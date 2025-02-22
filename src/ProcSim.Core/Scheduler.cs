@@ -7,6 +7,8 @@ public class Scheduler
 {
     private readonly Queue<Process> _queue = new();
 
+    public event Action<Process> ProcessUpdated;
+
     public void AddProcess(Process process)
     {
         _queue.Enqueue(process);
@@ -14,16 +16,20 @@ public class Scheduler
 
     public void Run()
     {
-        while (_queue.Any())
+        while (_queue.Count > 0)
         {
             Process process = _queue.Dequeue();
             process.State = ProcessState.Running;
-            // Simple FCFS logic: run until complete
+
             while (process.RemainingTime > 0)
             {
+                Thread.Sleep(2000);
                 process.RemainingTime--;
+                ProcessUpdated.Invoke(process);
             }
+
             process.State = ProcessState.Completed;
+            ProcessUpdated.Invoke(process);
         }
     }
 }
