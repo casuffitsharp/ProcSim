@@ -1,0 +1,37 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore ProcSim.sln
+
+      - name: Build Solution
+        run: dotnet build ProcSim.sln --no-restore --configuration Release
+
+      - name: Test
+        run: dotnet test ProcSim.sln --no-build --configuration Release
+
+      - name: Publish Executable
+        run: dotnet publish ProcSim.Console/ProcSim.Console.csproj --configuration Release --output ./published
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ProcSim-Build
+          path: ./published
