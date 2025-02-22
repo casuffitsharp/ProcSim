@@ -28,7 +28,7 @@ jobs:
         run: dotnet test ProcSim.sln --no-build --configuration Release
 
       - name: Publish Self-Contained Console Executable
-        run: dotnet publish src/ProcSim.Console/ProcSim.Console.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true -r win-x64
+        run: dotnet publish src/ProcSim.Console/ProcSim.Console.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
