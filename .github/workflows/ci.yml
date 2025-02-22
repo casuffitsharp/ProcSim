@@ -24,14 +24,14 @@ jobs:
       - name: Build Solution
         run: dotnet build ProcSim.sln --no-restore --configuration Release
 
-      - name: Test
+      - name: Run Unit Tests
         run: dotnet test ProcSim.sln --no-build --configuration Release
 
-      - name: Publish Self-Contained Executable
-        run: dotnet publish src/ProcSim.Console/ProcSim.Console.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -r win-x64
+      - name: Publish Self-Contained Console Executable
+        run: dotnet publish src/ProcSim.Console/ProcSim.Console.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true -r win-x64
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ProcSim-Build
+          name: ProcSim-Console-Build
           path: ./published
