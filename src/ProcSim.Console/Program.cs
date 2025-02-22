@@ -1,4 +1,5 @@
 using ProcSim.Core;
+using ProcSim.Core.Entities;
 
 namespace ProcSim.Console;
 

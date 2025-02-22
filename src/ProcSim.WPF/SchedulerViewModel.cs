@@ -1,4 +1,5 @@
 using ProcSim.Core;
+using ProcSim.Core.Entities;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
