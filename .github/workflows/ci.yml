@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  build:
+  build_and_publish:
     runs-on: windows-latest
 
     steps:
