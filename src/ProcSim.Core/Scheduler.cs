@@ -1,52 +1,29 @@
-using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using ProcSim.Core.Scheduling;
 
 namespace ProcSim.Core;
 
 public class Scheduler
 {
-    private readonly List<Process> _processes = [];
-    private CancellationTokenSource _cts;
+    private CancellationTokenSource _cts = new();
 
     public event Action<Process> ProcessUpdated;
 
-    public IReadOnlyList<Process> Processes => _processes.AsReadOnly();
-
-    public void AddProcess(Process process)
+    public async Task RunAsync(Queue<Process> processes, ISchedulingAlgorithm algorithm, CancellationToken token)
     {
-        _processes.Add(process);
-    }
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-    public async Task RunAsync(CancellationToken cancellationToken = default)
-    {
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-
-        while (_processes.Any(p => p.State != ProcessState.Completed))
+        await algorithm.RunAsync(processes, process =>
         {
-            var process = _processes.FirstOrDefault(p => p.State == ProcessState.Ready);
-            if (process is null) break;
+            if (_cts.Token.IsCancellationRequested)
+                return;
 
-            process.State = ProcessState.Running;
             ProcessUpdated?.Invoke(process);
-
-            while (process.RemainingTime > 0)
-            {
-                if (_cts.Token.IsCancellationRequested)
-                    return;
-
-                await Task.Delay(1000, _cts.Token);
-                process.RemainingTime--;
-                ProcessUpdated?.Invoke(process);
-            }
-
-            process.State = ProcessState.Completed;
-            ProcessUpdated?.Invoke(process);
-        }
+        }, _cts.Token);
     }
 
-    public void Reset()
+    public void Cancel()
     {
-        _cts?.Cancel();
-        _processes.Clear();
+        _cts.Cancel();
     }
 }

@@ -1,22 +1,25 @@
-﻿using System.Windows;
-using ProcSim.WPF.ViewModels;
+﻿using ProcSim.Wpf.ViewModels;
+using System.Windows;
 
-namespace ProcSim.WPF.Views;
+namespace ProcSim.Wpf.Views;
 
 public partial class MainWindowView : Window
 {
-    private readonly SchedulerViewModel _schedulerViewModel;
+    private readonly MainViewModel _schedulerViewModel;
 
     public MainWindowView()
     {
         InitializeComponent();
 
-        _schedulerViewModel = new SchedulerViewModel();
+        _schedulerViewModel = new MainViewModel();
         DataContext = _schedulerViewModel;
     }
 
     private async void RunScheduler_Click(object sender, RoutedEventArgs e)
     {
-        await _schedulerViewModel.RunSchedulingAsync();
+        if (DataContext is MainViewModel viewModel)
+        {
+            await viewModel.RunSchedulingAsync();
+        }
     }
 }

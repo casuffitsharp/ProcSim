@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Data;
 using ProcSim.Core.Enums;
 
-namespace ProcSim.WPF.Converters;
+namespace ProcSim.Wpf.Converters;
 
 public class StateToVisibilityConverter(ProcessState targetState) : IValueConverter
 {

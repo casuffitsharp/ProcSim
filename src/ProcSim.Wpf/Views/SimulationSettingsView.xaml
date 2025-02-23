@@ -1,0 +1,37 @@
+﻿<UserControl x:Class="ProcSim.Wpf.Views.SimulationSettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ProcSim.Wpf.Views"
+             mc:Ignorable="d" 
+             d:DesignHeight="150" d:DesignWidth="300">
+
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Algoritmo de Escalonamento -->
+        <Label Grid.Row="0" Grid.Column="0" Content="Algoritmo:" VerticalAlignment="Center" Margin="5"/>
+        <ComboBox Grid.Row="0" Grid.Column="1" ItemsSource="{Binding Algorithms}"
+                  SelectedItem="{Binding SelectedAlgorithm}" DisplayMemberPath="Description"
+                  Width="Auto" Margin="5"/>
+
+        <!-- Quantum -->
+        <Label Grid.Row="1" Grid.Column="0" Content="Quantum (ms):" VerticalAlignment="Center" Margin="5" Visibility="{Binding IsPreemptive, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Quantum}" HorizontalAlignment="Left" Width="80" Margin="5" Visibility="{Binding IsPreemptive, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+        <!-- Botão para Aplicar Configurações -->
+        <Button Grid.Row="3" Grid.ColumnSpan="2" Content="Aplicar Configuração" Command="{Binding ApplySettingsCommand}"
+                Background="#007BFF" Foreground="White" Padding="8" FontWeight="Bold" HorizontalAlignment="Center" Margin="10"/>
+    </Grid>
+</UserControl>

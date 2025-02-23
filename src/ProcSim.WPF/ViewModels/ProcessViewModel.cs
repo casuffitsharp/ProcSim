@@ -1,7 +1,7 @@
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
 
-namespace ProcSim.WPF.ViewModels;
+namespace ProcSim.Wpf.ViewModels;
 
 public class ProcessViewModel(Process process) : ViewModelBase
 {
@@ -15,6 +15,7 @@ public class ProcessViewModel(Process process) : ViewModelBase
     public int IoTime => _process.IoTime;
     public int RemainingTime => _process.RemainingTime;
     public ProcessState State => _process.State;
+    public ProcessType Type => _process.Type;
 
     public void UpdateFromModel()
     {

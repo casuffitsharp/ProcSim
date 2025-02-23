@@ -4,71 +4,82 @@ using ProcSim.Core;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
 
-namespace ProcSim.WPF.ViewModels;
+namespace ProcSim.Wpf.ViewModels;
 
-public class SchedulerViewModel : ViewModelBase
+public class MainViewModel : ViewModelBase
 {
     private readonly Scheduler _scheduler = new();
+    private CancellationTokenSource _cts = new();
 
     private readonly ObservableCollection<ProcessViewModel> _processes = [];
 
     private readonly ObservableCollection<ProcessViewModel> _readyProcesses = [];
+    private readonly ObservableCollection<ProcessViewModel> _runningProcesses = [];
     private readonly ObservableCollection<ProcessViewModel> _blockedProcesses = [];
     private readonly ObservableCollection<ProcessViewModel> _completedProcesses = [];
 
     public ReadOnlyObservableCollection<ProcessViewModel> ReadyProcesses { get; }
+    public ReadOnlyObservableCollection<ProcessViewModel> RunningProcesses { get; }
     public ReadOnlyObservableCollection<ProcessViewModel> BlockedProcesses { get; }
     public ReadOnlyObservableCollection<ProcessViewModel> CompletedProcesses { get; }
-    public ProcessRegistrationViewModel ProcessRegistrationViewModel { get; }
 
-    public SchedulerViewModel()
+    public ProcessRegistrationViewModel ProcessRegistrationViewModel { get; }
+    public SimulationSettingsViewModel SimulationSettingsViewModel { get; }
+
+    public MainViewModel()
     {
         _scheduler.ProcessUpdated += OnProcessUpdated;
 
         ProcessRegistrationViewModel = new ProcessRegistrationViewModel(_processes);
-
-        // Carrega os processos do Scheduler
-        foreach (var process in _scheduler.Processes)
-        {
-            _processes.Add(new ProcessViewModel(process));
-        }
+        SimulationSettingsViewModel = new SimulationSettingsViewModel();
 
         ReadyProcesses = new ReadOnlyObservableCollection<ProcessViewModel>(_readyProcesses);
+        RunningProcesses = new ReadOnlyObservableCollection<ProcessViewModel>(_runningProcesses);
         BlockedProcesses = new ReadOnlyObservableCollection<ProcessViewModel>(_blockedProcesses);
         CompletedProcesses = new ReadOnlyObservableCollection<ProcessViewModel>(_completedProcesses);
 
         _processes.CollectionChanged += Processes_CollectionChanged;
-
-        UpdateFilteredLists();
     }
 
     public void AddProcess(ProcessViewModel processViewModel)
     {
         _processes.Add(processViewModel);
-        _scheduler.AddProcess(processViewModel.Model);
     }
 
     public async Task RunSchedulingAsync()
     {
-        await _scheduler.RunAsync();
+        if (!_processes.Any()) return;
+
+        _cts = new CancellationTokenSource();
+        var algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+
+        await _scheduler.RunAsync(new(_processes.Select(p => p.Model)), algorithm, _cts.Token);
+        UpdateFilteredLists();
     }
 
-    private void OnProcessUpdated(Process updatedProcess)
+    public void CancelScheduling()
     {
-        var processViewModel = _processes.FirstOrDefault(p => p.Id == updatedProcess.Id);
-        if (processViewModel is null)
-            return;
-
-        processViewModel.UpdateFromModel();
+        _cts.Cancel();
     }
 
     public void Reset()
     {
-        _scheduler.Reset();
+        CancelScheduling();
         _processes.Clear();
+        UpdateFilteredLists();
     }
 
-    private void Processes_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    private void OnProcessUpdated(Process updatedProcess)
+    {
+        var processViewModel = _processes.FirstOrDefault(p => p.Model == updatedProcess);
+        if (processViewModel is null)
+            return;
+
+        processViewModel.UpdateFromModel();
+        UpdateFilteredLists();
+    }
+
+    private void Processes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         UpdateFilteredLists();
     }
@@ -76,6 +87,7 @@ public class SchedulerViewModel : ViewModelBase
     private void UpdateFilteredLists()
     {
         _readyProcesses.Clear();
+        _runningProcesses.Clear();
         _blockedProcesses.Clear();
         _completedProcesses.Clear();
 
@@ -85,6 +97,9 @@ public class SchedulerViewModel : ViewModelBase
             {
                 case ProcessState.Ready:
                     _readyProcesses.Add(process);
+                    break;
+                case ProcessState.Running:
+                    _runningProcesses.Add(process);
                     break;
                 case ProcessState.Blocked:
                     _blockedProcesses.Add(process);
@@ -96,6 +111,7 @@ public class SchedulerViewModel : ViewModelBase
         }
 
         OnPropertyChanged(nameof(ReadyProcesses));
+        OnPropertyChanged(nameof(RunningProcesses));
         OnPropertyChanged(nameof(BlockedProcesses));
         OnPropertyChanged(nameof(CompletedProcesses));
     }

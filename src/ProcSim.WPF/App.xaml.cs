@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-namespace ProcSim.WPF;
+namespace ProcSim.Wpf;
 
 /// <summary>
 /// Interaction logic for App.xaml

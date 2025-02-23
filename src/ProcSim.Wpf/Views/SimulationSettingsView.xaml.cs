@@ -2,9 +2,9 @@
 
 namespace ProcSim.Wpf.Views;
 
-public partial class ProcessRegistrationView : UserControl
+public partial class SimulationSettingsView : UserControl
 {
-    public ProcessRegistrationView()
+    public SimulationSettingsView()
     {
         InitializeComponent();
     }

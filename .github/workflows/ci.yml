@@ -27,11 +27,11 @@ jobs:
       - name: Run Unit Tests
         run: dotnet test ProcSim.sln --no-build --configuration Release
 
-      - name: Publish Self-Contained Console Executable
-        run: dotnet publish src/ProcSim.Console/ProcSim.Console.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true
+      - name: Publish Self-Contained Wpf Executable
+        run: dotnet publish src/ProcSim.Wpf/ProcSim.Wpf.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true
 
       - name: Upload Build Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ProcSim-Console-Build
+          name: ProcSim-Wpf-Build
           path: ./published

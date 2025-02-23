@@ -1,6 +1,6 @@
 ﻿using System.Windows.Input;
 
-namespace ProcSim.WPF.Commands;
+namespace ProcSim.Wpf.Commands;
 
 public class RelayCommand(Action execute, Func<bool> canExecute = null) : ICommand
 {

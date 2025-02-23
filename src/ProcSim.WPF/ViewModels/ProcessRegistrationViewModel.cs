@@ -2,9 +2,9 @@
 using System.Windows.Input;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
-using ProcSim.WPF.Commands;
+using ProcSim.Wpf.Commands;
 
-namespace ProcSim.WPF.ViewModels;
+namespace ProcSim.Wpf.ViewModels;
 
 public class ProcessRegistrationViewModel : ViewModelBase
 {

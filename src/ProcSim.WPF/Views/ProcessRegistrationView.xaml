@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ProcSim.WPF.Views.ProcessRegistrationView"
+﻿<UserControl x:Class="ProcSim.Wpf.Views.ProcessRegistrationView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Height="Auto" Width="Auto"
@@ -24,21 +24,11 @@
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <!-- Título -->
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="10"/>
-            <!-- Espaço -->
             <RowDefinition Height="Auto"/>
-            <!-- Nome -->
-            <RowDefinition Height="Auto"/>
-            <!-- Tempo Execução -->
-            <RowDefinition Height="Auto"/>
-            <!-- Tipo -->
-            <RowDefinition Height="Auto"/>
-            <!-- Tempo I/O -->
-            <RowDefinition Height="10"/>
-            <!-- Espaço -->
-            <RowDefinition Height="Auto"/>
-            <!-- Botão -->
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
@@ -48,32 +38,27 @@
             <!-- Campos ocupam o restante -->
         </Grid.ColumnDefinitions>
 
-        <!-- Título -->
-        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="➕ Criar Novo Processo" 
-                   FontWeight="Bold" FontSize="16" Foreground="#007BFF" 
-                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
-
         <!-- Nome do Processo -->
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="Nome:"/>
-        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Name}"/>
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Nome:"/>
+        <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name}"/>
 
         <!-- Tempo de Execução -->
-        <TextBlock Grid.Row="3" Grid.Column="0" Text="Tempo Execução:"/>
-        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ExecutionTime}"/>
+        <TextBlock Grid.Row="1" Grid.Column="0" Text="Tempo Execução:"/>
+        <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ExecutionTime}"/>
 
         <!-- Tipo do Processo -->
-        <TextBlock Grid.Row="4" Grid.Column="0" Text="Tipo:"/>
-        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Tipo:"/>
+        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
             <RadioButton Content="CPU-bound" IsChecked="{Binding IsCpuBound}" GroupName="ProcessType"/>
             <RadioButton Content="I/O-bound" IsChecked="{Binding IsIoBound}" GroupName="ProcessType" Margin="10,0,0,0"/>
         </StackPanel>
 
         <!-- Tempo de I/O (Somente visível se IsIoBound == true) -->
-        <TextBlock Grid.Row="5" Grid.Column="0" Text="Tempo I/O:" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-        <TextBox Grid.Row="5" Grid.Column="1" Name="tbIoTime" Text="{Binding IoTime}" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Tempo I/O:" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Name="tbIoTime" Text="{Binding IoTime}" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <!-- Botão Adicionar Processo -->
-        <Button Grid.Row="7" Grid.ColumnSpan="2" Content="➕ Adicionar" 
+        <Button Grid.Row="5" Grid.ColumnSpan="2" Content="➕ Adicionar" 
                 Command="{Binding AddProcessCommand}" Background="#007BFF" Foreground="White"
                 Padding="8" FontWeight="Bold" HorizontalAlignment="Center" Width="100" Margin="0,10,0,0"/>
     </Grid>
