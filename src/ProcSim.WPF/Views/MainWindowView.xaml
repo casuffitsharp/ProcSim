@@ -67,7 +67,7 @@
             </StackPanel>
 
             <!-- Formulário de Cadastro -->
-            <views:ProcessRegistrationView Grid.Column="1"/>
+            <views:ProcessRegistrationView DataContext="{Binding ProcessRegistrationViewModel}" Grid.Column="1"/>
         </Grid>
     </Grid>
 </Window>

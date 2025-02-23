@@ -13,6 +13,7 @@
         <Style TargetType="TextBox">
             <Setter Property="Margin" Value="0,5,0,5"/>
             <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Width" Value="150"/>
         </Style>
 
         <Style TargetType="StackPanel">
@@ -23,20 +24,28 @@
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <!-- Título -->
             <RowDefinition Height="10"/>
+            <!-- Espaço -->
             <RowDefinition Height="Auto"/>
+            <!-- Nome -->
             <RowDefinition Height="Auto"/>
+            <!-- Tempo Execução -->
             <RowDefinition Height="Auto"/>
+            <!-- Tipo -->
             <RowDefinition Height="Auto"/>
+            <!-- Tempo I/O -->
             <RowDefinition Height="10"/>
+            <!-- Espaço -->
             <RowDefinition Height="Auto"/>
+            <!-- Botão -->
         </Grid.RowDefinitions>
 
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="110"/>
+            <ColumnDefinition Width="120"/>
             <!-- Largura fixa para rótulos -->
             <ColumnDefinition Width="*"/>
-            <!-- TextBoxes ocupam o restante -->
+            <!-- Campos ocupam o restante -->
         </Grid.ColumnDefinitions>
 
         <!-- Título -->
@@ -46,26 +55,26 @@
 
         <!-- Nome do Processo -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Nome:"/>
+        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Name}"/>
 
         <!-- Tempo de Execução -->
         <TextBlock Grid.Row="3" Grid.Column="0" Text="Tempo Execução:"/>
-        <TextBox Grid.Row="3" Grid.Column="1" Width="100" Text="{Binding NovoProcesso.TempoExecucao}"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Text="{Binding ExecutionTime}"/>
 
         <!-- Tipo do Processo -->
         <TextBlock Grid.Row="4" Grid.Column="0" Text="Tipo:"/>
         <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
-            <RadioButton Content="CPU-bound" IsChecked="{Binding NovoProcesso.IsCpuBound}" GroupName="ProcessType"/>
-            <RadioButton Content="I/O-bound" IsChecked="{Binding NovoProcesso.IsIoBound}" GroupName="ProcessType" Margin="10,0,0,0"/>
+            <RadioButton Content="CPU-bound" IsChecked="{Binding IsCpuBound}" GroupName="ProcessType"/>
+            <RadioButton Content="I/O-bound" IsChecked="{Binding IsIoBound}" GroupName="ProcessType" Margin="10,0,0,0"/>
         </StackPanel>
 
-        <!-- Tempo de I/O -->
-        <TextBlock Grid.Row="5" Grid.Column="0" Text="Tempo I/O:"/>
-        <TextBox Grid.Row="5" Grid.Column="1" Width="100" Text="{Binding NovoProcesso.TempoIO}" IsEnabled="{Binding NovoProcesso.IsIoBound}"/>
+        <!-- Tempo de I/O (Somente visível se IsIoBound == true) -->
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="Tempo I/O:" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <TextBox Grid.Row="5" Grid.Column="1" Name="tbIoTime" Text="{Binding IoTime}" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <!-- Botão Adicionar Processo -->
         <Button Grid.Row="7" Grid.ColumnSpan="2" Content="➕ Adicionar" 
-                Command="{Binding AdicionarProcesso}" Background="#007BFF" Foreground="White"
+                Command="{Binding AddProcessCommand}" Background="#007BFF" Foreground="White"
                 Padding="8" FontWeight="Bold" HorizontalAlignment="Center" Width="100" Margin="0,10,0,0"/>
-        <TextBox Grid.Row="2" Grid.Column="1"              Width="200" HorizontalAlignment="Left"  Text="{Binding NovoProcesso.Nome}"/>
     </Grid>
 </UserControl>

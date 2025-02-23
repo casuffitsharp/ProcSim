@@ -4,6 +4,7 @@
              xmlns:views="clr-namespace:ProcSim.WPF.Views"
              StartupUri="Views/MainWindowView.xaml">
     <Application.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <Style x:Key="Estilo_Placeholder" TargetType="{x:Type TextBox}" BasedOn="{StaticResource {x:Type TextBox}}">
             <Setter Property="Template">
                 <Setter.Value>

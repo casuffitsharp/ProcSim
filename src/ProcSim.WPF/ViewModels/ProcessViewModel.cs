@@ -5,12 +5,20 @@ namespace ProcSim.WPF.ViewModels;
 
 public class ProcessViewModel(Process process) : ViewModelBase
 {
-    public Process Model => process;
+    private readonly Process _process = process;
 
-    public int Id => process.Id;
-    public string Name => process.Name;
-    public int ExecutionTime => process.ExecutionTime;
-    public int IoTime => process.IoTime;
-    public int RemainingTime => process.RemainingTime;
-    public ProcessState State => process.State;
+    public Process Model => _process;
+
+    public int Id => _process.Id;
+    public string Name => _process.Name;
+    public int ExecutionTime => _process.ExecutionTime;
+    public int IoTime => _process.IoTime;
+    public int RemainingTime => _process.RemainingTime;
+    public ProcessState State => _process.State;
+
+    public void UpdateFromModel()
+    {
+        OnPropertyChanged(nameof(RemainingTime));
+        OnPropertyChanged(nameof(State));
+    }
 }

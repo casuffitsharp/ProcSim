@@ -8,32 +8,112 @@ namespace ProcSim.WPF.ViewModels;
 
 public class ProcessRegistrationViewModel : ViewModelBase
 {
-    public ProcessRegistrationViewModel(ObservableCollection<Process> processes)
+    private int _nextProcessId = 1;
+
+    public ProcessRegistrationViewModel(ObservableCollection<ProcessViewModel> processes)
     {
         Processes = processes;
         AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
+        ResetNewProcess();
     }
 
-    public ObservableCollection<Process> Processes { get; }
-    public Process NewProcess { get; private set; } = new(0, "", 0, 0, ProcessType.CpuBound);
+    public ObservableCollection<ProcessViewModel> Processes { get; }
+
+    private string _name = string.Empty;
+    private int _executionTime;
+    private int _ioTime;
+    private bool _isCpuBound = true;
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (_name != value)
+            {
+                _name = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public int ExecutionTime
+    {
+        get => _executionTime;
+        set
+        {
+            if (_executionTime != value)
+            {
+                _executionTime = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public int IoTime
+    {
+        get => _ioTime;
+        set
+        {
+            if (_ioTime != value)
+            {
+                _ioTime = value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
+    public bool IsCpuBound
+    {
+        get => _isCpuBound;
+        set
+        {
+            if (_isCpuBound != value)
+            {
+                _isCpuBound = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsIoBound));
+            }
+        }
+    }
+
+    public bool IsIoBound
+    {
+        get => !_isCpuBound;
+        set
+        {
+            if (IsIoBound != value)
+            {
+                IsCpuBound = !value;
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public ICommand AddProcessCommand { get; }
 
     private void AddProcess()
     {
         var process = new Process(
-            id: Processes.Count + 1,
-            name: NewProcess.Name,
-            executionTime: NewProcess.ExecutionTime,
-            ioTime: NewProcess.IoTime,
-            type: NewProcess.Type
+            id: _nextProcessId++,
+            name: Name,
+            executionTime: ExecutionTime,
+            ioTime: IsIoBound ? IoTime : 0,
+            type: IsCpuBound ? ProcessType.CpuBound : ProcessType.IoBound
         );
 
-        Processes.Add(process);
-
-        // Reset NewProcess after adding
-        NewProcess = new Process(0, "", 0, 0, ProcessType.CpuBound);
-        OnPropertyChanged(nameof(NewProcess));
+        Processes.Add(new ProcessViewModel(process));
+        ResetNewProcess();
     }
 
-    private bool CanAddProcess() => !string.IsNullOrWhiteSpace(NewProcess.Name) && NewProcess.ExecutionTime > 0;
+    private bool CanAddProcess() =>
+        !string.IsNullOrWhiteSpace(Name) && ExecutionTime > 0;
+
+    private void ResetNewProcess()
+    {
+        Name = string.Empty;
+        ExecutionTime = 0;
+        IoTime = 0;
+        IsCpuBound = true; // Reseta para CPU-bound por padrão
+    }
 }
