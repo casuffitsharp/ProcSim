@@ -1,0 +1,71 @@
+﻿<UserControl x:Class="ProcSim.WPF.Views.ProcessRegistrationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Height="Auto" Width="Auto"
+    Background="White">
+
+    <UserControl.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,5,5,5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="0,5,0,5"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+
+        <Style TargetType="StackPanel">
+            <Setter Property="Margin" Value="0,5,0,5"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="110"/>
+            <!-- Largura fixa para rótulos -->
+            <ColumnDefinition Width="*"/>
+            <!-- TextBoxes ocupam o restante -->
+        </Grid.ColumnDefinitions>
+
+        <!-- Título -->
+        <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="➕ Criar Novo Processo" 
+                   FontWeight="Bold" FontSize="16" Foreground="#007BFF" 
+                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <!-- Nome do Processo -->
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="Nome:"/>
+
+        <!-- Tempo de Execução -->
+        <TextBlock Grid.Row="3" Grid.Column="0" Text="Tempo Execução:"/>
+        <TextBox Grid.Row="3" Grid.Column="1" Width="100" Text="{Binding NovoProcesso.TempoExecucao}"/>
+
+        <!-- Tipo do Processo -->
+        <TextBlock Grid.Row="4" Grid.Column="0" Text="Tipo:"/>
+        <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
+            <RadioButton Content="CPU-bound" IsChecked="{Binding NovoProcesso.IsCpuBound}" GroupName="ProcessType"/>
+            <RadioButton Content="I/O-bound" IsChecked="{Binding NovoProcesso.IsIoBound}" GroupName="ProcessType" Margin="10,0,0,0"/>
+        </StackPanel>
+
+        <!-- Tempo de I/O -->
+        <TextBlock Grid.Row="5" Grid.Column="0" Text="Tempo I/O:"/>
+        <TextBox Grid.Row="5" Grid.Column="1" Width="100" Text="{Binding NovoProcesso.TempoIO}" IsEnabled="{Binding NovoProcesso.IsIoBound}"/>
+
+        <!-- Botão Adicionar Processo -->
+        <Button Grid.Row="7" Grid.ColumnSpan="2" Content="➕ Adicionar" 
+                Command="{Binding AdicionarProcesso}" Background="#007BFF" Foreground="White"
+                Padding="8" FontWeight="Bold" HorizontalAlignment="Center" Width="100" Margin="0,10,0,0"/>
+        <TextBox Grid.Row="2" Grid.Column="1"              Width="200" HorizontalAlignment="Left"  Text="{Binding NovoProcesso.Nome}"/>
+    </Grid>
+</UserControl>

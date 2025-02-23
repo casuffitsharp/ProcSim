@@ -1,50 +1,74 @@
-using ProcSim.Core;
-using ProcSim.Core.Entities;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Windows.Threading;
+using System.Linq;
+using System.Threading.Tasks;
+using ProcSim.Core;
+using ProcSim.Core.Enums;
+using ProcSim.Core.Models;
 
 namespace ProcSim.WPF.ViewModels;
 
-public class SchedulerViewModel : INotifyPropertyChanged
+public class SchedulerViewModel : ViewModelBase
 {
     private readonly Scheduler _scheduler = new();
+    private readonly ObservableCollection<ProcessViewModel> _processes = [];
 
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    public ObservableCollection<ProcessViewModel> Processes { get; } = [];
+    public ObservableCollection<ProcessViewModel> ReadyProcesses { get; private set; } = [];
+    public ObservableCollection<ProcessViewModel> BlockedProcesses { get; private set; } = [];
+    public ObservableCollection<ProcessViewModel> CompletedProcesses { get; private set; } = [];
 
     public SchedulerViewModel()
     {
         _scheduler.ProcessUpdated += OnProcessUpdated;
+
+        // Carrega os processos do Scheduler
+        foreach (var process in _scheduler.Processes)
+        {
+            _processes.Add(new ProcessViewModel(process));
+        }
+
+        UpdateFilteredLists();
     }
 
     public void AddProcess(ProcessViewModel processViewModel)
     {
-        Processes.Add(processViewModel);
+        _processes.Add(processViewModel);
         _scheduler.AddProcess(processViewModel.Model);
+        UpdateFilteredLists();
     }
 
     public async Task RunSchedulingAsync()
     {
-        await Task.Run(_scheduler.Run);
-        // If needed, signal that the collection has been updated
-        //OnPropertyChanged(nameof(Processes));
+        await _scheduler.RunAsync();
+        UpdateFilteredLists();
     }
 
     private void OnProcessUpdated(Process updatedProcess)
     {
-        var vm = Processes.FirstOrDefault(p => p.Model == updatedProcess);
-        if (vm is null)
+        var processViewModel = _processes.FirstOrDefault(p => p.Id == updatedProcess.Id);
+        if (processViewModel is null)
             return;
 
-        // Force update by raising PropertyChanged notifications for properties that may change
-        vm.NotifyPropertyChanged(nameof(vm.RemainingTime));
-        vm.NotifyPropertyChanged(nameof(vm.State));
+        processViewModel.NotifyPropertyChanged(nameof(processViewModel.RemainingTime));
+        processViewModel.NotifyPropertyChanged(nameof(processViewModel.State));
+
+        UpdateFilteredLists();
     }
 
-    protected virtual void OnPropertyChanged(string propertyName)
+    public void Reset()
     {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        _scheduler.Reset();
+        _processes.Clear();
+        UpdateFilteredLists();
+    }
+
+    private void UpdateFilteredLists()
+    {
+        ReadyProcesses = [.. _processes.Where(p => p.State == ProcessState.Ready)];
+        BlockedProcesses = [.. _processes.Where(p => p.State == ProcessState.Blocked)];
+        CompletedProcesses = [.. _processes.Where(p => p.State == ProcessState.Completed)];
+
+        OnPropertyChanged(nameof(ReadyProcesses));
+        OnPropertyChanged(nameof(BlockedProcesses));
+        OnPropertyChanged(nameof(CompletedProcesses));
     }
 }

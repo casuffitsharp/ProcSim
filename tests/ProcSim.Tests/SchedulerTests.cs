@@ -1,28 +1,23 @@
 using ProcSim.Core;
-using ProcSim.Core.Entities;
+using ProcSim.Core.Enums;
+using ProcSim.Core.Models;
 
 namespace ProcSim.Tests;
 
 public class SchedulerTests
 {
     [Fact]
-    public void FCFS_Should_CompleteAllProcesses()
+    public async Task FCFS_Should_CompleteAllProcessesAsync()
     {
         // Arrange
         Scheduler scheduler = new();
         for (int i = 1; i <= 3; i++)
         {
-            scheduler.AddProcess(new Process
-            {
-                Id = i,
-                Name = $"P{i}",
-                ExecutionTime = i * 1,
-                RemainingTime = i * 1
-            });
+            scheduler.AddProcess(new Process(i, $"P{i}", i * 1, 0, ProcessType.CpuBound));
         }
 
         // Act
-        scheduler.Run();
+        await scheduler.RunAsync();
 
         // Assert
         // If the code reaches here, all processes should be completed
