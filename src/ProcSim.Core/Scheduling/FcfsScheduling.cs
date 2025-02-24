@@ -5,8 +5,6 @@ namespace ProcSim.Core.Scheduling;
 
 public class FcfsScheduling : ISchedulingAlgorithm
 {
-    public bool IsPreemptive => false;
-
     public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, CancellationToken token)
     {
         while (processes.Count > 0)

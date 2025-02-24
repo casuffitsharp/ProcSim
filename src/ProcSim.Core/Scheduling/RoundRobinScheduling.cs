@@ -3,10 +3,8 @@ using ProcSim.Core.Models;
 
 namespace ProcSim.Core.Scheduling;
 
-public class RoundRobinScheduling(int quantum) : ISchedulingAlgorithm
+public class RoundRobinScheduling : PreemptiveAlgorithmBase, ISchedulingAlgorithm
 {
-    public bool IsPreemptive => true;
-
     public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, CancellationToken token)
     {
         List<Process> readyQueue = [.. processes];
@@ -19,7 +17,7 @@ public class RoundRobinScheduling(int quantum) : ISchedulingAlgorithm
                 process.State = ProcessState.Running;
                 onProcessUpdated(process);
 
-                int executionTime = Math.Min(quantum, process.RemainingTime);
+                int executionTime = Math.Min(Quantum, process.RemainingTime);
                 await Task.Delay(executionTime * 1000, token);
                 process.RemainingTime -= executionTime;
 

@@ -1,42 +1,58 @@
-﻿using System.Collections.ObjectModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
 using ProcSim.Core.Scheduling;
 
 namespace ProcSim.Wpf.ViewModels;
 
-public class SimulationSettingsViewModel : ViewModelBase
+public class SimulationSettingsViewModel : ObservableObject
 {
-    public ObservableCollection<SchedulingAlgorithmType> Algorithms { get; } = [.. Enum.GetValues<SchedulingAlgorithmType>()];
-
-    private SchedulingAlgorithmType _selectedAlgorithm = SchedulingAlgorithmType.Fcfs;
-    private ISchedulingAlgorithm _selectedAlgorithmInstance;
+    public List<SchedulingAlgorithmType> Algorithms { get; } = [.. Enum.GetValues<SchedulingAlgorithmType>()];
 
     public SimulationSettingsViewModel()
     {
-        _selectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(_selectedAlgorithm);
+        SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(SelectedAlgorithm);
+        Quantum = 1;
     }
 
     public SchedulingAlgorithmType SelectedAlgorithm
     {
-        get => _selectedAlgorithm;
+        get;
         set
         {
-            if (_selectedAlgorithm != value)
+            if (field != value)
             {
-                _selectedAlgorithm = value;
-                _selectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(value);
-                
+                field = value;
+                SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(value);
+
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsPreemptive));
                 OnPropertyChanged(nameof(SelectedAlgorithmInstance));
             }
         }
+    } = SchedulingAlgorithmType.Fcfs;
+
+    public ISchedulingAlgorithm SelectedAlgorithmInstance { get; private set; }
+
+    public bool IsPreemptive => SelectedAlgorithmInstance is IPreemptiveAlgorithm;
+
+    public int Quantum
+    {
+        get;
+        set
+        {
+            if (field != value && value > 0)
+            {
+                field = value;
+                OnPropertyChanged();
+                UpdateSchedulerQuantum();
+            }
+        }
     }
 
-    public ISchedulingAlgorithm SelectedAlgorithmInstance => _selectedAlgorithmInstance;
-
-    public bool IsPreemptive => _selectedAlgorithmInstance.IsPreemptive;
-
-    public int Quantum { get; set; } = 1;
+    private void UpdateSchedulerQuantum()
+    {
+        if (SelectedAlgorithmInstance is IPreemptiveAlgorithm preemptiveAlgorithm)
+            preemptiveAlgorithm.Quantum = Quantum;
+    }
 }

@@ -1,4 +1,5 @@
-﻿using ProcSim.Wpf.ViewModels;
+﻿using MaterialDesignThemes.Wpf;
+using ProcSim.Wpf.ViewModels;
 using System.Windows;
 
 namespace ProcSim.Wpf.Views;
@@ -15,11 +16,17 @@ public partial class MainWindowView : Window
         DataContext = _schedulerViewModel;
     }
 
-    private async void RunScheduler_Click(object sender, RoutedEventArgs e)
+    private static void ModifyTheme(bool isDarkTheme)
     {
-        if (DataContext is MainViewModel viewModel)
-        {
-            await viewModel.RunSchedulingAsync();
-        }
+        var paletteHelper = new PaletteHelper();
+        var theme = paletteHelper.GetTheme();
+
+        theme.SetBaseTheme(isDarkTheme ? BaseTheme.Dark : BaseTheme.Light);
+        paletteHelper.SetTheme(theme);
+    }
+
+    private void MenuDarkModeButton_Click(object sender, RoutedEventArgs e)
+    {
+        ModifyTheme(DarkModeToggleButton.IsChecked == true);
     }
 }

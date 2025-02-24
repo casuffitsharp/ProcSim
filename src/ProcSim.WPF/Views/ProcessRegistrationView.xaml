@@ -1,8 +1,7 @@
 ﻿<UserControl x:Class="ProcSim.Wpf.Views.ProcessRegistrationView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Height="Auto" Width="Auto"
-    Background="White">
+    Height="Auto" Width="Auto">
 
     <UserControl.Resources>
         <Style TargetType="TextBlock">
@@ -49,8 +48,9 @@
         <!-- Tipo do Processo -->
         <TextBlock Grid.Row="2" Grid.Column="0" Text="Tipo:"/>
         <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Left">
-            <RadioButton Content="CPU-bound" IsChecked="{Binding IsCpuBound}" GroupName="ProcessType"/>
-            <RadioButton Content="I/O-bound" IsChecked="{Binding IsIoBound}" GroupName="ProcessType" Margin="10,0,0,0"/>
+            <RadioButton Content="CPU-bound" IsChecked="true" GroupName="ProcessType"/>
+            <Separator Width="10" Visibility="Hidden"/>
+            <RadioButton Content="I/O-bound" IsChecked="{Binding IsIoBound}" GroupName="ProcessType"/>
         </StackPanel>
 
         <!-- Tempo de I/O (Somente visível se IsIoBound == true) -->
@@ -58,8 +58,6 @@
         <TextBox Grid.Row="3" Grid.Column="1" Name="tbIoTime" Text="{Binding IoTime}" Visibility="{Binding IsIoBound, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
         <!-- Botão Adicionar Processo -->
-        <Button Grid.Row="5" Grid.ColumnSpan="2" Content="➕ Adicionar" 
-                Command="{Binding AddProcessCommand}" Background="#007BFF" Foreground="White"
-                Padding="8" FontWeight="Bold" HorizontalAlignment="Center" Width="100" Margin="0,10,0,0"/>
+        <Button Grid.Row="5" Grid.ColumnSpan="2" Content="Adicionar" Command="{Binding AddProcessCommand}" HorizontalAlignment="Center" Width="100" />
     </Grid>
 </UserControl>

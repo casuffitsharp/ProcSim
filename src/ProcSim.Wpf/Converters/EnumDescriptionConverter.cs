@@ -1,30 +1,37 @@
-﻿using System.ComponentModel;
+﻿using ProcSim.Core.Enums;
+using System.Collections;
+using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
 using System.Windows.Data;
 
 namespace ProcSim.Wpf.Converters;
 
-public class EnumDescriptionConverter : IValueConverter
+public sealed class EnumDescriptionConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        if (value is Enum enumValue)
+        return value switch
         {
-            return GetEnumDescription(enumValue);
-        }
-        return string.Empty;
+            IEnumerable enumerable => ConvertCollection(enumerable),
+            Enum enumValue => GetEnumDescription(enumValue),
+            _ => Binding.DoNothing
+        };
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        return Binding.DoNothing; // Não há necessidade de converter de volta
+        return Binding.DoNothing;
+    }
+
+    private static IEnumerable<string> ConvertCollection(IEnumerable enumerable)
+    {
+        return [.. enumerable.Cast<object>().OfType<Enum>().Select(GetEnumDescription)];
     }
 
     private static string GetEnumDescription(Enum value)
     {
-        FieldInfo field = value.GetType().GetField(value.ToString());
-        DescriptionAttribute attribute = field?.GetCustomAttributes<DescriptionAttribute>().FirstOrDefault();
-        return attribute?.Description ?? value.ToString();
+        var field = value.GetType().GetField(value.ToString());
+        return field?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? value.ToString();
     }
 }

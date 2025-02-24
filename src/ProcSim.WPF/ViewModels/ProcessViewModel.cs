@@ -1,9 +1,10 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
 
 namespace ProcSim.Wpf.ViewModels;
 
-public class ProcessViewModel(Process process) : ViewModelBase
+public class ProcessViewModel(Process process) : ObservableObject
 {
     private readonly Process _process = process;
 
