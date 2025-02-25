@@ -5,58 +5,61 @@
     xmlns:conv="clr-namespace:ProcSim.Wpf.Converters"
              Height="Auto" Width="Auto">
 
-        <UserControl.Resources>
-            <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
-        </UserControl.Resources>
+    <UserControl.Resources>
+        <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+    </UserControl.Resources>
+    <!--<materialDesign:Card Background="{Binding CardBackground, RelativeSource={RelativeSource AncestorType=UserControl}}">-->
+    <materialDesign:Card>
+        <StackPanel Margin="5">
+            <TextBlock Text="{Binding Header, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue='My Header'}"
+                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
 
-        <GroupBox Header="{Binding Header, RelativeSource={RelativeSource AncestorType=UserControl}}"
-              FontSize="12" FontWeight="Bold" VerticalAlignment="Stretch" MinHeight="150">
-            <ListView ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                  SelectionMode="Single" Focusable="False" BorderThickness="0"
-                  MinHeight="100" IsManipulationEnabled="False" IsHitTestVisible="False"
-                  HorizontalAlignment="Stretch">
+            <Separator Margin="0,8"/>
 
-                <ListView.ItemContainerStyle>
-                    <Style TargetType="{x:Type ListViewItem}">
-                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <DataGrid ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserReorderColumns="False"
+                  CanUserResizeColumns="False"
+                  CanUserSortColumns="False"
+                  HeadersVisibility="Column"
+                  RowHeaderWidth="0"
+                  GridLinesVisibility="None"
+                  SelectionMode="Single"
+                  BorderThickness="0"
+                  Padding="0"
+                  Focusable="False"
+                  IsHitTestVisible="False">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="SizeToHeader" />
+                    <DataGridTextColumn Header="Timer" Binding="{Binding RemainingTime}" Width="SizeToHeader" />
+                    <DataGridTemplateColumn Header="Tipo" Width="SizeToHeader">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Type, Converter={StaticResource EnumDescriptionConverter}}"/>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+
+                <DataGrid.CellStyle>
+                    <Style TargetType="DataGridCell">
+                        <Setter Property="Focusable" Value="False"/>
                     </Style>
-                </ListView.ItemContainerStyle>
-
-                <ListView.View>
-                    <GridView>
-                        <!-- Nome: Ajuste Dinâmico -->
-                        <GridViewColumn Header="Nome" Width="Auto">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-
-                        <!-- Timer: Ajuste Automático -->
-                        <GridViewColumn DisplayMemberBinding="{Binding RemainingTime}" Width="Auto">
-                            <GridViewColumn.Header>
-                                <GridViewColumnHeader>
-                                    <GridViewColumnHeader.Content>
-                                        <materialDesign:PackIcon Kind="Timer" Width="20" Height="20"/>
-                                    </GridViewColumnHeader.Content>
-                                </GridViewColumnHeader>
-                            </GridViewColumn.Header>
-                        </GridViewColumn>
-
-                        <!-- Tipo: Ajuste Dinâmico -->
-                        <GridViewColumn Header="Tipo" Width="Auto">
-                            <GridViewColumn.CellTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding Type, Converter={StaticResource EnumDescriptionConverter}}" TextWrapping="Wrap"/>
-                                </DataTemplate>
-                            </GridViewColumn.CellTemplate>
-                        </GridViewColumn>
-
-                    </GridView>
-                </ListView.View>
-            </ListView>
-        </GroupBox>
-    </UserControl>
-
+                </DataGrid.CellStyle>
+                <DataGrid.Resources>
+                    <!-- Remove o fundo de seleção -->
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                    <!-- Remove o contorno de célula selecionada -->
+                    <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
+                    <!-- Mantém o texto na cor preta mesmo quando selecionado -->
+                    <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+                </DataGrid.Resources>
+            </DataGrid>
+        </StackPanel>
+    </materialDesign:Card>
+</UserControl>
     

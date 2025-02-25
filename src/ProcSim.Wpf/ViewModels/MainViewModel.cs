@@ -22,8 +22,7 @@ public class MainViewModel : ObservableObject
 
     public ProcessRegistrationViewModel ProcessRegistrationViewModel { get; }
     public SimulationSettingsViewModel SimulationSettingsViewModel { get; }
-    public IAsyncRelayCommand RunSchedulingCommand { get; }
-    public IAsyncRelayCommand CancelSchedulingCommand { get; }
+    public IAsyncRelayCommand RunPauseSchedulingCommand { get; }
     public IRelayCommand ResetSchedulingCommand { get; }
 
     public MainViewModel()
@@ -32,26 +31,41 @@ public class MainViewModel : ObservableObject
 
         ProcessRegistrationViewModel = new ProcessRegistrationViewModel(_processes);
         SimulationSettingsViewModel = new SimulationSettingsViewModel();
-        RunSchedulingCommand = new AsyncRelayCommand(RunSchedulingAsync, CanRunScheduling);
-        CancelSchedulingCommand = new AsyncRelayCommand(CancelSchedulingAsync, CanCancelScheduling);
+        RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 
         _processes.CollectionChanged += Processes_CollectionChanged;
+
+        PopulateExampleData();
     }
 
-    private bool CanRunScheduling()
+    private void PopulateExampleData()
     {
-        return !IsRunning && _processes.Any(p => p.State == ProcessState.Ready);
+        _processes.Add(new(new Process(1, "P1", 10, 0, ProcessType.CpuBound)));
+        _processes.Add(new(new Process(2, "P2", 5, 5, ProcessType.IoBound)));
+        _processes.Add(new(new Process(3, "P3", 3, 0, ProcessType.CpuBound)));
+        _processes.Add(new(new Process(4, "P4", 7, 0, ProcessType.CpuBound)));
     }
 
-    private bool CanCancelScheduling()
+    private bool CanRunPauseScheduling()
     {
-        return IsRunning;
+        if (IsRunning)
+            return true;
+
+        return _processes.Any(_processes => _processes.State != ProcessState.Completed);
     }
 
     private bool CanResetScheduling()
     {
-        return CanRunScheduling();
+        return !IsRunning;
+    }
+
+    private async Task RunPauseSchedulingAsync()
+    {
+        if (IsRunning)
+            await PauseSchedulingAsync();
+        else
+            await RunSchedulingAsync();
     }
 
     private async Task RunSchedulingAsync()
@@ -67,7 +81,7 @@ public class MainViewModel : ObservableObject
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Simulação cancelada pelo usuário.");
+            Console.WriteLine("Simulação pausada pelo usuário.");
         }
         catch (Exception ex)
         {
@@ -81,8 +95,6 @@ public class MainViewModel : ObservableObject
         UpdateFilteredLists();
     }
 
-    public bool CanChangeAlgorithm => !IsRunning;
-
     private bool _isRunning;
     public bool IsRunning
     {
@@ -91,10 +103,9 @@ public class MainViewModel : ObservableObject
         {
             if (SetProperty(ref _isRunning, value))
             {
-                RunSchedulingCommand.NotifyCanExecuteChanged();
-                CancelSchedulingCommand.NotifyCanExecuteChanged();
+                SimulationSettingsViewModel.CanChangeAlgorithm = !value;
+                RunPauseSchedulingCommand.NotifyCanExecuteChanged();
                 ResetSchedulingCommand.NotifyCanExecuteChanged();
-                OnPropertyChanged(nameof(CanChangeAlgorithm));
             }
         }
     }
@@ -104,7 +115,7 @@ public class MainViewModel : ObservableObject
         _processes.Add(processViewModel);
     }
 
-    public async Task CancelSchedulingAsync()
+    public async Task PauseSchedulingAsync()
     {
         await _cts.CancelAsync();
     }
@@ -118,6 +129,7 @@ public class MainViewModel : ObservableObject
         }
 
         UpdateFilteredLists();
+        RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
     private void OnProcessUpdated(Process updatedProcess)
@@ -133,7 +145,7 @@ public class MainViewModel : ObservableObject
     private void Processes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
         UpdateFilteredLists();
-        RunSchedulingCommand.NotifyCanExecuteChanged();
+        RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
     private void UpdateFilteredLists()

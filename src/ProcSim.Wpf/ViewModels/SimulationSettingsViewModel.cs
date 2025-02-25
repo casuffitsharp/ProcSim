@@ -13,6 +13,7 @@ public class SimulationSettingsViewModel : ObservableObject
     {
         SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(SelectedAlgorithm);
         Quantum = 1;
+        CanChangeAlgorithm = true;
     }
 
     public SchedulingAlgorithmType SelectedAlgorithm
@@ -48,6 +49,13 @@ public class SimulationSettingsViewModel : ObservableObject
                 UpdateSchedulerQuantum();
             }
         }
+    }
+
+    private bool canChangeAlgorithm;
+    public bool CanChangeAlgorithm
+    {
+        get => canChangeAlgorithm;
+        set => SetProperty(ref canChangeAlgorithm, value);
     }
 
     private void UpdateSchedulerQuantum()

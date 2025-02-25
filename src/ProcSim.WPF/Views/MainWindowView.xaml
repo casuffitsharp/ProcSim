@@ -10,8 +10,16 @@
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
     mc:Ignorable="av"
     x:Class="ProcSim.Wpf.Views.MainWindowView"
+    Icon="/Assets/procsim_icon.ico"
     Title="ProcSim" Height="600" Width="900"
     WindowStartupLocation="CenterScreen">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="ReadyCardBrush" Color="#E8F5E9" />
+        <SolidColorBrush x:Key="RunningCardBrush" Color="#E3F2FD" />
+        <SolidColorBrush x:Key="BlockedCardBrush" Color="#FFEBEE" />
+        <SolidColorBrush x:Key="CompletedCardBrush" Color="#ECEFF1" />
+    </Window.Resources>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -33,9 +41,11 @@
             </Grid.ColumnDefinitions>
 
             <!-- Cadastro de Processos -->
-            <views:ProcessRegistrationView DataContext="{Binding ProcessRegistrationViewModel}" Grid.Column="0"/>
+            <GroupBox Header="Cadastro de Processos" FontSize="12" FontWeight="Bold" Padding="0">
+                <views:ProcessRegistrationView DataContext="{Binding ProcessRegistrationViewModel}"/>
+            </GroupBox>
 
-            <Grid Grid.Column="1">
+            <Grid Grid.Column="1" Margin="20,0,0,0">
                 <Grid.RowDefinitions>
                     <!-- Configuração -->
                     <RowDefinition Height="Auto"/>
@@ -44,18 +54,29 @@
                 </Grid.RowDefinitions>
 
                 <!-- Configuração da Simulação -->
-                <views:SimulationSettingsView DataContext="{Binding SimulationSettingsViewModel}" Grid.Row="0" Margin="0,0,0,0"/>
+                <views:SimulationSettingsView DataContext="{Binding SimulationSettingsViewModel}"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
-                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding RunSchedulingCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Iniciar">
-                        <materialDesign:PackIcon Kind="Play" />
+                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding RunPauseSchedulingCommand}"
+                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Iniciar">
+                        <materialDesign:PackIcon>
+                            <materialDesign:PackIcon.Style>
+                                <Style TargetType="materialDesign:PackIcon" BasedOn="{StaticResource {x:Type materialDesign:PackIcon}}">
+                                    <Setter Property="Kind" Value="Play" />
+                                    <Setter Property="ToolTip" Value="Iniciar" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                            <Setter Property="Kind" Value="Pause" />
+                                            <Setter Property="ToolTip" Value="Pausar" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </materialDesign:PackIcon.Style>
+                        </materialDesign:PackIcon>
                     </Button>
-                    <Separator Width="10" Visibility="Hidden"/>
-                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding CancelSchedulingCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Cancelar">
-                        <materialDesign:PackIcon Kind="Stop" />
-                    </Button>
-                    <Separator Width="10" Visibility="Hidden"/>
-                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding ResetSchedulingCommand}" Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
+                    <Separator Width="20" Visibility="Hidden"/>
+                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding ResetSchedulingCommand}"
+                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
                         <materialDesign:PackIcon Kind="Refresh" />
                     </Button>
                 </StackPanel>
@@ -79,7 +100,7 @@
 
         <!-- Lista de Processos -->
         <Grid Grid.Row="1">
-            <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold">
+            <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -88,10 +109,10 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcesses}" Grid.Column="0"/>
-                    <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcesses}" Grid.Column="1"/>
-                    <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcesses}" Grid.Column="2"/>
-                    <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcesses}" Grid.Column="3"/>
+                    <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcesses}" CardBackground="{StaticResource ReadyCardBrush}" Grid.Column="0"/>
+                    <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcesses}" CardBackground="{StaticResource RunningCardBrush}" Grid.Column="1"/>
+                    <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcesses}" CardBackground="{StaticResource BlockedCardBrush}" Grid.Column="2"/>
+                    <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcesses}" CardBackground="{StaticResource CompletedCardBrush}" Grid.Column="3"/>
                 </Grid>
             </GroupBox>
         </Grid>

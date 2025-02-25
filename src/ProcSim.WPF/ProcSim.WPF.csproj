@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
+      <None Remove="Assets\procsim_icon.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
       <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
       <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
       <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
@@ -11,6 +15,12 @@
         <ProjectReference Include="..\ProcSim.Core\ProcSim.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Resource Include="Assets\procsim_icon.ico">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Resource>
+    </ItemGroup>
+
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0-windows</TargetFramework>
@@ -19,6 +29,7 @@
         <Nullable>disable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
+        <ApplicationIcon>Assets/procsim_icon.ico</ApplicationIcon>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
