@@ -76,7 +76,7 @@ public static class SmoothBackgroundTransitionBehavior
         };
 
         // Inicia a animação
-        animBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
+        animBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation, HandoffBehavior.Compose);
 
         // Define o Background da célula com o brush animado
         cell.Background = animBrush;

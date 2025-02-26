@@ -48,11 +48,11 @@ public partial class MainWindowView : Window
             {
                 var col = new DataGridTemplateColumn
                 {
-                    Header = t.ToString(), // Você ainda pode exibir o índice se quiser
-                    CellTemplate = (DataTemplate)FindResource("GanttCellTemplate")
+                    Header = t.ToString(), // ou outro valor que deseje exibir
+                    CellTemplate = (DataTemplate)FindResource("GanttCellAnimatedTemplate")
                 };
 
-                // Define a attached property para armazenar o índice da coluna
+                // Define a attached property para armazenar o índice da coluna (se necessário)
                 DataGridColumnExtensions.SetColumnIndex(col, t);
 
                 dataGridGantt.Columns.Add(col);

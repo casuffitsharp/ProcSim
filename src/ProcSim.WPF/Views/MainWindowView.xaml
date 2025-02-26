@@ -13,7 +13,7 @@
     mc:Ignorable="av"
     x:Class="ProcSim.Wpf.Views.MainWindowView"
     Icon="/Assets/procsim_icon.ico"
-    Title="ProcSim" Height="900" Width="900"
+    Title="ProcSim" Height="690" Width="900"
     WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
@@ -24,6 +24,7 @@
 
         <!-- Conversor que recebe a coleção de estados e o índice e retorna um Brush -->
         <local:StateHistoryToBrushConverter x:Key="StateHistoryToBrushConverter"/>
+        <local:CloneBrushConverter x:Key="CloneBrushConverter"/>
 
         <!-- Estilo para as células do Gantt -->
         <Style TargetType="DataGridCell" x:Key="GanttCellStyle">
@@ -45,10 +46,17 @@
                 </Setter.Value>
             </Setter>
         </Style>
-
+        
         <!-- DataTemplate simples para cada célula (pode ser vazio se não houver conteúdo adicional) -->
         <DataTemplate x:Key="GanttCellTemplate">
             <Grid Background="Transparent"/>
+        </DataTemplate>
+
+        <DataTemplate x:Key="GanttCellAnimatedTemplate">
+            <views:GanttCellControl Brush="{Binding RelativeSource={RelativeSource AncestorType=DataGridCell}, 
+                                              Path=Background, 
+                                              Converter={StaticResource CloneBrushConverter}, 
+                                              Mode=OneTime}" />
         </DataTemplate>
     </Window.Resources>
 
@@ -57,9 +65,9 @@
             <!-- Cadastro e Configuração -->
             <RowDefinition Height="Auto"/>
             <!-- Listagem de Processos -->
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <!-- Gantt-->
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Configuração e Cadastro de Processos -->
@@ -172,6 +180,13 @@
                 <DataGrid.Columns>
                     <!-- Coluna fixa para o nome do processo – não utiliza o estilo GanttCellStyle -->
                     <DataGridTextColumn Header="P" Binding="{Binding Name}" Width="Auto">
+                        <DataGridTextColumn.HeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Padding" Value="0"/>
+                            </Style>
+                        </DataGridTextColumn.HeaderStyle>
                         <DataGridTextColumn.CellStyle>
                             <Style TargetType="DataGridCell">
                                 <Setter Property="Background" Value="Transparent"/>
