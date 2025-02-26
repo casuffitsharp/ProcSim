@@ -5,9 +5,9 @@ namespace ProcSim.Core.Scheduling;
 
 public class RoundRobinScheduling : PreemptiveAlgorithmBase, ISchedulingAlgorithm
 {
-    public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, CancellationToken token)
+    public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, Func<CancellationToken, Task> delayFunc, CancellationToken token)
     {
-        List<Process> readyQueue = [.. processes];
+        List<Process> readyQueue = new(processes);
 
         while (readyQueue.Count != 0 && !token.IsCancellationRequested)
         {
@@ -18,7 +18,10 @@ public class RoundRobinScheduling : PreemptiveAlgorithmBase, ISchedulingAlgorith
                 onProcessUpdated(process);
 
                 int executionTime = Math.Min(Quantum, process.RemainingTime);
-                await Task.Delay(executionTime * 1000, token);
+
+                for (int j = 0; j < executionTime && !token.IsCancellationRequested; j++)
+                    await delayFunc(token);
+
                 process.RemainingTime -= executionTime;
 
                 if (process.RemainingTime <= 0)

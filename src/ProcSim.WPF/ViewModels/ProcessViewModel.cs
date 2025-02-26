@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using System.Collections.ObjectModel;
 
 namespace ProcSim.Wpf.ViewModels;
 
@@ -17,6 +18,15 @@ public class ProcessViewModel(Process process) : ObservableObject
     public int RemainingTime => _process.RemainingTime;
     public ProcessState State => _process.State;
     public ProcessType Type => _process.Type;
+
+    // Histórico dos estados ao longo do tempo.
+    public ObservableCollection<ProcessState> StateHistory { get; } = [];
+
+    public void Tick()
+    {
+        StateHistory.Add(State);
+        OnPropertyChanged(nameof(StateHistory));
+    }
 
     public void UpdateFromModel()
     {

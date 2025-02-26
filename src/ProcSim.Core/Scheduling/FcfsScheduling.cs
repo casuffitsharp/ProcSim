@@ -5,7 +5,7 @@ namespace ProcSim.Core.Scheduling;
 
 public class FcfsScheduling : ISchedulingAlgorithm
 {
-    public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, CancellationToken token)
+    public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, Func<CancellationToken, Task> delayFunc, CancellationToken token)
     {
         while (processes.Count > 0)
         {
@@ -15,7 +15,7 @@ public class FcfsScheduling : ISchedulingAlgorithm
 
             while (process.RemainingTime > 0 && !token.IsCancellationRequested)
             {
-                await Task.Delay(1000, token);
+                await delayFunc(token);
                 process.RemainingTime--;
                 onProcessUpdated(process);
             }

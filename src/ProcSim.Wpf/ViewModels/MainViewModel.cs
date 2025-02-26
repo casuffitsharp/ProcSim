@@ -13,7 +13,7 @@ public class MainViewModel : ObservableObject
     private readonly Scheduler _scheduler = new();
     private CancellationTokenSource _cts = new();
 
-    private readonly ObservableCollection<ProcessViewModel> _processes = [];
+    public ObservableCollection<ProcessViewModel> Processes { get; private set; } = [];
 
     public ObservableCollection<ProcessViewModel> ReadyProcesses { get; private set; } = [];
     public ObservableCollection<ProcessViewModel> RunningProcesses { get; private set; } = [];
@@ -28,37 +28,32 @@ public class MainViewModel : ObservableObject
     public MainViewModel()
     {
         _scheduler.ProcessUpdated += OnProcessUpdated;
+        _scheduler.TickUpdated += OnTickUpdated;
 
-        ProcessRegistrationViewModel = new ProcessRegistrationViewModel(_processes);
+        ProcessRegistrationViewModel = new ProcessRegistrationViewModel(Processes);
         SimulationSettingsViewModel = new SimulationSettingsViewModel();
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 
-        _processes.CollectionChanged += Processes_CollectionChanged;
+        Processes.CollectionChanged += Processes_CollectionChanged;
 
         PopulateExampleData();
     }
 
     private void PopulateExampleData()
     {
-        _processes.Add(new(new Process(1, "P1", 10, 0, ProcessType.CpuBound)));
-        _processes.Add(new(new Process(2, "P2", 5, 5, ProcessType.IoBound)));
-        _processes.Add(new(new Process(3, "P3", 3, 0, ProcessType.CpuBound)));
-        _processes.Add(new(new Process(4, "P4", 7, 0, ProcessType.CpuBound)));
+        Processes.Add(new(new Process(1, "P1", 10, 0, ProcessType.CpuBound)));
+        Processes.Add(new(new Process(2, "P2", 5, 5, ProcessType.IoBound)));
+        Processes.Add(new(new Process(3, "P3", 3, 0, ProcessType.CpuBound)));
+        Processes.Add(new(new Process(4, "P4", 7, 0, ProcessType.CpuBound)));
     }
 
     private bool CanRunPauseScheduling()
     {
-        if (IsRunning)
-            return true;
-
-        return _processes.Any(_processes => _processes.State != ProcessState.Completed);
+        return IsRunning || Processes.Any(p => p.State != ProcessState.Completed);
     }
 
-    private bool CanResetScheduling()
-    {
-        return !IsRunning;
-    }
+    private bool CanResetScheduling() => !IsRunning;
 
     private async Task RunPauseSchedulingAsync()
     {
@@ -71,13 +66,14 @@ public class MainViewModel : ObservableObject
     private async Task RunSchedulingAsync()
     {
         IsRunning = true;
-
         _cts = new CancellationTokenSource();
         var algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
 
         try
         {
-            await _scheduler.RunAsync(new(_processes.Select(p => p.Model)), algorithm, _cts.Token);
+            // Cria uma fila com os modelos de processo
+            var queue = new Queue<Process>(Processes.Select(p => p.Model));
+            await _scheduler.RunAsync(queue, algorithm, _cts.Token);
         }
         catch (OperationCanceledException)
         {
@@ -112,34 +108,46 @@ public class MainViewModel : ObservableObject
 
     public void AddProcess(ProcessViewModel processViewModel)
     {
-        _processes.Add(processViewModel);
+        Processes.Add(processViewModel);
     }
 
     public async Task PauseSchedulingAsync()
     {
-        await _cts.CancelAsync();
+        _cts.Cancel();
+        await Task.CompletedTask;
     }
 
     public void ResetScheduling()
     {
-        foreach (var process in _processes)
+        foreach (var process in Processes)
         {
             process.Model.State = ProcessState.Ready;
             process.Model.RemainingTime = process.Model.ExecutionTime;
+            process.StateHistory.Clear();
+            OnPropertyChanged(nameof(process.StateHistory));
         }
-
         UpdateFilteredLists();
         RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
+    public event Action<int> GanttUpdated;
     private void OnProcessUpdated(Process updatedProcess)
     {
-        var processViewModel = _processes.FirstOrDefault(p => p.Model == updatedProcess);
+        var processViewModel = Processes.FirstOrDefault(p => p.Model == updatedProcess);
         if (processViewModel is null)
             return;
 
         processViewModel.UpdateFromModel();
         UpdateFilteredLists();
+    }
+
+    private void OnTickUpdated()
+    {
+        foreach (var process in Processes)
+            process.Tick();
+
+        int totalTimeUnits = Processes.Any() ? Processes.Max(p => p.StateHistory.Count) : 0;
+        GanttUpdated?.Invoke(totalTimeUnits);
     }
 
     private void Processes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -155,7 +163,7 @@ public class MainViewModel : ObservableObject
         BlockedProcesses.Clear();
         CompletedProcesses.Clear();
 
-        foreach (var process in _processes)
+        foreach (var process in Processes)
         {
             switch (process.State)
             {
@@ -178,5 +186,6 @@ public class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(RunningProcesses));
         OnPropertyChanged(nameof(BlockedProcesses));
         OnPropertyChanged(nameof(CompletedProcesses));
+        OnPropertyChanged(nameof(Processes));
     }
 }

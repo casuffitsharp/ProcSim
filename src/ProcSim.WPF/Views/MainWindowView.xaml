@@ -5,13 +5,15 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="clr-namespace:ProcSim.Wpf.Views"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:local="clr-namespace:ProcSim.Wpf.Converters"
+    xmlns:local1="clr-namespace:ProcSim.Wpf.Helpers"
     Style="{StaticResource MaterialDesignWindow}"
     Background="{DynamicResource MaterialDesignPaper}"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
     mc:Ignorable="av"
     x:Class="ProcSim.Wpf.Views.MainWindowView"
     Icon="/Assets/procsim_icon.ico"
-    Title="ProcSim" Height="600" Width="900"
+    Title="ProcSim" Height="900" Width="900"
     WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
@@ -19,14 +21,45 @@
         <SolidColorBrush x:Key="RunningCardBrush" Color="#E3F2FD" />
         <SolidColorBrush x:Key="BlockedCardBrush" Color="#FFEBEE" />
         <SolidColorBrush x:Key="CompletedCardBrush" Color="#ECEFF1" />
+
+        <!-- Conversor que recebe a coleção de estados e o índice e retorna um Brush -->
+        <local:StateHistoryToBrushConverter x:Key="StateHistoryToBrushConverter"/>
+
+        <!-- Estilo para as células do Gantt -->
+        <Style TargetType="DataGridCell" x:Key="GanttCellStyle">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Width" Value="20"/>
+            <!-- Ativa a transição suave -->
+            <Setter Property="local1:SmoothBackgroundTransitionBehavior.EnableSmoothTransition" Value="True"/>
+            <Setter Property="Background">
+                <Setter.Value>
+                    <MultiBinding Converter="{StaticResource StateHistoryToBrushConverter}">
+                        <!-- 1) Coleção de estados do processo (do item da linha) -->
+                        <Binding Path="StateHistory"/>
+                        <!-- 2) Índice do tick vindo da attached property da coluna -->
+                        <Binding Path="Column.(local1:DataGridColumnExtensions.ColumnIndex)"
+                         RelativeSource="{RelativeSource Mode=Self}"/>
+                    </MultiBinding>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- DataTemplate simples para cada célula (pode ser vazio se não houver conteúdo adicional) -->
+        <DataTemplate x:Key="GanttCellTemplate">
+            <Grid Background="Transparent"/>
+        </DataTemplate>
     </Window.Resources>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <!-- Cadastro e Configuração -->
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
             <!-- Listagem de Processos -->
+            <RowDefinition Height="*"/>
+            <!-- Gantt-->
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <!-- Configuração e Cadastro de Processos -->
@@ -116,5 +149,44 @@
                 </Grid>
             </GroupBox>
         </Grid>
+
+        <GroupBox Header="Gantt" FontSize="12" FontWeight="Bold" Padding="0" Grid.Row="2" Margin="0,10,0,10">
+            <!-- Gantt DataGrid -->
+            <DataGrid x:Name="dataGridGantt"
+                  ItemsSource="{Binding Processes}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserResizeColumns="False"
+                  CanUserReorderColumns="False"
+                  HeadersVisibility="Column"
+                  RowHeaderWidth="0"
+                  GridLinesVisibility="None"
+                  Margin="5"
+                  EnableRowVirtualization="True"
+                  EnableColumnVirtualization="True"
+                  materialDesign:DataGridAssist.CellPadding="0"
+                  materialDesign:DataGridAssist.ColumnHeaderPadding="0"
+                  CellStyle="{StaticResource GanttCellStyle}">
+                <DataGrid.Columns>
+                    <!-- Coluna fixa para o nome do processo – não utiliza o estilo GanttCellStyle -->
+                    <DataGridTextColumn Header="P" Binding="{Binding Name}" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style TargetType="DataGridCell">
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Padding" Value="0"/>
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+                <DataGrid.RowStyle>
+                    <Style TargetType="DataGridRow">
+                        <Setter Property="Margin" Value="0,2,0,2"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                    </Style>
+                </DataGrid.RowStyle>
+            </DataGrid>
+        </GroupBox>
     </Grid>
 </Window>
