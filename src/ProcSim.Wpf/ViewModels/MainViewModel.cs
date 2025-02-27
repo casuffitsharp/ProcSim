@@ -106,6 +106,13 @@ public class MainViewModel : ObservableObject
         }
     }
 
+    private int _totalTimeUnits;
+    public int TotalTimeUnits
+    {
+        get => _totalTimeUnits;
+        private set => SetProperty(ref _totalTimeUnits, value);
+    }
+
     public void AddProcess(ProcessViewModel processViewModel)
     {
         Processes.Add(processViewModel);
@@ -130,7 +137,6 @@ public class MainViewModel : ObservableObject
         RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
-    public event Action<int> GanttUpdated;
     private void OnProcessUpdated(Process updatedProcess)
     {
         var processViewModel = Processes.FirstOrDefault(p => p.Model == updatedProcess);
@@ -146,8 +152,7 @@ public class MainViewModel : ObservableObject
         foreach (var process in Processes)
             process.Tick();
 
-        int totalTimeUnits = Processes.Any() ? Processes.Max(p => p.StateHistory.Count) : 0;
-        GanttUpdated?.Invoke(totalTimeUnits);
+        TotalTimeUnits = Processes.Any() ? Processes.Max(p => p.StateHistory.Count) : 0;
     }
 
     private void Processes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

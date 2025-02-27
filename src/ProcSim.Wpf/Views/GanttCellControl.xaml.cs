@@ -1,38 +1,103 @@
-﻿using System.Windows;
+﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Data;
+using ProcSim.Core.Enums;
 
-namespace ProcSim.Wpf.Views;
-
-public partial class GanttCellControl : UserControl
+namespace ProcSim.Wpf.Views
 {
-    // Propriedade de dependência para receber o Brush que será animado
-    public static readonly DependencyProperty BrushProperty = DependencyProperty.Register("Brush", typeof(Brush), typeof(GanttCellControl), new PropertyMetadata(null));
-
-    public Brush Brush
+    public partial class GanttCellControl : UserControl
     {
-        get => (Brush)GetValue(BrushProperty);
-        set => SetValue(BrushProperty, value);
-    }
-
-    public GanttCellControl()
-    {
-        InitializeComponent();
-        Loaded += GanttCellControl_Loaded;
-    }
-
-    private void GanttCellControl_Loaded(object sender, RoutedEventArgs e)
-    {
-        // Anima o ScaleX do retângulo de 0 para 1 em 0,5 segundos
-        var animation = new DoubleAnimation
+        public GanttCellControl()
         {
-            From = 0,
-            To = 1,
-            Duration = TimeSpan.FromSeconds(0.5),
-            FillBehavior = FillBehavior.HoldEnd
-        };
+            InitializeComponent();
+            Loaded += GanttCellControl_Loaded;
+        }
 
-        ScaleTransform.BeginAnimation(ScaleTransform.ScaleXProperty, animation);
+        public static readonly DependencyProperty StateHistoryProperty = DependencyProperty.Register("StateHistory", typeof(IList<ProcessState>), typeof(GanttCellControl), new PropertyMetadata(null, OnStateHistoryOrColumnIndexChanged));
+
+        public IList<ProcessState> StateHistory
+        {
+            get => (IList<ProcessState>)GetValue(StateHistoryProperty);
+            set => SetValue(StateHistoryProperty, value);
+        }
+
+        public static readonly DependencyProperty ColumnIndexProperty = DependencyProperty.Register("ColumnIndex", typeof(int), typeof(GanttCellControl), new PropertyMetadata(0, OnStateHistoryOrColumnIndexChanged));
+
+        public int ColumnIndex
+        {
+            get => (int)GetValue(ColumnIndexProperty);
+            set => SetValue(ColumnIndexProperty, value);
+        }
+
+        public static readonly DependencyProperty ColorConverterProperty = DependencyProperty.Register("ColorConverter", typeof(IMultiValueConverter), typeof(GanttCellControl), new PropertyMetadata(null, OnStateHistoryOrColumnIndexChanged));
+
+        public IMultiValueConverter ColorConverter
+        {
+            get => (IMultiValueConverter)GetValue(ColorConverterProperty);
+            set => SetValue(ColorConverterProperty, value);
+        }
+
+        public static readonly DependencyProperty AnimationDurationProperty = DependencyProperty.Register("AnimationDuration", typeof(TimeSpan), typeof(GanttCellControl), new PropertyMetadata(TimeSpan.FromSeconds(0.5)));
+
+        public TimeSpan AnimationDuration
+        {
+            get => (TimeSpan)GetValue(AnimationDurationProperty);
+            set => SetValue(AnimationDurationProperty, value);
+        }
+
+        public static readonly DependencyProperty BrushProperty = DependencyProperty.Register("Brush", typeof(Brush), typeof(GanttCellControl), new PropertyMetadata(Brushes.Transparent));
+
+        public Brush Brush
+        {
+            get => (Brush)GetValue(BrushProperty);
+            set => SetValue(BrushProperty, value);
+        }
+
+        private static void OnStateHistoryOrColumnIndexChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var control = (GanttCellControl)d;
+            control.UpdateBrush();
+        }
+
+        private void UpdateBrush()
+        {
+            if (StateHistory == null || ColumnIndex < 0 || ColumnIndex >= StateHistory.Count)
+            {
+                Brush = Brushes.Transparent;
+                return;
+            }
+
+            if (ColorConverter != null)
+            {
+                object result = ColorConverter.Convert([StateHistory, ColumnIndex], typeof(Brush), null, CultureInfo.CurrentCulture);
+                Brush = result as Brush ?? Brushes.Transparent;
+                return;
+            }
+        }
+
+        private void GanttCellControl_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (AnimatedRect.RenderTransform is not ScaleTransform st)
+            {
+                st = new ScaleTransform(0, 1);
+                AnimatedRect.RenderTransform = st;
+                AnimatedRect.RenderTransformOrigin = new Point(0, 0.5);
+            }
+
+            var anim = new DoubleAnimation
+            {
+                From = 0,
+                To = 1,
+                Duration = AnimationDuration,
+                FillBehavior = FillBehavior.HoldEnd
+            };
+
+            st.BeginAnimation(ScaleTransform.ScaleXProperty, anim);
+        }
     }
 }

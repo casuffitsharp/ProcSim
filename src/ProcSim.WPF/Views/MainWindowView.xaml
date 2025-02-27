@@ -1,7 +1,7 @@
 ﻿<Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:av="http://schemas.microsoft.com/expression.blend/2008"
+    xmlns:av="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:views="clr-namespace:ProcSim.Wpf.Views"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -17,47 +17,14 @@
     WindowStartupLocation="CenterScreen">
 
     <Window.Resources>
+        <!-- Brushes para os cartões das listas -->
         <SolidColorBrush x:Key="ReadyCardBrush" Color="#E8F5E9" />
         <SolidColorBrush x:Key="RunningCardBrush" Color="#E3F2FD" />
         <SolidColorBrush x:Key="BlockedCardBrush" Color="#FFEBEE" />
         <SolidColorBrush x:Key="CompletedCardBrush" Color="#ECEFF1" />
 
-        <!-- Conversor que recebe a coleção de estados e o índice e retorna um Brush -->
-        <local:StateHistoryToBrushConverter x:Key="StateHistoryToBrushConverter"/>
-        <local:CloneBrushConverter x:Key="CloneBrushConverter"/>
-
-        <!-- Estilo para as células do Gantt -->
-        <Style TargetType="DataGridCell" x:Key="GanttCellStyle">
-            <Setter Property="Padding" Value="0"/>
-            <Setter Property="BorderBrush" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Width" Value="20"/>
-            <!-- Ativa a transição suave -->
-            <Setter Property="local1:SmoothBackgroundTransitionBehavior.EnableSmoothTransition" Value="True"/>
-            <Setter Property="Background">
-                <Setter.Value>
-                    <MultiBinding Converter="{StaticResource StateHistoryToBrushConverter}">
-                        <!-- 1) Coleção de estados do processo (do item da linha) -->
-                        <Binding Path="StateHistory"/>
-                        <!-- 2) Índice do tick vindo da attached property da coluna -->
-                        <Binding Path="Column.(local1:DataGridColumnExtensions.ColumnIndex)"
-                         RelativeSource="{RelativeSource Mode=Self}"/>
-                    </MultiBinding>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        
-        <!-- DataTemplate simples para cada célula (pode ser vazio se não houver conteúdo adicional) -->
-        <DataTemplate x:Key="GanttCellTemplate">
-            <Grid Background="Transparent"/>
-        </DataTemplate>
-
-        <DataTemplate x:Key="GanttCellAnimatedTemplate">
-            <views:GanttCellControl Brush="{Binding RelativeSource={RelativeSource AncestorType=DataGridCell}, 
-                                              Path=Background, 
-                                              Converter={StaticResource CloneBrushConverter}, 
-                                              Mode=OneTime}" />
-        </DataTemplate>
+        <!-- Conversor de estado para cor -->
+        <local:StateHistoryToBrushConverter x:Key="StateHistoryToBrushConverter" />
     </Window.Resources>
 
     <Grid Margin="10">
@@ -65,7 +32,7 @@
             <!-- Cadastro e Configuração -->
             <RowDefinition Height="Auto"/>
             <!-- Listagem de Processos -->
-            <RowDefinition Height="Auto"/>
+            <RowDefinition MinHeight="250" Height="Auto"/>
             <!-- Gantt-->
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -98,7 +65,8 @@
                 <views:SimulationSettingsView DataContext="{Binding SimulationSettingsViewModel}"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
-                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding RunPauseSchedulingCommand}"
+                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
+                            Command="{Binding RunPauseSchedulingCommand}"
                             Style="{StaticResource MaterialDesignIconButton}" ToolTip="Iniciar">
                         <materialDesign:PackIcon>
                             <materialDesign:PackIcon.Style>
@@ -116,13 +84,15 @@
                         </materialDesign:PackIcon>
                     </Button>
                     <Separator Width="20" Visibility="Hidden"/>
-                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" Command="{Binding ResetSchedulingCommand}"
+                    <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
+                            Command="{Binding ResetSchedulingCommand}"
                             Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
                         <materialDesign:PackIcon Kind="Refresh" />
                     </Button>
                 </StackPanel>
             </Grid>
-            <materialDesign:PopupBox Grid.Column="2" PlacementMode="BottomAndAlignRightEdges" StaysOpen="False" VerticalAlignment="Top" Margin="20,0,0,0">
+            <materialDesign:PopupBox Grid.Column="2" PlacementMode="BottomAndAlignRightEdges" 
+                                     StaysOpen="False" VerticalAlignment="Top" Margin="20,0,0,0">
                 <StackPanel>
                     <Grid Margin="10">
                         <Grid.ColumnDefinitions>
@@ -150,58 +120,24 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcesses}" CardBackground="{StaticResource ReadyCardBrush}" Grid.Column="0"/>
-                    <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcesses}" CardBackground="{StaticResource RunningCardBrush}" Grid.Column="1"/>
-                    <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcesses}" CardBackground="{StaticResource BlockedCardBrush}" Grid.Column="2"/>
-                    <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcesses}" CardBackground="{StaticResource CompletedCardBrush}" Grid.Column="3"/>
+                    <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcesses}" 
+                                           CardBackground="{StaticResource ReadyCardBrush}" Grid.Column="0"/>
+                    <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcesses}" 
+                                           CardBackground="{StaticResource RunningCardBrush}" Grid.Column="1"/>
+                    <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcesses}" 
+                                           CardBackground="{StaticResource BlockedCardBrush}" Grid.Column="2"/>
+                    <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcesses}" 
+                                           CardBackground="{StaticResource CompletedCardBrush}" Grid.Column="3"/>
                 </Grid>
             </GroupBox>
         </Grid>
 
         <GroupBox Header="Gantt" FontSize="12" FontWeight="Bold" Padding="0" Grid.Row="2" Margin="0,10,0,10">
-            <!-- Gantt DataGrid -->
-            <DataGrid x:Name="dataGridGantt"
-                  ItemsSource="{Binding Processes}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  CanUserResizeColumns="False"
-                  CanUserReorderColumns="False"
-                  HeadersVisibility="Column"
-                  RowHeaderWidth="0"
-                  GridLinesVisibility="None"
-                  Margin="5"
-                  EnableRowVirtualization="True"
-                  EnableColumnVirtualization="True"
-                  materialDesign:DataGridAssist.CellPadding="0"
-                  materialDesign:DataGridAssist.ColumnHeaderPadding="0"
-                  CellStyle="{StaticResource GanttCellStyle}">
-                <DataGrid.Columns>
-                    <!-- Coluna fixa para o nome do processo – não utiliza o estilo GanttCellStyle -->
-                    <DataGridTextColumn Header="P" Binding="{Binding Name}" Width="Auto">
-                        <DataGridTextColumn.HeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="HorizontalContentAlignment" Value="Center" />
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Padding" Value="0"/>
-                            </Style>
-                        </DataGridTextColumn.HeaderStyle>
-                        <DataGridTextColumn.CellStyle>
-                            <Style TargetType="DataGridCell">
-                                <Setter Property="Background" Value="Transparent"/>
-                                <Setter Property="Padding" Value="0"/>
-                            </Style>
-                        </DataGridTextColumn.CellStyle>
-                    </DataGridTextColumn>
-                </DataGrid.Columns>
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <Setter Property="Margin" Value="0,2,0,2"/>
-                        <Setter Property="Background" Value="Transparent"/>
-                    </Style>
-                </DataGrid.RowStyle>
-            </DataGrid>
+            <views:GanttControl x:Name="ganttControl"
+                    ItemsSource="{Binding Processes}"
+                    TimeUnits="{Binding TotalTimeUnits}"
+                    ColorConverter="{StaticResource StateHistoryToBrushConverter}"
+                    AnimationDuration="0:0:1" />
         </GroupBox>
     </Grid>
 </Window>

@@ -2,17 +2,13 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Name="root"
-             Background="Transparent">
+             Background="Transparent"
+             Width="20"
+             Padding="0">
     <Grid Background="Transparent">
-        <!-- O Rectangle usa o Brush definido na propriedade do UC. O binding é OneTime para que não haja reavaliações -->
         <Rectangle x:Name="AnimatedRect"
-               Fill="{Binding Brush, ElementName=root, Mode=OneTime}"
+               Fill="{Binding Brush, ElementName=root}"
                HorizontalAlignment="Stretch"
-               VerticalAlignment="Stretch">
-            <Rectangle.RenderTransform>
-                <ScaleTransform x:Name="ScaleTransform" ScaleX="0"/>
-            </Rectangle.RenderTransform>
-            <Rectangle.RenderTransformOrigin>0,0.5</Rectangle.RenderTransformOrigin>
-        </Rectangle>
+               VerticalAlignment="Stretch"/>
     </Grid>
 </UserControl>
