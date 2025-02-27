@@ -14,30 +14,41 @@ public class Scheduler
     {
         _cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-        // Cria o PeriodicTimer com intervalo de 1 segundo
         using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
 
-        // Define a função delay que aguarda o próximo tick e notifica via TickUpdated
-        async Task delayFunc(CancellationToken ct)
+        TaskCompletionSource<bool> tickTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var tickTask = Task.Run(async () =>
         {
-            bool tickOccurred = await timer.WaitForNextTickAsync(ct);
-            if (tickOccurred)
+            try
             {
-                TickUpdated?.Invoke();
+                while (await timer.WaitForNextTickAsync(_cts.Token))
+                {
+                    TickUpdated?.Invoke();
+                    tickTcs.TrySetResult(true);
+                    tickTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                }
             }
+            catch (OperationCanceledException) { }
+        }, _cts.Token);
+
+        async Task DelayFunc(CancellationToken ct)
+        {
+            await tickTcs.Task;
         }
 
-        // Injeta a função delay no algoritmo
-        await algorithm.RunAsync(processes, process =>
-        {
-            if (_cts.Token.IsCancellationRequested)
-                return;
-            ProcessUpdated?.Invoke(process);
-        }, delayFunc, _cts.Token);
+        // Executa o algoritmo, injetando a função de delay.
+        await algorithm.RunAsync(
+            processes,
+            process =>
+            {
+                if (!_cts.Token.IsCancellationRequested)
+                    ProcessUpdated?.Invoke(process);
+            }, DelayFunc, _cts.Token);
+
+        _cts.Cancel();
+        await tickTask;
     }
 
-    public void Cancel()
-    {
-        _cts.Cancel();
-    }
+    public void Cancel() => _cts.Cancel();
 }

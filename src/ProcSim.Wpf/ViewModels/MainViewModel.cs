@@ -42,7 +42,7 @@ public class MainViewModel : ObservableObject
 
     private void PopulateExampleData()
     {
-        Processes.Add(new(new Process(1, "P1", 10, 0, ProcessType.CpuBound)));
+        Processes.Add(new(new Process(1, "P1", 5, 0, ProcessType.CpuBound)));
         Processes.Add(new(new Process(2, "P2", 5, 5, ProcessType.IoBound)));
         Processes.Add(new(new Process(3, "P3", 3, 0, ProcessType.CpuBound)));
         Processes.Add(new(new Process(4, "P4", 7, 0, ProcessType.CpuBound)));

@@ -7,6 +7,9 @@ namespace ProcSim.Wpf.Converters;
 
 public class StateHistoryToBrushConverter : IMultiValueConverter
 {
+    private static Color ConvertHex(string hex) =>
+        (Color)ColorConverter.ConvertFromString(hex);
+
     public object Convert(object[] values, Type targetType, object parameter, CultureInfo culture)
     {
         if (values.Length < 2)
@@ -25,10 +28,10 @@ public class StateHistoryToBrushConverter : IMultiValueConverter
         ProcessState state = stateHistory[index];
         return state switch
         {
-            ProcessState.Ready => new SolidColorBrush(Colors.LightGreen),
-            ProcessState.Running => new SolidColorBrush(Colors.LightBlue),
-            ProcessState.Blocked => new SolidColorBrush(Colors.LightCoral),
-            ProcessState.Completed => new SolidColorBrush(Colors.LightGray),
+            ProcessState.Ready => new SolidColorBrush(ConvertHex("#C5E1A5")),     // Green 200
+            ProcessState.Running => new SolidColorBrush(ConvertHex("#90CAF9")),   // Blue 200
+            ProcessState.Blocked => new SolidColorBrush(ConvertHex("#EF9A9A")),   // Red 200
+            ProcessState.Completed => new SolidColorBrush(ConvertHex("#E0E0E0")), // Grey 300
             _ => Brushes.Transparent,
         };
     }
