@@ -14,18 +14,18 @@ public class Scheduler
     {
         _cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        using PeriodicTimer timer = new(TimeSpan.FromSeconds(1));
 
         TaskCompletionSource<bool> tickTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var tickTask = Task.Run(async () =>
+        Task tickTask = Task.Run(async () =>
         {
             try
             {
                 while (await timer.WaitForNextTickAsync(_cts.Token))
                 {
                     TickUpdated?.Invoke();
-                    tickTcs.TrySetResult(true);
+                    _ = tickTcs.TrySetResult(true);
                     tickTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
                 }
             }
@@ -34,7 +34,7 @@ public class Scheduler
 
         async Task DelayFunc(CancellationToken ct)
         {
-            await tickTcs.Task;
+            _ = await tickTcs.Task;
         }
 
         // Executa o algoritmo, injetando a função de delay.
@@ -43,12 +43,17 @@ public class Scheduler
             process =>
             {
                 if (!_cts.Token.IsCancellationRequested)
+                {
                     ProcessUpdated?.Invoke(process);
+                }
             }, DelayFunc, _cts.Token);
 
         _cts.Cancel();
         await tickTask;
     }
 
-    public void Cancel() => _cts.Cancel();
+    public void Cancel()
+    {
+        _cts.Cancel();
+    }
 }

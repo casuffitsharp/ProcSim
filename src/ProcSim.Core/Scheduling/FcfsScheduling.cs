@@ -8,9 +8,11 @@ public class FcfsScheduling : ISchedulingAlgorithm
     public async Task RunAsync(Queue<Process> readyQueue, Action<Process> onProcessUpdated, Func<CancellationToken, Task> delayFunc, CancellationToken token)
     {
         // Cria um dicionário para registrar se o I/O já foi realizado.
-        var ioPerformed = new Dictionary<int, bool>();
-        foreach (var process in readyQueue)
+        Dictionary<int, bool> ioPerformed = [];
+        foreach (Process process in readyQueue)
+        {
             ioPerformed[process.Id] = false;
+        }
 
         while (readyQueue.Count > 0 && !token.IsCancellationRequested)
         {
@@ -50,7 +52,9 @@ public class FcfsScheduling : ISchedulingAlgorithm
             }
 
             if (process.State == ProcessState.Blocked)
+            {
                 continue;
+            }
 
             if (process.RemainingTime > 0)
             {
@@ -70,7 +74,9 @@ public class FcfsScheduling : ISchedulingAlgorithm
     {
         // Simula o tempo de I/O.
         for (int i = 0; i < process.IoTime && !token.IsCancellationRequested; i++)
+        {
             await delayFunc(token);
+        }
 
         // Ao completar o I/O, simula a chegada de uma interrupção:
         process.State = ProcessState.Ready;

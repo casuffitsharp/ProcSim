@@ -86,6 +86,7 @@
                     <Separator Width="20" Visibility="Hidden"/>
                     <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
                             Command="{Binding ResetSchedulingCommand}"
+                            Click="ResetButton_Click"
                             Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
                         <materialDesign:PackIcon Kind="Refresh" />
                     </Button>

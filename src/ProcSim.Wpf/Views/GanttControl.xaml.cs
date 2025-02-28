@@ -1,14 +1,13 @@
-﻿using System.Collections;
+﻿using ProcSim.Wpf.Helpers;
+using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
-using ProcSim.Wpf.Helpers;
+using System.Windows.Data;
 
 namespace ProcSim.Wpf.Views;
 
 public partial class GanttControl : UserControl
 {
-    private int _currentDynamicColumns = 0;
-
     public GanttControl()
     {
         InitializeComponent();
@@ -36,29 +35,28 @@ public partial class GanttControl : UserControl
         }
     }
 
-    public static readonly DependencyProperty ColorConverterProperty = DependencyProperty.Register("ColorConverter", typeof(System.Windows.Data.IMultiValueConverter), typeof(GanttControl), new PropertyMetadata(null));
+    public static readonly DependencyProperty ColorConverterProperty = DependencyProperty.Register("ColorConverter", typeof(IMultiValueConverter), typeof(GanttControl), new PropertyMetadata(null));
     public System.Windows.Data.IMultiValueConverter ColorConverter
     {
         get => (System.Windows.Data.IMultiValueConverter)GetValue(ColorConverterProperty);
         set => SetValue(ColorConverterProperty, value);
     }
 
-    public static readonly DependencyProperty AnimationDurationProperty = DependencyProperty.Register("AnimationDuration", typeof(System.TimeSpan), typeof(GanttControl), new PropertyMetadata(System.TimeSpan.FromSeconds(0.5)));
+    public static readonly DependencyProperty AnimationDurationProperty = DependencyProperty.Register("AnimationDuration", propertyType: typeof(System.TimeSpan), typeof(GanttControl), new PropertyMetadata(System.TimeSpan.FromSeconds(0.5)));
     public System.TimeSpan AnimationDuration
     {
         get => (System.TimeSpan)GetValue(AnimationDurationProperty);
         set => SetValue(AnimationDurationProperty, value);
     }
 
-    // Cria as colunas dinâmicas com base no número de TimeUnits
     public void UpdateColumns(int totalTimeUnits)
     {
-        if (totalTimeUnits <= _currentDynamicColumns)
+        if (totalTimeUnits < dataGridGantt.Columns.Count)
             return;
 
-        for (int t = _currentDynamicColumns; t < totalTimeUnits; t++)
+        for (int t = dataGridGantt.Columns.Count - 1; t < totalTimeUnits; t++)
         {
-            var col = new DataGridTemplateColumn
+            DataGridTemplateColumn col = new()
             {
                 Header = t.ToString(), // Cabeçalho com o índice
                 HeaderStyle = (Style)FindResource("CenteredHeaderStyle"),
@@ -69,7 +67,12 @@ public partial class GanttControl : UserControl
             DataGridColumnExtensions.SetColumnIndex(col, t);
             dataGridGantt.Columns.Add(col);
         }
+    }
 
-        _currentDynamicColumns = totalTimeUnits;
+    public void Reset()
+    {
+        DataGridColumn firstColumn = dataGridGantt.Columns[0];
+        dataGridGantt.Columns.Clear();
+        dataGridGantt.Columns.Add(firstColumn);
     }
 }

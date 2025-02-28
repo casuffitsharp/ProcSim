@@ -1,8 +1,6 @@
 ﻿using MaterialDesignThemes.Wpf;
-using ProcSim.Wpf.Helpers;
 using ProcSim.Wpf.ViewModels;
 using System.Windows;
-using System.Windows.Controls;
 
 namespace ProcSim.Wpf.Views;
 
@@ -20,8 +18,8 @@ public partial class MainWindowView : Window
 
     private static void ModifyTheme(bool isDarkTheme)
     {
-        var paletteHelper = new PaletteHelper();
-        var theme = paletteHelper.GetTheme();
+        PaletteHelper paletteHelper = new();
+        Theme theme = paletteHelper.GetTheme();
 
         theme.SetBaseTheme(isDarkTheme ? BaseTheme.Dark : BaseTheme.Light);
         paletteHelper.SetTheme(theme);
@@ -30,5 +28,10 @@ public partial class MainWindowView : Window
     private void MenuDarkModeButton_Click(object sender, RoutedEventArgs e)
     {
         ModifyTheme(DarkModeToggleButton.IsChecked == true);
+    }
+
+    private void ResetButton_Click(object sender, RoutedEventArgs e)
+    {
+        ganttControl.Reset();
     }
 }

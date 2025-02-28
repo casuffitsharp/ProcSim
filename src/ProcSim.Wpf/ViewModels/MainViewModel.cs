@@ -1,10 +1,10 @@
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace ProcSim.Wpf.ViewModels;
 
@@ -53,26 +53,33 @@ public class MainViewModel : ObservableObject
         return IsRunning || Processes.Any(p => p.State != ProcessState.Completed);
     }
 
-    private bool CanResetScheduling() => !IsRunning;
+    private bool CanResetScheduling()
+    {
+        return !IsRunning;
+    }
 
     private async Task RunPauseSchedulingAsync()
     {
         if (IsRunning)
+        {
             await PauseSchedulingAsync();
+        }
         else
+        {
             await RunSchedulingAsync();
+        }
     }
 
     private async Task RunSchedulingAsync()
     {
         IsRunning = true;
         _cts = new CancellationTokenSource();
-        var algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+        Core.Scheduling.ISchedulingAlgorithm algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
 
         try
         {
             // Cria uma fila com os modelos de processo
-            var queue = new Queue<Process>(Processes.Select(p => p.Model));
+            Queue<Process> queue = new(Processes.Select(p => p.Model));
             await _scheduler.RunAsync(queue, algorithm, _cts.Token);
         }
         catch (OperationCanceledException)
@@ -90,14 +97,12 @@ public class MainViewModel : ObservableObject
 
         UpdateFilteredLists();
     }
-
-    private bool _isRunning;
     public bool IsRunning
     {
-        get => _isRunning;
+        get;
         private set
         {
-            if (SetProperty(ref _isRunning, value))
+            if (SetProperty(ref field, value))
             {
                 SimulationSettingsViewModel.CanChangeAlgorithm = !value;
                 RunPauseSchedulingCommand.NotifyCanExecuteChanged();
@@ -106,11 +111,10 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    private int _totalTimeUnits;
     public int TotalTimeUnits
     {
-        get => _totalTimeUnits;
-        private set => SetProperty(ref _totalTimeUnits, value);
+        get;
+        private set => SetProperty(ref field, value);
     }
 
     public void AddProcess(ProcessViewModel processViewModel)
@@ -126,22 +130,25 @@ public class MainViewModel : ObservableObject
 
     public void ResetScheduling()
     {
-        foreach (var process in Processes)
+        foreach (ProcessViewModel process in Processes)
         {
             process.Model.State = ProcessState.Ready;
             process.Model.RemainingTime = process.Model.ExecutionTime;
             process.StateHistory.Clear();
             OnPropertyChanged(nameof(process.StateHistory));
         }
+
         UpdateFilteredLists();
         RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
     private void OnProcessUpdated(Process updatedProcess)
     {
-        var processViewModel = Processes.FirstOrDefault(p => p.Model == updatedProcess);
+        ProcessViewModel processViewModel = Processes.FirstOrDefault(p => p.Model == updatedProcess);
         if (processViewModel is null)
+        {
             return;
+        }
 
         processViewModel.UpdateFromModel();
         UpdateFilteredLists();
@@ -149,8 +156,10 @@ public class MainViewModel : ObservableObject
 
     private void OnTickUpdated()
     {
-        foreach (var process in Processes)
+        foreach (ProcessViewModel process in Processes)
+        {
             process.Tick();
+        }
 
         TotalTimeUnits = Processes.Any() ? Processes.Max(p => p.StateHistory.Count) : 0;
     }
@@ -168,7 +177,7 @@ public class MainViewModel : ObservableObject
         BlockedProcesses.Clear();
         CompletedProcesses.Clear();
 
-        foreach (var process in Processes)
+        foreach (ProcessViewModel process in Processes)
         {
             switch (process.State)
             {

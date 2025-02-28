@@ -1,20 +1,15 @@
-﻿using System.Collections.ObjectModel;
-using System.ComponentModel;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace ProcSim.Wpf.ViewModels;
 
 public class ProcessRegistrationViewModel : ObservableObject
 {
     private int _nextProcessId = 1;
-
-    private string name;
-    private int executionTime;
-    private int ioTime;
-    private bool isIoBound;
 
     public ProcessRegistrationViewModel(ObservableCollection<ProcessViewModel> processes)
     {
@@ -27,33 +22,33 @@ public class ProcessRegistrationViewModel : ObservableObject
 
     public string Name
     {
-        get => name;
-        set => SetProperty(ref name, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public int ExecutionTime
     {
-        get => executionTime;
-        set => SetProperty(ref executionTime, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public int IoTime
     {
-        get => ioTime;
-        set => SetProperty(ref ioTime, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public bool IsIoBound
     {
-        get => isIoBound;
-        set => SetProperty(ref isIoBound, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     public IRelayCommand AddProcessCommand { get; }
 
     private void AddProcess()
     {
-        var process = new Process(
+        Process process = new(
             id: _nextProcessId++,
             name: Name,
             executionTime: ExecutionTime,
@@ -83,6 +78,8 @@ public class ProcessRegistrationViewModel : ObservableObject
         base.OnPropertyChanged(e);
 
         if (e.PropertyName is nameof(ExecutionTime) or nameof(Name))
+        {
             AddProcessCommand.NotifyCanExecuteChanged();
+        }
     }
 }

@@ -18,7 +18,7 @@ public class Process
     public string Name { get; }
     public int ExecutionTime { get; }
     public int RemainingTime { get; set; }
-    public int IoTime { get;} 
+    public int IoTime { get; }
     public ProcessState State { get; set; } = ProcessState.Ready;
     public ProcessType Type { get; }
 }

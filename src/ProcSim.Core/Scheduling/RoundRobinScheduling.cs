@@ -12,9 +12,11 @@ public class RoundRobinScheduling : PreemptiveAlgorithmBase, ISchedulingAlgorith
         List<Process> readyQueue = [.. processes];
 
         // Dicionário para saber se o processo já realizou I/O.
-        var ioPerformed = new Dictionary<int, bool>();
-        foreach (var process in readyQueue)
+        Dictionary<int, bool> ioPerformed = [];
+        foreach (Process process in readyQueue)
+        {
             ioPerformed[process.Id] = false;
+        }
 
         // Enquanto houver processos prontos.
         while (readyQueue.Count != 0 && !token.IsCancellationRequested)
@@ -89,7 +91,9 @@ public class RoundRobinScheduling : PreemptiveAlgorithmBase, ISchedulingAlgorith
     {
         // Simula a operação de I/O aguardando IoTime ticks.
         for (int i = 0; i < process.IoTime && !token.IsCancellationRequested; i++)
+        {
             await delayFunc(token);
+        }
 
         // Ao concluir o I/O, simula a interrupção: atualiza o estado para Ready e notifica.
         process.State = ProcessState.Ready;

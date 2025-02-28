@@ -51,16 +51,17 @@ public class SimulationSettingsViewModel : ObservableObject
         }
     }
 
-    private bool canChangeAlgorithm;
     public bool CanChangeAlgorithm
     {
-        get => canChangeAlgorithm;
-        set => SetProperty(ref canChangeAlgorithm, value);
+        get;
+        set => SetProperty(ref field, value);
     }
 
     private void UpdateSchedulerQuantum()
     {
         if (SelectedAlgorithmInstance is IPreemptiveAlgorithm preemptiveAlgorithm)
+        {
             preemptiveAlgorithm.Quantum = Quantum;
+        }
     }
 }

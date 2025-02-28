@@ -1,5 +1,4 @@
-﻿using ProcSim.Core.Enums;
-using System.Collections;
+﻿using System.Collections;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
@@ -31,7 +30,7 @@ public sealed class EnumDescriptionConverter : IValueConverter
 
     private static string GetEnumDescription(Enum value)
     {
-        var field = value.GetType().GetField(value.ToString());
+        FieldInfo field = value.GetType().GetField(value.ToString());
         return field?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? value.ToString();
     }
 }

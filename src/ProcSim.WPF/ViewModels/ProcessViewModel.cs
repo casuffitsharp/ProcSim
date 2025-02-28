@@ -7,17 +7,15 @@ namespace ProcSim.Wpf.ViewModels;
 
 public class ProcessViewModel(Process process) : ObservableObject
 {
-    private readonly Process _process = process;
+    public Process Model { get; } = process;
 
-    public Process Model => _process;
-
-    public int Id => _process.Id;
-    public string Name => _process.Name;
-    public int ExecutionTime => _process.ExecutionTime;
-    public int IoTime => _process.IoTime;
-    public int RemainingTime => _process.RemainingTime;
-    public ProcessState State => _process.State;
-    public ProcessType Type => _process.Type;
+    public int Id => Model.Id;
+    public string Name => Model.Name;
+    public int ExecutionTime => Model.ExecutionTime;
+    public int IoTime => Model.IoTime;
+    public int RemainingTime => Model.RemainingTime;
+    public ProcessState State => Model.State;
+    public ProcessType Type => Model.Type;
 
     // Histórico dos estados ao longo do tempo.
     public ObservableCollection<ProcessState> StateHistory { get; } = [];
