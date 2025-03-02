@@ -36,16 +36,16 @@ public partial class GanttControl : UserControl
     }
 
     public static readonly DependencyProperty ColorConverterProperty = DependencyProperty.Register("ColorConverter", typeof(IMultiValueConverter), typeof(GanttControl), new PropertyMetadata(null));
-    public System.Windows.Data.IMultiValueConverter ColorConverter
+    public IMultiValueConverter ColorConverter
     {
-        get => (System.Windows.Data.IMultiValueConverter)GetValue(ColorConverterProperty);
+        get => (IMultiValueConverter)GetValue(ColorConverterProperty);
         set => SetValue(ColorConverterProperty, value);
     }
 
-    public static readonly DependencyProperty AnimationDurationProperty = DependencyProperty.Register("AnimationDuration", propertyType: typeof(System.TimeSpan), typeof(GanttControl), new PropertyMetadata(System.TimeSpan.FromSeconds(0.5)));
-    public System.TimeSpan AnimationDuration
+    public static readonly DependencyProperty AnimationDurationProperty = DependencyProperty.Register("AnimationDuration", propertyType: typeof(TimeSpan), typeof(GanttControl), new PropertyMetadata(TimeSpan.FromSeconds(0.5)));
+    public TimeSpan AnimationDuration
     {
-        get => (System.TimeSpan)GetValue(AnimationDurationProperty);
+        get => (TimeSpan)GetValue(AnimationDurationProperty);
         set => SetValue(AnimationDurationProperty, value);
     }
 
@@ -72,7 +72,9 @@ public partial class GanttControl : UserControl
     public void Reset()
     {
         DataGridColumn firstColumn = dataGridGantt.Columns[0];
+
         dataGridGantt.Columns.Clear();
         dataGridGantt.Columns.Add(firstColumn);
+        dataGridGantt.UpdateLayout();
     }
 }

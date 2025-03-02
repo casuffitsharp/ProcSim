@@ -17,7 +17,6 @@ public partial class GanttCellControl : UserControl
     }
 
     public static readonly DependencyProperty StateHistoryProperty = DependencyProperty.Register("StateHistory", typeof(IList<ProcessState>), typeof(GanttCellControl), new PropertyMetadata(null, OnStateHistoryOrColumnIndexChanged));
-
     public IList<ProcessState> StateHistory
     {
         get => (IList<ProcessState>)GetValue(StateHistoryProperty);
@@ -25,7 +24,6 @@ public partial class GanttCellControl : UserControl
     }
 
     public static readonly DependencyProperty ColumnIndexProperty = DependencyProperty.Register("ColumnIndex", typeof(int), typeof(GanttCellControl), new PropertyMetadata(0, OnStateHistoryOrColumnIndexChanged));
-
     public int ColumnIndex
     {
         get => (int)GetValue(ColumnIndexProperty);
@@ -33,7 +31,6 @@ public partial class GanttCellControl : UserControl
     }
 
     public static readonly DependencyProperty ColorConverterProperty = DependencyProperty.Register("ColorConverter", typeof(IMultiValueConverter), typeof(GanttCellControl), new PropertyMetadata(null, OnStateHistoryOrColumnIndexChanged));
-
     public IMultiValueConverter ColorConverter
     {
         get => (IMultiValueConverter)GetValue(ColorConverterProperty);
@@ -41,7 +38,6 @@ public partial class GanttCellControl : UserControl
     }
 
     public static readonly DependencyProperty AnimationDurationProperty = DependencyProperty.Register("AnimationDuration", typeof(TimeSpan), typeof(GanttCellControl), new PropertyMetadata(TimeSpan.FromSeconds(0.5)));
-
     public TimeSpan AnimationDuration
     {
         get => (TimeSpan)GetValue(AnimationDurationProperty);
@@ -49,7 +45,6 @@ public partial class GanttCellControl : UserControl
     }
 
     public static readonly DependencyProperty BrushProperty = DependencyProperty.Register("Brush", typeof(Brush), typeof(GanttCellControl), new PropertyMetadata(Brushes.Transparent));
-
     public Brush Brush
     {
         get => (Brush)GetValue(BrushProperty);

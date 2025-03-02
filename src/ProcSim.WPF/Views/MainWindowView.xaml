@@ -25,6 +25,11 @@
 
         <!-- Conversor de estado para cor -->
         <local:StateHistoryToBrushConverter x:Key="StateHistoryToBrushConverter" />
+
+        <Style x:Key="DelayedUpdateSliderStyle" TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}">
+            <EventSetter Event="Thumb.DragCompleted" Handler="Slider_DragCompleted"/>
+            <EventSetter Event="MouseLeftButtonUp" Handler="Slider_DragCompleted"/>
+        </Style>
     </Window.Resources>
 
     <Grid Margin="10">
@@ -55,6 +60,8 @@
 
             <Grid Grid.Column="1" Margin="20,0,0,0">
                 <Grid.RowDefinitions>
+                    <!-- Vel Simulação -->
+                    <RowDefinition Height="*"/>
                     <!-- Configuração -->
                     <RowDefinition Height="Auto"/>
                     <!-- Botões-->
@@ -62,9 +69,10 @@
                 </Grid.RowDefinitions>
 
                 <!-- Configuração da Simulação -->
-                <views:SimulationSettingsView DataContext="{Binding SimulationSettingsViewModel}"/>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="1">
+                <views:SimulationSettingsView DataContext="{Binding SimulationSettingsViewModel}" Grid.Row="1"/>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2">
                     <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
                             Command="{Binding RunPauseSchedulingCommand}"
                             Style="{StaticResource MaterialDesignIconButton}" ToolTip="Iniciar">
@@ -91,6 +99,15 @@
                         <materialDesign:PackIcon Kind="Refresh" />
                     </Button>
                 </StackPanel>
+                <Slider Grid.Row="0"
+                    Minimum="10"
+                    Maximum="1000"
+                    IsDirectionReversed="True"
+                    TickFrequency="10"
+                    TickPlacement="TopLeft"
+                    Value="{Binding CpuTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                    Style="{StaticResource DelayedUpdateSliderStyle}"
+                    Margin="0,20,0,0" ToolTip="CPU Time" />
             </Grid>
             <materialDesign:PopupBox Grid.Column="2" PlacementMode="BottomAndAlignRightEdges" 
                                      StaysOpen="False" VerticalAlignment="Top" Margin="20,0,0,0">
@@ -138,7 +155,7 @@
                     ItemsSource="{Binding Processes}"
                     TimeUnits="{Binding TotalTimeUnits}"
                     ColorConverter="{StaticResource StateHistoryToBrushConverter}"
-                    AnimationDuration="0:0:1" />
+                    AnimationDuration="{Binding CpuTimeTs}" />
         </GroupBox>
     </Grid>
 </Window>

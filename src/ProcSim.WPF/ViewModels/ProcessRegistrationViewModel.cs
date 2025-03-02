@@ -7,7 +7,7 @@ using System.ComponentModel;
 
 namespace ProcSim.Wpf.ViewModels;
 
-public class ProcessRegistrationViewModel : ObservableObject
+public partial class ProcessRegistrationViewModel : ObservableObject
 {
     private int _nextProcessId = 1;
 
@@ -20,29 +20,17 @@ public class ProcessRegistrationViewModel : ObservableObject
 
     public ObservableCollection<ProcessViewModel> Processes { get; }
 
-    public string Name
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial string Name { get; set; }
 
-    public int ExecutionTime
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial int ExecutionTime { get; set; }
 
-    public int IoTime
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial int IoTime { get; set; }
 
-    public bool IsIoBound
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial bool IsIoBound { get; set; }
 
     public IRelayCommand AddProcessCommand { get; }
 

@@ -1,6 +1,8 @@
 ﻿using MaterialDesignThemes.Wpf;
 using ProcSim.Wpf.ViewModels;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ProcSim.Wpf.Views;
 
@@ -33,5 +35,14 @@ public partial class MainWindowView : Window
     private void ResetButton_Click(object sender, RoutedEventArgs e)
     {
         ganttControl.Reset();
+    }
+
+    private void Slider_DragCompleted(object sender, object e)
+    {
+        if (sender is Slider slider)
+        {
+            var binding = slider.GetBindingExpression(Slider.ValueProperty);
+            binding?.UpdateSource();
+        }
     }
 }

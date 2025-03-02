@@ -21,4 +21,5 @@ public class Process
     public int IoTime { get; }
     public ProcessState State { get; set; } = ProcessState.Ready;
     public ProcessType Type { get; }
+    public bool IoPerformed{ get; set; }
 }

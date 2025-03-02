@@ -1,16 +1,19 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ControlzEx.Standard;
 using ProcSim.Core;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using ProcSim.Core.Scheduling;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 
 namespace ProcSim.Wpf.ViewModels;
 
-public class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject
 {
-    private readonly Scheduler _scheduler = new();
+    private readonly Scheduler _scheduler;
+    private readonly TickManager _tickManager = new();
     private CancellationTokenSource _cts = new();
 
     public ObservableCollection<ProcessViewModel> Processes { get; private set; } = [];
@@ -27,8 +30,12 @@ public class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
+        CpuTime = _tickManager.CpuTime;
+
+        _tickManager.TickOccurred += OnTickOcurred;
+        _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
+        _scheduler = new(_tickManager);
         _scheduler.ProcessUpdated += OnProcessUpdated;
-        _scheduler.TickUpdated += OnTickUpdated;
 
         ProcessRegistrationViewModel = new ProcessRegistrationViewModel(Processes);
         SimulationSettingsViewModel = new SimulationSettingsViewModel();
@@ -55,14 +62,14 @@ public class MainViewModel : ObservableObject
 
     private bool CanResetScheduling()
     {
-        return !IsRunning;
+        return _tickManager.IsPaused;
     }
 
     private async Task RunPauseSchedulingAsync()
     {
         if (IsRunning)
         {
-            await PauseSchedulingAsync();
+            PauseScheduling();
         }
         else
         {
@@ -72,13 +79,11 @@ public class MainViewModel : ObservableObject
 
     private async Task RunSchedulingAsync()
     {
-        IsRunning = true;
         _cts = new CancellationTokenSource();
-        Core.Scheduling.ISchedulingAlgorithm algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+        ISchedulingAlgorithm algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
 
         try
         {
-            // Cria uma fila com os modelos de processo
             Queue<Process> queue = new(Processes.Select(p => p.Model));
             await _scheduler.RunAsync(queue, algorithm, _cts.Token);
         }
@@ -90,16 +95,13 @@ public class MainViewModel : ObservableObject
         {
             Console.WriteLine($"Erro inesperado: {ex.Message}");
         }
-        finally
-        {
-            IsRunning = false;
-        }
 
         UpdateFilteredLists();
     }
+
     public bool IsRunning
     {
-        get;
+        get => field;
         private set
         {
             if (SetProperty(ref field, value))
@@ -111,21 +113,32 @@ public class MainViewModel : ObservableObject
         }
     }
 
-    public int TotalTimeUnits
+    public ushort CpuTime
     {
-        get;
-        private set => SetProperty(ref field, value);
+        get => field;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                _tickManager.CpuTime = value;
+                OnPropertyChanged(nameof(CpuTimeTs));
+            }
+        }
     }
+
+    public TimeSpan CpuTimeTs => TimeSpan.FromMilliseconds(CpuTime);
+
+    [ObservableProperty]
+    public partial int TotalTimeUnits { get; set; }
 
     public void AddProcess(ProcessViewModel processViewModel)
     {
         Processes.Add(processViewModel);
     }
 
-    public async Task PauseSchedulingAsync()
+    public void PauseScheduling()
     {
-        _cts.Cancel();
-        await Task.CompletedTask;
+        _tickManager.Pause();
     }
 
     public void ResetScheduling()
@@ -146,20 +159,16 @@ public class MainViewModel : ObservableObject
     {
         ProcessViewModel processViewModel = Processes.FirstOrDefault(p => p.Model == updatedProcess);
         if (processViewModel is null)
-        {
             return;
-        }
 
         processViewModel.UpdateFromModel();
         UpdateFilteredLists();
     }
 
-    private void OnTickUpdated()
+    private void OnTickOcurred()
     {
         foreach (ProcessViewModel process in Processes)
-        {
             process.Tick();
-        }
 
         TotalTimeUnits = Processes.Any() ? Processes.Max(p => p.StateHistory.Count) : 0;
     }

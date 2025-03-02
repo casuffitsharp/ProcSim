@@ -5,7 +5,7 @@ using ProcSim.Core.Scheduling;
 
 namespace ProcSim.Wpf.ViewModels;
 
-public class SimulationSettingsViewModel : ObservableObject
+public partial class SimulationSettingsViewModel : ObservableObject
 {
     public List<SchedulingAlgorithmType> Algorithms { get; } = [.. Enum.GetValues<SchedulingAlgorithmType>()];
 
@@ -51,11 +51,8 @@ public class SimulationSettingsViewModel : ObservableObject
         }
     }
 
-    public bool CanChangeAlgorithm
-    {
-        get;
-        set => SetProperty(ref field, value);
-    }
+    [ObservableProperty]
+    public partial bool CanChangeAlgorithm { get; set; }
 
     private void UpdateSchedulerQuantum()
     {
