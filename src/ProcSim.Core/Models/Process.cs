@@ -1,25 +1,37 @@
 using ProcSim.Core.Enums;
+using ProcSim.Core.Models.Operations;
 
 namespace ProcSim.Core.Models;
 
-public class Process
+public sealed class Process(int id, string name, List<IOperation> operations)
 {
-    public Process(int id, string name, int executionTime, int ioTime, ProcessType type)
+    public int Id { get; } = id;
+    public string Name { get; } = name;
+    public List<IOperation> Operations { get; } = operations;
+    public int CurrentOperationIndex { get; private set; } = 0;
+    public ProcessState State { get; set; } = ProcessState.Ready;
+
+    // Executa um tick da operação atual. Se a operação for completada, avança para a próxima e atualiza o estado, se necessário.
+    public void ExecuteTick()
     {
-        Id = id;
-        Name = name;
-        ExecutionTime = executionTime;
-        RemainingTime = executionTime;
-        IoTime = ioTime;
-        Type = type;
+        if (State == ProcessState.Completed || CurrentOperationIndex >= Operations.Count)
+            return;
+
+        var currentOperation = Operations[CurrentOperationIndex];
+        currentOperation.ExecuteTick();
+
+        if (currentOperation.IsCompleted)
+        {
+            CurrentOperationIndex++;
+            if (CurrentOperationIndex >= Operations.Count)
+            {
+                State = ProcessState.Completed;
+            }
+        }
     }
 
-    public int Id { get; }
-    public string Name { get; }
-    public int ExecutionTime { get; }
-    public int RemainingTime { get; set; }
-    public int IoTime { get; }
-    public ProcessState State { get; set; } = ProcessState.Ready;
-    public ProcessType Type { get; }
-    public bool IoPerformed{ get; set; }
+    public IOperation GetCurrentOperation()
+    {
+        return Operations.ElementAtOrDefault(CurrentOperationIndex);
+    }
 }

@@ -7,11 +7,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Core", "src\ProcSim.Core\ProcSim.Core.csproj", "{557EF114-CA40-4DA5-86EA-B38E236BE195}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Wpf", "src\ProcSim.Wpf\ProcSim.Wpf.csproj", "{731F4C69-FE36-42BD-8F89-10ABB306CC2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim", "src\ProcSim\ProcSim.csproj", "{731F4C69-FE36-42BD-8F89-10ABB306CC2D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Tests", "tests\ProcSim.Tests\ProcSim.Tests.csproj", "{89E62A86-D616-42AA-A658-444065519A9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Core.Tests", "tests\ProcSim.Core.Tests\ProcSim.Core.Tests.csproj", "{89E62A86-D616-42AA-A658-444065519A9A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject

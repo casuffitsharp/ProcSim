@@ -1,5 +1,6 @@
 ﻿using ProcSim.Core.Enums;
 using ProcSim.Core.Scheduling;
+using ProcSim.Core.Scheduling.Algorithms;
 
 namespace ProcSim.Core.Factories;
 
