@@ -1,19 +1,20 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ControlzEx.Standard;
 using ProcSim.Core.Enums;
+using ProcSim.Core.Logging;
 using ProcSim.Core.Models;
 using ProcSim.Core.Runtime;
 using ProcSim.Core.Scheduling.Algorithms;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 
-namespace ProcSim.Wpf.ViewModels;
+namespace ProcSim.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private readonly ILogger _logger;
     private readonly Scheduler _scheduler;
-    private readonly TickManager _tickManager = new();
+    private readonly TickManager _tickManager;
     private CancellationTokenSource _cts = new();
 
     public ObservableCollection<ProcessViewModel> Processes { get; private set; } = [];
@@ -31,7 +32,9 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel()
     {
         CpuTime = _tickManager.CpuTime;
+        _logger = new StructuredLogger();
 
+        _tickManager = new(_logger);
         _tickManager.TickOccurred += OnTickOcurred;
         _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
         _scheduler = new(_tickManager);

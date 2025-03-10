@@ -1,6 +1,4 @@
-﻿using ProcSim.Core.Enums;
-
-namespace ProcSim.Core.Models.Operations;
+﻿namespace ProcSim.Core.Models.Operations;
 
 public interface IOperation
 {

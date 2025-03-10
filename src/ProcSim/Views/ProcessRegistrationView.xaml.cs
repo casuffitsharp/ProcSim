@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace ProcSim.Wpf.Views;
+namespace ProcSim.Views;
 
 public partial class ProcessRegistrationView : UserControl
 {

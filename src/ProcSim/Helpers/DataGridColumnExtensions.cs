@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
 
-namespace ProcSim.Wpf.Helpers;
+namespace ProcSim.Helpers;
 
 public static class DataGridColumnExtensions
 {

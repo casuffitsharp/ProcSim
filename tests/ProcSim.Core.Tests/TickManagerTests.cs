@@ -8,35 +8,31 @@ public class TickManagerTests
     [Fact]
     public async Task TickManager_FiresTickOccurred_WhenResumed()
     {
-        // Arrange
-        var logger = new StructuredLogger();
-        var tickManager = new TickManager(logger);
-        tickManager.CpuTime = 10;
+        StructuredLogger logger = new();
+        TickManager tickManager = new(logger)
+        {
+            CpuTime = 10
+        };
         bool tickFired = false;
         tickManager.TickOccurred += () => tickFired = true;
-        using var cts = new CancellationTokenSource(500);
+        using CancellationTokenSource cts = new(500);
 
-        // Act
         tickManager.Resume();
         await tickManager.WaitNextTickAsync(cts.Token);
 
-        // Assert
         Assert.True(tickFired);
     }
 
     [Fact]
     public async Task TickManager_DoesNotFireTick_WhenPaused()
     {
-        // Arrange
-        var logger = new StructuredLogger();
-        var tickManager = new TickManager(logger);
+        StructuredLogger logger = new();
+        TickManager tickManager = new(logger);
         bool tickFired = false;
         tickManager.TickOccurred += () => tickFired = true;
         tickManager.Pause();
+        using CancellationTokenSource cts = new(200);
 
-        using var cts = new CancellationTokenSource(200);
-
-        // Act & Assert: espera um tick e espera cancelamento (não ocorrer tick).
         await Assert.ThrowsAsync<TaskCanceledException>(async () =>
         {
             await tickManager.WaitNextTickAsync(cts.Token);

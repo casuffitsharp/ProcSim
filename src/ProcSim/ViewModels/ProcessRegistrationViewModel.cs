@@ -5,7 +5,7 @@ using ProcSim.Core.Models;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-namespace ProcSim.Wpf.ViewModels;
+namespace ProcSim.ViewModels;
 
 public partial class ProcessRegistrationViewModel : ObservableObject
 {

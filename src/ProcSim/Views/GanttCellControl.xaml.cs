@@ -6,7 +6,7 @@ using System.Windows.Data;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-namespace ProcSim.Wpf.Views;
+namespace ProcSim.Views;
 
 public partial class GanttCellControl : UserControl
 {

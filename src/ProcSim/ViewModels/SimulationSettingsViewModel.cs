@@ -3,7 +3,7 @@ using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
 using ProcSim.Core.Scheduling.Algorithms;
 
-namespace ProcSim.Wpf.ViewModels;
+namespace ProcSim.ViewModels;
 
 public partial class SimulationSettingsViewModel : ObservableObject
 {

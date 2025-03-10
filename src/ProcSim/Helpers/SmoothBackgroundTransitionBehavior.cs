@@ -4,7 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 
-namespace ProcSim.Wpf.Helpers;
+namespace ProcSim.Helpers;
 
 public static class SmoothBackgroundTransitionBehavior
 {
@@ -45,39 +45,27 @@ public static class SmoothBackgroundTransitionBehavior
     private static void OnEnableSmoothTransitionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is not DataGridCell cell)
-        {
             return;
-        }
 
         DependencyPropertyDescriptor dpd = DependencyPropertyDescriptor.FromProperty(Control.BackgroundProperty, typeof(DataGridCell));
         if ((bool)e.NewValue)
-        {
             dpd.AddValueChanged(cell, OnBackgroundChanged);
-        }
         else
-        {
             dpd.RemoveValueChanged(cell, OnBackgroundChanged);
-        }
     }
 
     private static void OnBackgroundChanged(object sender, EventArgs e)
     {
         if (sender is not DataGridCell cell)
-        {
             return;
-        }
 
         // Se já estiver animando, não entra novamente.
         if (GetIsAnimating(cell))
-        {
             return;
-        }
 
         // Verifica se o novo Background é um SolidColorBrush
         if (cell.Background is not SolidColorBrush newBrush)
-        {
             return;
-        }
 
         // Define a cor inicial como a última cor animada, se houver; caso contrário, usa a cor atual
         Color startColor = GetPreviousBrush(cell) is SolidColorBrush prevBrush ? prevBrush.Color : newBrush.Color;

@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Reflection;
 using System.Windows.Data;
 
-namespace ProcSim.Wpf.Converters;
+namespace ProcSim.Converters;
 
 public sealed class EnumDescriptionConverter : IValueConverter
 {

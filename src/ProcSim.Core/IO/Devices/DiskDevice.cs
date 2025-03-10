@@ -22,12 +22,12 @@ public sealed class DiskDevice(string name, int channels, Func<CancellationToken
     // Método que inicia o processamento da fila, simulando o tempo de I/O para cada requisição.
     public async Task StartProcessingAsync()
     {
-        var tasks = new List<Task>();
+        List<Task> tasks = [];
 
         for (int i = 0; i < Channels; i++)
             tasks.Add(Task.Run(async () =>
             {
-                await foreach (var request in _requestChannel.Reader.ReadAllAsync(cancellationToken))
+                await foreach (IoRequest request in _requestChannel.Reader.ReadAllAsync(cancellationToken))
                 {
                     // Simula o tempo de operação de I/O.
                     for (int j = 0; j < request.IoTime && !cancellationToken.IsCancellationRequested; j++)

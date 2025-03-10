@@ -1,59 +1,63 @@
-﻿using ProcSim.Core.Enums;
+﻿using Moq;
+using ProcSim.Core.Enums;
+using ProcSim.Core.IO;
 using ProcSim.Core.Models;
 using ProcSim.Core.Models.Operations;
+using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Tests;
 
 public class ProcessTests
 {
-    [Fact]
-    public void Process_CompletesAfterAllTicks()
+    private IoRequest _lastRequest;
+    private readonly ISysCallHandler _handlerMock;
+
+    public ProcessTests()
     {
-        // Arrange: cria um processo com uma operação de CPU de duração 3.
-        var operations = new List<IOperation>
-        {
-            new CpuOperation(3)
-        };
-        var process = new Process(1, "TestProcess", operations);
+        Mock<ISysCallHandler> handlerMock = new();
+        handlerMock
+            .Setup(handler => handler.RequestIo(It.IsAny<Process>(), It.IsAny<int>(), It.IsAny<IoDeviceType>()))
+            .Callback<Process, int, IoDeviceType>((process, remainingTime, deviceType) =>
+            {
+                _lastRequest = new IoRequest(process, remainingTime, deviceType, DateTime.Now);
+            });
+        _handlerMock = handlerMock.Object;
+    }
+
+    [Fact]
+    public void Process_CompletesAfterCpuOperations()
+    {
+        // Arrange: processo com operação de CPU de duração 3.
+        List<IOperation> operations = [new CpuOperation(3)];
+        Process process = new(1, "ProcessoTeste", operations);
 
         // Act: executa 3 ticks.
-        process.ExecuteTick();
-        process.ExecuteTick();
-        process.ExecuteTick();
+        process.AdvanceTick(_handlerMock);
+        process.AdvanceTick(_handlerMock);
+        process.AdvanceTick(_handlerMock);
 
         // Assert: o processo deve estar concluído.
         Assert.Equal(ProcessState.Completed, process.State);
     }
 
     [Fact]
-    public void Process_AdvancesToNextOperation()
+    public void Process_AdvancesToIoOperation()
     {
-        // Arrange: cria um processo com duas operações de CPU.
-        var operations = new List<IOperation>
-        {
+        // Arrange: processo com CPU de duração 2 seguida de I/O de duração 4.
+        List<IOperation> operations =
+        [
             new CpuOperation(2),
-            new CpuOperation(2)
-        };
-        var process = new Process(2, "TestProcess2", operations);
+            new IoOperation(4, IoDeviceType.Disk)
+        ];
+        Process process = new(2, "ProcessoTeste2", operations);
 
-        // Act & Assert:
-        // Primeiro tick: operação 1 (2 -> 1).
-        process.ExecuteTick();
-        Assert.NotEqual(ProcessState.Completed, process.State);
-        Assert.Equal(1, operations[0].RemainingTime);
+        // Act: executa dois ticks para concluir a operação de CPU.
+        process.AdvanceTick(_handlerMock);
+        process.AdvanceTick(_handlerMock);
 
-        // Segundo tick: operação 1 completa, passa para operação 2.
-        process.ExecuteTick();
-        Assert.NotEqual(ProcessState.Completed, process.State);
-        Assert.Equal(2, operations[1].RemainingTime);
-
-        // Terceiro tick: operação 2 (2 -> 1).
-        process.ExecuteTick();
-        Assert.NotEqual(ProcessState.Completed, process.State);
-        Assert.Equal(1, operations[1].RemainingTime);
-
-        // Quarto tick: operação 2 completa, processo concluído.
-        process.ExecuteTick();
-        Assert.Equal(ProcessState.Completed, process.State);
+        // Assert: após a operação de CPU, a próxima é I/O, o que deve acionar o sys call e alterar o estado para Blocked.
+        Assert.Equal(ProcessState.Blocked, process.State);
+        Assert.NotNull(_lastRequest);
+        Assert.Equal(IoDeviceType.Disk, _lastRequest.DeviceType);
     }
 }

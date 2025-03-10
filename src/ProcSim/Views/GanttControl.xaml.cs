@@ -1,10 +1,9 @@
-﻿using ProcSim.Wpf.Helpers;
-using System.Collections;
+﻿using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 
-namespace ProcSim.Wpf.Views;
+namespace ProcSim.Views;
 
 public partial class GanttControl : UserControl
 {

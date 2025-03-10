@@ -7,28 +7,10 @@ public sealed class TickManager
     private const ushort DEFAULT_CPU_TIME = 1000;
     private readonly PeriodicTimer _timer = new(TimeSpan.FromMilliseconds(DEFAULT_CPU_TIME));
     private readonly Lock _waitersLock = new();
-    private readonly List<TaskCompletionSource<bool>> _tickWaiters = new();
+    private readonly List<TaskCompletionSource<bool>> _tickWaiters = [];
 
     private readonly Lock _pauseLock = new();
     private TaskCompletionSource<bool> _resumeTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    public bool IsPaused { get; private set; } = true;
-
-    private ushort _cpuTime = DEFAULT_CPU_TIME;
-    public ushort CpuTime
-    {
-        get => _cpuTime;
-        set
-        {
-            if (_cpuTime == value)
-                return;
-
-            _cpuTime = value;
-            _timer.Period = TimeSpan.FromMilliseconds(value);
-        }
-    }
-
-    public event Action TickOccurred;
-    public event Action RunStateChanged;
 
     private readonly ILogger _logger;
 
@@ -38,7 +20,7 @@ public sealed class TickManager
         _logger.Log(new LogEvent(null, "TickManager", "TickManager iniciado."));
 
         // Tarefa central que aguarda ticks e notifica os aguardadores.
-        _ = Task.Run(async () =>
+        Task.Run(async () =>
         {
             while (await _timer.WaitForNextTickAsync(CancellationToken.None))
             {
@@ -50,10 +32,10 @@ public sealed class TickManager
                 List<TaskCompletionSource<bool>> waiters;
                 lock (_waitersLock)
                 {
-                    waiters = new List<TaskCompletionSource<bool>>(_tickWaiters);
+                    waiters = [.. _tickWaiters];
                     _tickWaiters.Clear();
                 }
-                foreach (var tcs in waiters)
+                foreach (TaskCompletionSource<bool> tcs in waiters)
                     tcs.TrySetResult(true);
 
                 TickOccurred?.Invoke();
@@ -61,6 +43,24 @@ public sealed class TickManager
             }
         });
     }
+
+    public bool IsPaused { get; private set; } = true;
+
+    public ushort CpuTime
+    {
+        get;
+        set
+        {
+            if (field == value)
+                return;
+
+            field = value;
+            _timer.Period = TimeSpan.FromMilliseconds(value);
+        }
+    } = DEFAULT_CPU_TIME;
+
+    public event Action TickOccurred;
+    public event Action RunStateChanged;
 
     public void Pause()
     {
@@ -95,7 +95,7 @@ public sealed class TickManager
         while (IsPaused)
             await _resumeTcs.Task.WaitAsync(ct);
 
-        var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        TaskCompletionSource<bool> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
         lock (_waitersLock)
             _tickWaiters.Add(tcs);

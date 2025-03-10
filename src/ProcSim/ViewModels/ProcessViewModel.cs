@@ -3,7 +3,7 @@ using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
 using System.Collections.ObjectModel;
 
-namespace ProcSim.Wpf.ViewModels;
+namespace ProcSim.ViewModels;
 
 public class ProcessViewModel(Process process) : ObservableObject
 {

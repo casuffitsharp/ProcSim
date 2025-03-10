@@ -1,9 +1,9 @@
 ﻿using MaterialDesignThemes.Wpf;
-using ProcSim.Wpf.ViewModels;
+using ProcSim.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace ProcSim.Wpf.Views;
+namespace ProcSim.Views;
 
 public partial class MainWindowView : Window
 {
@@ -40,7 +40,7 @@ public partial class MainWindowView : Window
     {
         if (sender is Slider slider)
         {
-            var binding = slider.GetBindingExpression(Slider.ValueProperty);
+            System.Windows.Data.BindingExpression binding = slider.GetBindingExpression(Slider.ValueProperty);
             binding?.UpdateSource();
         }
     }

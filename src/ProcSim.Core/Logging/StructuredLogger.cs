@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace ProcSim.Core.Logging;
 
@@ -9,6 +10,7 @@ public sealed class StructuredLogger : ILogger
     public void Log(LogEvent logEvent)
     {
         _events.Enqueue(logEvent);
+        Debug.WriteLine(logEvent);
     }
 
     // Método auxiliar para registrar mensagens simples, usando um tipo de evento padrão.

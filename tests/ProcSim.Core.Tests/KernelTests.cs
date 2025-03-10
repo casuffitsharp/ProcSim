@@ -11,12 +11,12 @@ using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Tests;
 
-public class SchedulerTests
+public class KernelTests
 {
     private readonly IIoManager _ioManagerMock;
     private readonly StructuredLogger _logger = new();
 
-    public SchedulerTests()
+    public KernelTests()
     {
         Mock<IIoManager> ioManagerMock = new();
         ioManagerMock.Setup(ioManagerMock => ioManagerMock.DispatchRequest(It.IsAny<IoRequest>()))
@@ -36,7 +36,7 @@ public class SchedulerTests
     }
 
     [Fact]
-    public async Task Scheduler_FcfsProcesses_RunAndComplete()
+    public async Task Kernel_EndToEnd_Process_CompletesSuccessfully()
     {
         // Arrange
         TickManager tickManager = new(_logger)
@@ -44,12 +44,17 @@ public class SchedulerTests
             CpuTime = 10
         };
 
-        ISysCallHandler sysCallHandler = new SystemCallHandler(_ioManagerMock);
+        // Cria o SystemCallHandler real, injetando o FakeIoManager.
+        SystemCallHandler sysCallHandler = new(_ioManagerMock);
 
+        // Cria o CpuScheduler real.
         CpuScheduler cpuScheduler = new(_ioManagerMock, _logger);
+
         // Escolhe FCFS como algoritmo de escalonamento.
         FcfsScheduling fcfs = new();
-        Kernel kernel = new(tickManager, cpuScheduler, sysCallHandler, fcfs);
+
+        // Cria o kernel injetando todas as dependências.
+        IKernel kernel = new Kernel(tickManager, cpuScheduler, sysCallHandler, fcfs);
 
         // Cria um processo com três operações: CPU (3 ticks) → I/O (2 ticks) → CPU (2 ticks)
         List<IOperation> operations =
@@ -58,19 +63,19 @@ public class SchedulerTests
             new IoOperation(2, IoDeviceType.Disk),
             new CpuOperation(2)
         ];
-        Process process = new(5, "ProcessoTesteSched", operations);
+        Process process = new(100, "KernelProcess", operations);
         kernel.RegisterProcess(process);
 
         using CancellationTokenSource cts = new(3000);
 
-        // Act: executa o Kernel; o loop é interrompido pelo cancelamento.
+        // Act: executa o kernel; o loop é interrompido pelo cancelamento.
         try
         {
             await kernel.RunAsync(cts.Token);
         }
         catch (OperationCanceledException)
         {
-            // Esperado, pois o loop é infinito e será cancelado.
+            // Esperado, pois o loop do kernel é infinito e será cancelado.
         }
 
         // Assert: o processo deve estar concluído.

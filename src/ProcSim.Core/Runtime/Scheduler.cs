@@ -1,13 +1,12 @@
-using ProcSim.Core.Models;
-using ProcSim.Core.Models.Operations;
-using ProcSim.Core.Scheduling;
-using ProcSim.Core.IO;
 using ProcSim.Core.Enums;
+using ProcSim.Core.Models;
+using ProcSim.Core.Scheduling;
 using ProcSim.Core.Scheduling.Algorithms;
+using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Runtime;
 
-public class Scheduler(TickManager tickManager, CpuScheduler cpuScheduler, IIoManager ioManager)
+public class Scheduler(TickManager tickManager, CpuScheduler cpuScheduler, ISysCallHandler sysCallHandler)
 {
     private readonly CancellationTokenSource _internalCts = new();
 
@@ -26,64 +25,51 @@ public class Scheduler(TickManager tickManager, CpuScheduler cpuScheduler, IIoMa
 
         while (!linkedCts.Token.IsCancellationRequested)
         {
-            // Coleta os processos prontos do CpuScheduler
-            var readyQueue = new Queue<Process>();
-            while (cpuScheduler.TryDequeueProcess(out var process))
+            Queue<Process> readyQueue = new();
+            while (cpuScheduler.TryDequeueProcess(out Process process))
                 readyQueue.Enqueue(process);
 
-            if (readyQueue.Count > 0)
-            {
-                // Fila para armazenar os processos que permanecem prontos para CPU após o tick atual.
-                var nextReadyQueue = new Queue<Process>();
-
-                foreach (var process in readyQueue)
-                {
-                    // Obtém a operação atual pendente do processo.
-                    var currentOp = process.GetCurrentOperation();
-                    if (currentOp is null)
-                    {
-                        // Se não há mais operações, o processo está concluído.
-                        ProcessUpdated?.Invoke(process);
-                        continue;
-                    }
-
-                    // Se a operação atual é de I/O, despacha a requisição.
-                    if (currentOp is IIoOperation ioOperation)
-                    {
-                        var ioRequest = new IoRequest(process, currentOp.RemainingTime, ioOperation.DeviceType, DateTime.Now);
-                        process.State = ProcessState.Blocked;
-                        ioManager.DispatchRequest(ioRequest);
-                        ProcessUpdated?.Invoke(process);
-                    }
-                    else if (currentOp is ICpuOperation)
-                    {
-                        // Se a operação é de CPU, executa um tick.
-                        process.ExecuteTick();
-                        ProcessUpdated?.Invoke(process);
-                    }
-
-                    // Após executar o tick (ou despachar I/O), verifica se há mais operações pendentes.
-                    var updatedOp = process.GetCurrentOperation();
-                    // Se o processo ainda tem uma operação ativa e não está bloqueado, re-adiciona à fila.
-                    if (updatedOp is not null && process.State != ProcessState.Blocked)
-                    {
-                        nextReadyQueue.Enqueue(process);
-                    }
-                }
-
-                // Aplica o algoritmo de escalonamento aos processos prontos para CPU.
-                await algorithm.RunAsync(nextReadyQueue, proc => ProcessUpdated?.Invoke(proc), DelayFunc, linkedCts.Token);
-
-                // Re-insere os processos remanescentes no CpuScheduler.
-                while (nextReadyQueue.Count > 0)
-                {
-                    cpuScheduler.EnqueueProcess(nextReadyQueue.Dequeue());
-                }
-            }
-            else
+            if (readyQueue.Count == 0)
             {
                 await DelayFunc(linkedCts.Token);
+                continue;
             }
+
+            // Fila para os processos que continuarão aptos para CPU.
+            Queue<Process> nextReadyQueue = new();
+
+            foreach (Process process in readyQueue)
+            {
+                // Ao retirar o processo da fila, se ele estiver em Ready, definimos como Running.
+                if (process.State == ProcessState.Ready)
+                    process.State = ProcessState.Running;
+
+                // O processo avança um tick; se durante esse tick ele invocar a chamada de sistema para I/O,
+                // o próprio AdvanceTick atualiza seu estado para Blocked.
+                process.AdvanceTick(sysCallHandler);
+                ProcessUpdated?.Invoke(process);
+
+                // Se o processo está Completed, não re-adicionamos.
+                if (process.State == ProcessState.Completed)
+                {
+                    ProcessUpdated?.Invoke(process);
+                    continue;
+                }
+                // Se o processo ficou Blocked (solicitou I/O), não re-enfileiramos.
+                if (process.State == ProcessState.Blocked)
+                    continue;
+
+                // Caso contrário, o processo permanece apto à CPU (e seu estado deve estar Running) e é re-enfileirado.
+                if (process.State == ProcessState.Running)
+                    nextReadyQueue.Enqueue(process);
+            }
+
+            // Executa o algoritmo de escalonamento nos processos aptos à CPU.
+            await algorithm.RunAsync(nextReadyQueue, proc => ProcessUpdated?.Invoke(proc), DelayFunc, linkedCts.Token);
+
+            // Reinsere os processos remanescentes no CpuScheduler.
+            while (nextReadyQueue.Count > 0)
+                cpuScheduler.EnqueueProcess(nextReadyQueue.Dequeue());
         }
 
         tickManager.Pause();
