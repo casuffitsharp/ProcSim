@@ -12,4 +12,9 @@ public abstract class Operation(int duration) : IOperation
         if (RemainingTime > 0)
             RemainingTime--;
     }
+
+    public void Reset()
+    {
+        RemainingTime = Duration;
+    }
 }

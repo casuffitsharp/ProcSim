@@ -9,8 +9,9 @@ namespace ProcSim.Core.Runtime;
 public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, ISysCallHandler sysCallHandler, ISchedulingAlgorithm schedulingAlgorithm) : IKernel
 {
     private readonly CancellationTokenSource _cts = new();
-
     private readonly Queue<Process> _processTable = new();
+
+    public ISchedulingAlgorithm SchedulingAlgorithm { get; set; } = schedulingAlgorithm;
 
     public void RegisterProcess(Process process)
     {
@@ -26,7 +27,7 @@ public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, I
         {
             await tickManager.WaitNextTickAsync(ct);
         }
-
+        
         tickManager.Resume();
 
         while (!linkedCts.Token.IsCancellationRequested)
@@ -34,7 +35,6 @@ public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, I
             Queue<Process> readyQueue = new();
             while (cpuScheduler.TryDequeueProcess(out Process process))
             {
-                // Somente processos prontos são considerados.
                 if (process.State == ProcessState.Ready)
                     process.State = ProcessState.Running;
 
@@ -48,28 +48,19 @@ public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, I
             }
 
             Queue<Process> nextReadyQueue = new();
-
             foreach (Process process in readyQueue)
             {
-                // O processo avança um tick; se for necessário realizar I/O, ele invoca o sys call handler internamente.
                 process.AdvanceTick(sysCallHandler);
 
-                // Se o processo solicitou I/O, seu estado foi atualizado para Blocked e ele NÃO é re-enfileirado.
-                if (process.State == ProcessState.Blocked)
+                if (process.State is ProcessState.Blocked or ProcessState.Blocked)
                     continue;
 
-                // Se o processo concluiu, não re-enfileira.
-                if (process.State == ProcessState.Completed)
-                    continue;
-
-                // Caso contrário, o processo permanece apto para CPU.
                 nextReadyQueue.Enqueue(process);
             }
 
             // Aplica o algoritmo de escalonamento somente aos processos aptos à CPU.
-            await schedulingAlgorithm.RunAsync(nextReadyQueue, proc => { }, DelayFunc, linkedCts.Token);
+            await SchedulingAlgorithm.RunAsync(nextReadyQueue, proc => { }, DelayFunc, linkedCts.Token);
 
-            // Re-insere os processos remanescentes no CpuScheduler.
             while (nextReadyQueue.Count > 0)
                 cpuScheduler.EnqueueProcess(nextReadyQueue.Dequeue());
         }

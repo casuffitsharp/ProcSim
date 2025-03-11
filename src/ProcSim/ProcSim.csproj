@@ -1,7 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
+      <Compile Remove="Views\GanttCellControl.xaml.cs" />
+      <Compile Remove="Views\GanttControl.xaml.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
       <None Remove="Assets\procsim_icon.ico" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Page Remove="Views\GanttCellControl.xaml" />
+      <Page Remove="Views\GanttControl.xaml" />
     </ItemGroup>
 
     <ItemGroup>

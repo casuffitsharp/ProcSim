@@ -31,11 +31,6 @@ public partial class MainWindowView : Window
         ModifyTheme(DarkModeToggleButton.IsChecked == true);
     }
 
-    private void ResetButton_Click(object sender, RoutedEventArgs e)
-    {
-        ganttControl.Reset();
-    }
-
     private void Slider_DragCompleted(object sender, object e)
     {
         if (sender is Slider slider)

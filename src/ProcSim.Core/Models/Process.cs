@@ -46,4 +46,12 @@ public sealed class Process(int id, string name, List<IOperation> operations)
             return;
         }
     }
+
+    public void Reset()
+    {
+        CurrentOperationIndex = 0;
+        State = ProcessState.Ready;
+        foreach (IOperation operation in Operations)
+            operation.Reset();
+    }
 }

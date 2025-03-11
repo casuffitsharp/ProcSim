@@ -23,9 +23,6 @@
         <SolidColorBrush x:Key="BlockedCardBrush" Color="#FFEBEE" />
         <SolidColorBrush x:Key="CompletedCardBrush" Color="#ECEFF1" />
 
-        <!-- Conversor de estado para cor -->
-        <local:StateHistoryToBrushConverter x:Key="StateHistoryToBrushConverter" />
-
         <Style x:Key="DelayedUpdateSliderStyle" TargetType="Slider" BasedOn="{StaticResource MaterialDesign3.MaterialDesignDiscreteSlider}">
             <EventSetter Event="Thumb.DragCompleted" Handler="Slider_DragCompleted"/>
             <EventSetter Event="MouseLeftButtonUp" Handler="Slider_DragCompleted"/>
@@ -38,8 +35,6 @@
             <RowDefinition Height="Auto"/>
             <!-- Listagem de Processos -->
             <RowDefinition MinHeight="250" Height="Auto"/>
-            <!-- Gantt-->
-            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <!-- Configuração e Cadastro de Processos -->
@@ -94,7 +89,6 @@
                     <Separator Width="20" Visibility="Hidden"/>
                     <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
                             Command="{Binding ResetSchedulingCommand}"
-                            Click="ResetButton_Click"
                             Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
                         <materialDesign:PackIcon Kind="Refresh" />
                     </Button>
@@ -129,7 +123,7 @@
 
         <!-- Lista de Processos -->
         <Grid Grid.Row="1">
-            <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
+            <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0" Margin="0,0,0,-125">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -149,13 +143,5 @@
                 </Grid>
             </GroupBox>
         </Grid>
-
-        <GroupBox Header="Gantt" FontSize="12" FontWeight="Bold" Padding="0" Grid.Row="2" Margin="0,10,0,10">
-            <views:GanttControl x:Name="ganttControl"
-                    ItemsSource="{Binding Processes}"
-                    TimeUnits="{Binding TotalTimeUnits}"
-                    ColorConverter="{StaticResource StateHistoryToBrushConverter}"
-                    AnimationDuration="{Binding CpuTimeTs}" />
-        </GroupBox>
     </Grid>
 </Window>

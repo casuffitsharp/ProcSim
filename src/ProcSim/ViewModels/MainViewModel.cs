@@ -4,21 +4,27 @@ using ProcSim.Core.Enums;
 using ProcSim.Core.Logging;
 using ProcSim.Core.Models;
 using ProcSim.Core.Runtime;
-using ProcSim.Core.Scheduling.Algorithms;
+using ProcSim.Core.IO;
+using ProcSim.Core.SystemCalls;
+using ProcSim.Core.Scheduling;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using ProcSim.Core.Models.Operations;
+using ProcSim.Core.IO.Devices;
 
 namespace ProcSim.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
     private readonly ILogger _logger;
-    private readonly Scheduler _scheduler;
     private readonly TickManager _tickManager;
+    private readonly IoManager _ioManager;
+    private readonly CpuScheduler _cpuScheduler;
+    private readonly ISysCallHandler _sysCallHandler;
+    private readonly Kernel _kernel;
     private CancellationTokenSource _cts = new();
 
     public ObservableCollection<ProcessViewModel> Processes { get; private set; } = [];
-
     public ObservableCollection<ProcessViewModel> ReadyProcesses { get; private set; } = [];
     public ObservableCollection<ProcessViewModel> RunningProcesses { get; private set; } = [];
     public ObservableCollection<ProcessViewModel> BlockedProcesses { get; private set; } = [];
@@ -31,31 +37,65 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel()
     {
-        CpuTime = _tickManager.CpuTime;
         _logger = new StructuredLogger();
 
-        _tickManager = new(_logger);
-        _tickManager.TickOccurred += OnTickOcurred;
+        _tickManager = new TickManager(_logger)
+        {
+            CpuTime = 10 // Valor padrão, que pode ser alterado via binding
+        };
+
+        _ioManager = new IoManager(_logger);
+        //_ioManager.AddDevice(seuDispositivo);
+
+        _cpuScheduler = new CpuScheduler(_ioManager, _logger);
+        _sysCallHandler = new SystemCallHandler(_ioManager);
+
+        SimulationSettingsViewModel = new SimulationSettingsViewModel();
+        var schedulingAlgorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+
+        _kernel = new Kernel(_tickManager, _cpuScheduler, _sysCallHandler, schedulingAlgorithm);
+
         _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
-        _scheduler = new(_tickManager);
-        _scheduler.ProcessUpdated += OnProcessUpdated;
 
         ProcessRegistrationViewModel = new ProcessRegistrationViewModel(Processes);
-        SimulationSettingsViewModel = new SimulationSettingsViewModel();
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 
         Processes.CollectionChanged += Processes_CollectionChanged;
 
+        CpuTime = _tickManager.CpuTime;
         PopulateExampleData();
     }
 
     private void PopulateExampleData()
     {
-        Processes.Add(new(new Process(1, "P1", 5, 0, ProcessType.CpuBound)));
-        Processes.Add(new(new Process(2, "P2", 5, 5, ProcessType.IoBound)));
-        Processes.Add(new(new Process(3, "P3", 3, 0, ProcessType.CpuBound)));
-        Processes.Add(new(new Process(4, "P4", 7, 0, ProcessType.CpuBound)));
+        Processes.Add(new ProcessViewModel(new Process(1, "P1", [
+            new CpuOperation(5),
+            new IoOperation(10, IoDeviceType.Disk),
+            new CpuOperation(3),
+            new IoOperation(5, IoDeviceType.Disk),
+            new CpuOperation(2)
+        ])));
+        Processes.Add(new ProcessViewModel(new Process(2, "P2", [
+            new CpuOperation(5),
+            new CpuOperation(3),
+            new CpuOperation(30),
+            new CpuOperation(10),
+            new IoOperation(5, IoDeviceType.Disk),
+            new CpuOperation(2)
+        ])));
+        Processes.Add(new ProcessViewModel(new Process(3, "P3", [
+            new IoOperation(5, IoDeviceType.Disk),
+            new IoOperation(10, IoDeviceType.Disk),
+            new CpuOperation(3),
+            new IoOperation(5, IoDeviceType.Disk),
+            new CpuOperation(2)
+        ])));
+        Processes.Add(new ProcessViewModel(new Process(4, "P4", [
+            new CpuOperation(5),
+            new CpuOperation(3),
+            new CpuOperation(2)
+        ])));
     }
 
     private bool CanRunPauseScheduling()
@@ -83,20 +123,21 @@ public partial class MainViewModel : ObservableObject
     private async Task RunSchedulingAsync()
     {
         _cts = new CancellationTokenSource();
-        ISchedulingAlgorithm algorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+
+        var schedulingAlgorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+        _kernel.SchedulingAlgorithm = schedulingAlgorithm;
 
         try
         {
-            Queue<Process> queue = new(Processes.Select(p => p.Model));
-            await _scheduler.RunAsync(queue, algorithm, _cts.Token);
+            await _kernel.RunAsync(_cts.Token);
         }
         catch (OperationCanceledException)
         {
-            Console.WriteLine("Simulação pausada pelo usuário.");
+            _logger.Log("Simulação pausada pelo usuário.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro inesperado: {ex.Message}");
+            _logger.Log($"Erro inesperado: {ex.Message}");
         }
 
         UpdateFilteredLists();
@@ -147,12 +188,7 @@ public partial class MainViewModel : ObservableObject
     public void ResetScheduling()
     {
         foreach (ProcessViewModel process in Processes)
-        {
-            process.Model.State = ProcessState.Ready;
-            process.Model.RemainingTime = process.Model.ExecutionTime;
-            process.StateHistory.Clear();
-            OnPropertyChanged(nameof(process.StateHistory));
-        }
+            process.Model.Reset();
 
         UpdateFilteredLists();
         RunPauseSchedulingCommand.NotifyCanExecuteChanged();
@@ -166,14 +202,6 @@ public partial class MainViewModel : ObservableObject
 
         processViewModel.UpdateFromModel();
         UpdateFilteredLists();
-    }
-
-    private void OnTickOcurred()
-    {
-        foreach (ProcessViewModel process in Processes)
-            process.Tick();
-
-        TotalTimeUnits = Processes.Any() ? Processes.Max(p => p.StateHistory.Count) : 0;
     }
 
     private void Processes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

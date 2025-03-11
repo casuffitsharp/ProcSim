@@ -10,9 +10,8 @@ public static class IoDeviceFactory
         IIoDevice device = deviceType switch
         {
             IoDeviceType.Disk => new DiskDevice(name, channels, delayFunc, cancellationToken),
-            // Exemplo para outros tipos:
-            // IODeviceType.Memory => new MemoryDevice(name, channels, delayFunc, cancellationToken),
-            // IODeviceType.USB => new UsbDevice(name, channels, delayFunc, cancellationToken),
+            IoDeviceType.Memory => throw new NotImplementedException(),
+            IoDeviceType.USB => throw new NotImplementedException(),
             _ => throw new ArgumentException($"Tipo de dispositivo desconhecido: {deviceType}", nameof(deviceType))
         };
 

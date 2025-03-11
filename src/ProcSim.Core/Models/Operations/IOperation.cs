@@ -6,4 +6,5 @@ public interface IOperation
     int RemainingTime { get; }
     bool IsCompleted { get; }
     void ExecuteTick();
+    void Reset();
 }
