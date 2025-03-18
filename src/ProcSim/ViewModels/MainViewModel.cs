@@ -30,7 +30,7 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<ProcessViewModel> BlockedProcesses { get; private set; } = [];
     public ObservableCollection<ProcessViewModel> CompletedProcesses { get; private set; } = [];
 
-    public ProcessRegistrationViewModel ProcessRegistrationViewModel { get; }
+    public ProcessesViewModel ProcessesViewModel { get; }
     public SimulationSettingsViewModel SimulationSettingsViewModel { get; }
     public IAsyncRelayCommand RunPauseSchedulingCommand { get; }
     public IRelayCommand ResetSchedulingCommand { get; }
@@ -57,7 +57,7 @@ public partial class MainViewModel : ObservableObject
 
         _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
 
-        ProcessRegistrationViewModel = new ProcessRegistrationViewModel(Processes);
+        ProcessesViewModel = new ProcessesViewModel(Processes);
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 

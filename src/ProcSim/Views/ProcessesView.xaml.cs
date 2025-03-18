@@ -2,9 +2,9 @@
 
 namespace ProcSim.Views;
 
-public partial class ProcessRegistrationView : UserControl
+public partial class ProcessesView : UserControl
 {
-    public ProcessRegistrationView()
+    public ProcessesView()
     {
         InitializeComponent();
     }

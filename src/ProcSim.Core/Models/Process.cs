@@ -1,6 +1,7 @@
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models.Operations;
 using ProcSim.Core.SystemCalls;
+using System.Text.Json.Serialization;
 
 namespace ProcSim.Core.Models;
 
@@ -9,7 +10,10 @@ public sealed class Process(int id, string name, List<IOperation> operations)
     public int Id { get; } = id;
     public string Name { get; } = name;
     public List<IOperation> Operations { get; } = operations;
+
+    [JsonIgnore]
     public int CurrentOperationIndex { get; internal set; } = 0;
+    [JsonIgnore]
     public ProcessState State { get; set; } = ProcessState.Ready;
 
     public IOperation GetCurrentOperation()

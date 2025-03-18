@@ -1,0 +1,86 @@
+﻿<Window x:Class="ProcSim.Mockups.OptionAWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+        Title="Opção A – Master–Detail" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <!-- Toolbar -->
+            <RowDefinition Height="*" />
+            <!-- Conteúdo Principal -->
+        </Grid.RowDefinitions>
+
+        <!-- Toolbar Superior com Ícones -->
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Background="DarkSlateGray" >
+            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Play">
+                <materialDesign:PackIcon Kind="Play" />
+            </Button>
+            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Pause">
+                <materialDesign:PackIcon Kind="Pause" />
+            </Button>
+            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reset">
+                <materialDesign:PackIcon Kind="Refresh" />
+            </Button>
+            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Salvar Config">
+                <materialDesign:PackIcon Kind="ContentSave" />
+            </Button>
+            <Button Style="{StaticResource MaterialDesignIconButton}" ToolTip="Carregar Config">
+                <materialDesign:PackIcon Kind="FolderOpen" />
+            </Button>
+            <ToggleButton Style="{StaticResource MaterialDesignIconButton}" ToolTip="Dark Mode">
+                <materialDesign:PackIcon Kind="ThemeLightDark" />
+            </ToggleButton>
+        </StackPanel>
+
+        <!-- Conteúdo Principal -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Painel de Cadastro colapsável -->
+                <ColumnDefinition Width="Auto" />
+                <!-- Área Master–Detail -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Painel de Cadastro (Expander com header “+”) -->
+            <Expander x:Name="expRegistration" ExpandDirection="Right" IsExpanded="False" Width="300" Margin="10">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" Width="24" Height="24" />
+                        <TextBlock Text=" Cadastro" VerticalAlignment="Center" FontWeight="Bold"/>
+                    </StackPanel>
+                </Expander.Header>
+                <StackPanel Margin="10">
+                    <TextBlock Text="Cadastro de Processos" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <TextBox x:Name="txtProcessName" Margin="0,5"/>
+                    <Button Content="Adicionar Processo" Click="AddProcess_Click" Style="{StaticResource MaterialDesignFlatButton}" Margin="0,5"/>
+                </StackPanel>
+            </Expander>
+
+            <!-- Área Master–Detail: Lista de Processos e Detalhes/Operações -->
+            <Grid Grid.Column="1" Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="3*" />
+                </Grid.ColumnDefinitions>
+                <!-- Lista de Processos -->
+                <Border Grid.Column="0" Background="LightGray" CornerRadius="4" Margin="0,0,5,0">
+                    <StackPanel>
+                        <TextBlock Text="Lista de Processos" FontWeight="Bold" Margin="10"/>
+                        <ListBox x:Name="lbProcessList" Margin="10"/>
+                    </StackPanel>
+                </Border>
+                <!-- Detalhes/Operações do Processo Selecionado -->
+                <Border Grid.Column="1" Background="WhiteSmoke" CornerRadius="4" Margin="5,0,0,0">
+                    <StackPanel>
+                        <TextBlock Text="Operações do Processo" FontWeight="Bold" Margin="10"/>
+                        <DataGrid x:Name="dgOperations" AutoGenerateColumns="False" Margin="10">
+                            <!-- Definição das colunas para operações pode ser adicionada -->
+                        </DataGrid>
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

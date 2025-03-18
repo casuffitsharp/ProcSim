@@ -2,6 +2,7 @@
 using ProcSim.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace ProcSim.Views;
 
@@ -35,7 +36,7 @@ public partial class MainWindowView : Window
     {
         if (sender is Slider slider)
         {
-            System.Windows.Data.BindingExpression binding = slider.GetBindingExpression(Slider.ValueProperty);
+            BindingExpression binding = slider.GetBindingExpression(Slider.ValueProperty);
             binding?.UpdateSource();
         }
     }

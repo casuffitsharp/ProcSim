@@ -6,6 +6,7 @@ using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Runtime;
 
+// todo: adicionar multicore
 public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, ISysCallHandler sysCallHandler, ISchedulingAlgorithm schedulingAlgorithm) : IKernel
 {
     private readonly CancellationTokenSource _cts = new();
