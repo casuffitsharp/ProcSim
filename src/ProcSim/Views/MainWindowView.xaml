@@ -49,9 +49,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Cadastro de Processos -->
-            <GroupBox Header="Cadastro de Processos" FontSize="12" FontWeight="Bold" Padding="0">
-                <views:ProcessesView DataContext="{Binding ProcessesViewModel}"/>
-            </GroupBox>
+            <views:ProcessesView DataContext="{Binding ProcessesViewModel}" HorizontalAlignment="Left"/>
 
             <Grid Grid.Column="1" Margin="20,0,0,0">
                 <Grid.RowDefinitions>

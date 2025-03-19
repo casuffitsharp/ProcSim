@@ -57,6 +57,7 @@ public partial class MainViewModel : ObservableObject
 
         _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
 
+        PopulateExampleData();
         ProcessesViewModel = new ProcessesViewModel(Processes);
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
@@ -64,7 +65,6 @@ public partial class MainViewModel : ObservableObject
         Processes.CollectionChanged += Processes_CollectionChanged;
 
         CpuTime = _tickManager.CpuTime;
-        PopulateExampleData();
     }
 
     private void PopulateExampleData()

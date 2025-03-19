@@ -1,21 +1,21 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using MaterialDesignThemes.Wpf.Converters;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models.Operations;
 
 namespace ProcSim.ViewModels;
 
-public partial class OperationViewModel : ObservableObject
+public partial class OperationViewModel() : ObservableObject
 {
-    public IOperation Model { get; }
-
-    public OperationViewModel(IOperation operation)
+    public OperationViewModel(IOperation operation) : this()
     {
         Model = operation;
         Reset();
     }
 
+    public IOperation Model { get; }
+
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChanges))]
     public partial int Duration { get; set; }
 
     [ObservableProperty]
@@ -33,11 +33,13 @@ public partial class OperationViewModel : ObservableObject
             {
                 IoDeviceType = IoDeviceType.None;
                 OnPropertyChanged(nameof(IoDeviceType));
+                OnPropertyChanged(nameof(HasChanges));
             }
         }
-    }
+    } = true;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChanges))]
     public partial IoDeviceType IoDeviceType { get; set; }
 
     public OperationViewModel Commit()
@@ -48,8 +50,10 @@ public partial class OperationViewModel : ObservableObject
 
     public void Reset()
     {
-        Duration = Model.Duration;
-        IsCpu = Model is ICpuOperation;
+        Duration = Model?.Duration ?? 0;
+        IsCpu = Model is null or ICpuOperation;
         IoDeviceType = Model is IIoOperation ioOperation ? ioOperation.DeviceType : IoDeviceType.None;
     }
+
+    public bool HasChanges => Duration != Model?.Duration || IsCpu != (Model is null or ICpuOperation) || IoDeviceType != (Model is IIoOperation ioOperation ? ioOperation.DeviceType : IoDeviceType.None);
 }

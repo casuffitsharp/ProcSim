@@ -12,8 +12,10 @@ public partial class ProcessesViewModel : ObservableObject
     {
         Processes = processes;
         SaveCommand = new RelayCommand(Save, CanSave);
-        CancelCommand = new RelayCommand(Cancel, CanCancel);
-        Cancel();
+        CancelCommand = new RelayCommand(Reset, CanCancel);
+        AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
+        RemoveProcessCommand = new RelayCommand(RemoveProcess, CanRemoveProcess);
+        Reset();
     }
 
     public ObservableCollection<ProcessViewModel> Processes { get; }
@@ -26,17 +28,36 @@ public partial class ProcessesViewModel : ObservableObject
         set
         {
             ProcessViewModel old = field;
+            if (field != null)
+                field.PropertyChanged -= SelectedProcess_PropertyChanged;
+
             if (SetProperty(ref field, value))
             {
+                if (field != null)
+                    field.PropertyChanged += SelectedProcess_PropertyChanged;
+
                 old?.Reset();
+                OnPropertyChanged(nameof(IsProcessSelected));
                 SaveCommand.NotifyCanExecuteChanged();
                 CancelCommand.NotifyCanExecuteChanged();
+                AddProcessCommand.NotifyCanExecuteChanged();
+                RemoveProcessCommand.NotifyCanExecuteChanged();
             }
         }
     }
 
+    public bool IsProcessSelected => SelectedProcess is not null;
+
     public IRelayCommand SaveCommand { get; }
     public IRelayCommand CancelCommand { get; }
+    public IRelayCommand AddProcessCommand { get; }
+    public IRelayCommand RemoveProcessCommand { get; }
+
+    private void SelectedProcess_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ProcessViewModel.IsValid) or nameof(ProcessViewModel.HasChanges))
+            SaveCommand.NotifyCanExecuteChanged();
+    }
 
     private void Save()
     {
@@ -49,18 +70,18 @@ public partial class ProcessesViewModel : ObservableObject
         else
             Processes.Add(SelectedProcess.Commit());
 
-        Cancel();
+        Reset();
     }
 
-    private void Cancel()
+    private void Reset()
     {
         SelectedProcess?.Reset();
-        SelectedProcess = new(Processes.Select(p => p.Id).DefaultIfEmpty(0).Max() + 1);
+        SelectedProcess = null;
     }
 
     private bool CanSave()
     {
-        return !string.IsNullOrWhiteSpace(SelectedProcess?.Name);
+        return SelectedProcess is not null && SelectedProcess.IsValid && SelectedProcess.HasChanges;
     }
 
     private bool CanCancel()
@@ -68,13 +89,25 @@ public partial class ProcessesViewModel : ObservableObject
         return SelectedProcess is not null;
     }
 
-    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    private void AddProcess()
     {
-        base.OnPropertyChanged(e);
+        Reset();
+        SelectedProcess = new(Processes.Select(p => p.Id).DefaultIfEmpty(0).Max() + 1);
+    }
 
-        //if (e.PropertyName is nameof(Name))
-        //{
-        //    SaveCommand.NotifyCanExecuteChanged();
-        //}
+    private void RemoveProcess()
+    {
+        Processes.Remove(SelectedProcess);
+        Reset();
+    }
+
+    private bool CanAddProcess()
+    {
+        return SelectedProcess is null;
+    }
+
+    private bool CanRemoveProcess()
+    {
+        return SelectedProcess is not null && Processes.Contains(SelectedProcess);
     }
 }
