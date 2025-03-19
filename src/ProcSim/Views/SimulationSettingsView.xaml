@@ -14,6 +14,12 @@
     </UserControl.Resources>
 
     <StackPanel Orientation="Vertical">
+        <materialDesign:ColorZone Grid.Row="0" Grid.ColumnSpan="3" Mode="PrimaryMid" Height="48"  HorizontalAlignment="Stretch" VerticalAlignment="Top">
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left" Text="Configuração de VM" VerticalAlignment="Center" Foreground="White" Margin="16,0"/>
+            </DockPanel>
+        </materialDesign:ColorZone>
+        
         <!-- Algoritmo de Escalonamento -->
         <ComboBox
           x:Name="FilledComboBox"

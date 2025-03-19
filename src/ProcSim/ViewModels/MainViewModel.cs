@@ -9,8 +9,7 @@ using ProcSim.Core.SystemCalls;
 using ProcSim.Core.Scheduling;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using ProcSim.Core.Models.Operations;
-using ProcSim.Core.IO.Devices;
+using ProcSim.Core.Simulation;
 
 namespace ProcSim.ViewModels;
 
@@ -23,17 +22,6 @@ public partial class MainViewModel : ObservableObject
     private readonly ISysCallHandler _sysCallHandler;
     private readonly Kernel _kernel;
     private CancellationTokenSource _cts = new();
-
-    public ObservableCollection<ProcessViewModel> Processes { get; private set; } = [];
-    public ObservableCollection<ProcessViewModel> ReadyProcesses { get; private set; } = [];
-    public ObservableCollection<ProcessViewModel> RunningProcesses { get; private set; } = [];
-    public ObservableCollection<ProcessViewModel> BlockedProcesses { get; private set; } = [];
-    public ObservableCollection<ProcessViewModel> CompletedProcesses { get; private set; } = [];
-
-    public ProcessesViewModel ProcessesViewModel { get; }
-    public SimulationSettingsViewModel SimulationSettingsViewModel { get; }
-    public IAsyncRelayCommand RunPauseSchedulingCommand { get; }
-    public IRelayCommand ResetSchedulingCommand { get; }
 
     public MainViewModel()
     {
@@ -50,15 +38,14 @@ public partial class MainViewModel : ObservableObject
         _cpuScheduler = new CpuScheduler(_ioManager, _logger);
         _sysCallHandler = new SystemCallHandler(_ioManager);
 
-        SimulationSettingsViewModel = new SimulationSettingsViewModel();
-        var schedulingAlgorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+        VmSettingsVm = new VmSettingsViewModel(new VmConfigRepository());
+        var schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
 
         _kernel = new Kernel(_tickManager, _cpuScheduler, _sysCallHandler, schedulingAlgorithm);
 
         _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
 
-        PopulateExampleData();
-        ProcessesViewModel = new ProcessesViewModel(Processes);
+        ProcessesSettingsVm = new ProcessesSettingsViewModel(new ProcessesConfigRepository());
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 
@@ -67,35 +54,73 @@ public partial class MainViewModel : ObservableObject
         CpuTime = _tickManager.CpuTime;
     }
 
-    private void PopulateExampleData()
+    public ObservableCollection<ProcessViewModel> Processes { get; private set; } = [];
+    public ObservableCollection<ProcessViewModel> ReadyProcesses { get; private set; } = [];
+    public ObservableCollection<ProcessViewModel> RunningProcesses { get; private set; } = [];
+    public ObservableCollection<ProcessViewModel> BlockedProcesses { get; private set; } = [];
+    public ObservableCollection<ProcessViewModel> CompletedProcesses { get; private set; } = [];
+
+    public ProcessesSettingsViewModel ProcessesSettingsVm { get; }
+    public VmSettingsViewModel VmSettingsVm { get; }
+
+    public IAsyncRelayCommand RunPauseSchedulingCommand { get; }
+    public IRelayCommand ResetSchedulingCommand { get; }
+
+    [ObservableProperty]
+    public partial string VmConfigStatusMessage { get; private set; }
+
+    [ObservableProperty]
+    public partial string ProcessesConfigStatusMessage { get; private set; }
+
+    [ObservableProperty]
+    public partial int TotalTimeUnits { get; set; }
+
+    public bool IsRunning
     {
-        Processes.Add(new ProcessViewModel(new Process(1, "P1", [
-            new CpuOperation(5),
-            new IoOperation(10, IoDeviceType.Disk),
-            new CpuOperation(3),
-            new IoOperation(5, IoDeviceType.Disk),
-            new CpuOperation(2)
-        ])));
-        Processes.Add(new ProcessViewModel(new Process(2, "P2", [
-            new CpuOperation(5),
-            new CpuOperation(3),
-            new CpuOperation(30),
-            new CpuOperation(10),
-            new IoOperation(5, IoDeviceType.Disk),
-            new CpuOperation(2)
-        ])));
-        Processes.Add(new ProcessViewModel(new Process(3, "P3", [
-            new IoOperation(5, IoDeviceType.Disk),
-            new IoOperation(10, IoDeviceType.Disk),
-            new CpuOperation(3),
-            new IoOperation(5, IoDeviceType.Disk),
-            new CpuOperation(2)
-        ])));
-        Processes.Add(new ProcessViewModel(new Process(4, "P4", [
-            new CpuOperation(5),
-            new CpuOperation(3),
-            new CpuOperation(2)
-        ])));
+        get => field;
+        private set
+        {
+            if (SetProperty(ref field, value))
+            {
+                VmSettingsVm.CanChangeAlgorithm = !value;
+                RunPauseSchedulingCommand.NotifyCanExecuteChanged();
+                ResetSchedulingCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
+
+    public ushort CpuTime
+    {
+        get => field;
+        set
+        {
+            if (SetProperty(ref field, value))
+            {
+                _tickManager.CpuTime = value;
+                OnPropertyChanged(nameof(CpuTimeTs));
+            }
+        }
+    }
+
+    public TimeSpan CpuTimeTs => TimeSpan.FromMilliseconds(CpuTime);
+
+    public void AddProcess(ProcessViewModel processViewModel)
+    {
+        Processes.Add(processViewModel);
+    }
+
+    public void PauseScheduling()
+    {
+        _tickManager.Pause();
+    }
+
+    public void ResetScheduling()
+    {
+        foreach (ProcessViewModel process in Processes)
+            process.Model.Reset();
+
+        UpdateFilteredLists();
+        RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
     private bool CanRunPauseScheduling()
@@ -124,7 +149,7 @@ public partial class MainViewModel : ObservableObject
     {
         _cts = new CancellationTokenSource();
 
-        var schedulingAlgorithm = SimulationSettingsViewModel.SelectedAlgorithmInstance;
+        var schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
         _kernel.SchedulingAlgorithm = schedulingAlgorithm;
 
         try
@@ -141,57 +166,6 @@ public partial class MainViewModel : ObservableObject
         }
 
         UpdateFilteredLists();
-    }
-
-    public bool IsRunning
-    {
-        get => field;
-        private set
-        {
-            if (SetProperty(ref field, value))
-            {
-                SimulationSettingsViewModel.CanChangeAlgorithm = !value;
-                RunPauseSchedulingCommand.NotifyCanExecuteChanged();
-                ResetSchedulingCommand.NotifyCanExecuteChanged();
-            }
-        }
-    }
-
-    public ushort CpuTime
-    {
-        get => field;
-        set
-        {
-            if (SetProperty(ref field, value))
-            {
-                _tickManager.CpuTime = value;
-                OnPropertyChanged(nameof(CpuTimeTs));
-            }
-        }
-    }
-
-    public TimeSpan CpuTimeTs => TimeSpan.FromMilliseconds(CpuTime);
-
-    [ObservableProperty]
-    public partial int TotalTimeUnits { get; set; }
-
-    public void AddProcess(ProcessViewModel processViewModel)
-    {
-        Processes.Add(processViewModel);
-    }
-
-    public void PauseScheduling()
-    {
-        _tickManager.Pause();
-    }
-
-    public void ResetScheduling()
-    {
-        foreach (ProcessViewModel process in Processes)
-            process.Model.Reset();
-
-        UpdateFilteredLists();
-        RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
     private void OnProcessUpdated(Process updatedProcess)

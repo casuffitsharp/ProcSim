@@ -4,6 +4,7 @@ using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 
 namespace ProcSim.ViewModels;
 
@@ -14,12 +15,12 @@ public partial class ProcessViewModel : ObservableObject
         Model = process;
         Name = process.Name;
         Operations = [.. process.Operations.Select(o => new OperationViewModel(o))];
-        Operations.CollectionChanged += Operations_CollectionChanged;
         foreach (var op in Operations)
-            op.PropertyChanged += (s, e) => OnPropertyChanged(nameof(HasChanges));
+            SubscribeOperation(op);
 
         AddOperationCommand = new RelayCommand(AddOperation);
         RemoveOperationCommand = new RelayCommand<OperationViewModel>(RemoveOperation);
+        Operations.CollectionChanged += Operations_CollectionChanged;
     }
 
     public ProcessViewModel(int id) : this(new Process(id, string.Empty, [])) { }
@@ -43,7 +44,7 @@ public partial class ProcessViewModel : ObservableObject
 
     public ObservableCollection<OperationViewModel> Operations { get; private set; }
 
-    public bool IsValid => !string.IsNullOrWhiteSpace(Name) && Operations?.Any() == true;
+    public bool IsValid => !string.IsNullOrWhiteSpace(Name) && Operations?.Count > 0 && Operations.All(o => o.IsValid) == true;
 
     public void UpdateFromModel()
     {
@@ -87,8 +88,39 @@ public partial class ProcessViewModel : ObservableObject
 
     private void Operations_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
+        if (e.NewItems != null)
+        {
+            foreach (OperationViewModel newOp in e.NewItems)
+                SubscribeOperation(newOp);
+        }
+
+        if (e.OldItems != null)
+        {
+            foreach (OperationViewModel oldOp in e.OldItems)
+                UnsubscribeOperation(oldOp);
+        }
+
         OnPropertyChanged(nameof(IsValid));
         OnPropertyChanged(nameof(HasChanges));
+    }
+
+    private void Operation_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(OperationViewModel.IsValid) or nameof(OperationViewModel.Duration))
+        {
+            OnPropertyChanged(nameof(IsValid));
+            OnPropertyChanged(nameof(HasChanges));
+        }
+    }
+
+    private void SubscribeOperation(OperationViewModel op)
+    {
+        op.PropertyChanged += Operation_PropertyChanged;
+    }
+
+    private void UnsubscribeOperation(OperationViewModel op)
+    {
+        op.PropertyChanged -= Operation_PropertyChanged;
     }
 
     private void AddOperation()

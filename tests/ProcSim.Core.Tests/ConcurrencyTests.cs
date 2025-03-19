@@ -53,7 +53,6 @@ public class ConcurrencyTests
 
         CpuScheduler cpuScheduler = new(ioManager, logger);
         SystemCallHandler sysCallHandler = new(ioManager);
-        Scheduler scheduler = new(tickManager, cpuScheduler, sysCallHandler);
         RoundRobinScheduling rr = new() { Quantum = 2 };
         Kernel kernel = new(tickManager, cpuScheduler, sysCallHandler, rr);
 

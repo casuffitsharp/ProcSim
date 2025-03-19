@@ -1,22 +1,40 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 using ProcSim.Core.Enums;
+using ProcSim.Core.Models;
+using ProcSim.Core.Simulation;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
 namespace ProcSim.ViewModels;
 
-public partial class ProcessesViewModel : ObservableObject
+public partial class ProcessesSettingsViewModel : ObservableObject
 {
-    public ProcessesViewModel(ObservableCollection<ProcessViewModel> processes)
+    private readonly IRepositoryBase<List<Process>> _configRepo;
+
+    public ProcessesSettingsViewModel(IRepositoryBase<List<Process>> configRepo)
     {
-        Processes = processes;
+        _configRepo = configRepo;
+
         SaveCommand = new RelayCommand(Save, CanSave);
         CancelCommand = new RelayCommand(Reset, CanCancel);
         AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
         RemoveProcessCommand = new RelayCommand(RemoveProcess, CanRemoveProcess);
+
+        SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync);
+        LoadConfigCommand = new AsyncRelayCommand(LoadConfigAsync);
+
         Reset();
     }
+
+    public IRelayCommand SaveCommand { get; }
+    public IRelayCommand CancelCommand { get; }
+    public IRelayCommand AddProcessCommand { get; }
+    public IRelayCommand RemoveProcessCommand { get; }
+
+    public IAsyncRelayCommand SaveConfigCommand { get; }
+    public IAsyncRelayCommand LoadConfigCommand { get; }
 
     public ObservableCollection<ProcessViewModel> Processes { get; }
 
@@ -47,11 +65,6 @@ public partial class ProcessesViewModel : ObservableObject
     }
 
     public bool IsProcessSelected => SelectedProcess is not null;
-
-    public IRelayCommand SaveCommand { get; }
-    public IRelayCommand CancelCommand { get; }
-    public IRelayCommand AddProcessCommand { get; }
-    public IRelayCommand RemoveProcessCommand { get; }
 
     private void SelectedProcess_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -109,5 +122,31 @@ public partial class ProcessesViewModel : ObservableObject
     private bool CanRemoveProcess()
     {
         return SelectedProcess is not null && Processes.Contains(SelectedProcess);
+    }
+
+    private async Task SaveConfigAsync()
+    {
+        var dialog = new SaveFileDialog { Filter = _configRepo.FileFilter };
+        dialog.ShowDialog();
+        string filePath = dialog.FileName;
+        if (!string.IsNullOrEmpty(filePath))
+            await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], filePath);
+    }
+
+    private async Task LoadConfigAsync()
+    {
+        var dialog = new OpenFileDialog { Filter = _configRepo.FileFilter };
+        bool? result = dialog.ShowDialog();
+        string filePath = dialog.FileName;
+        if (string.IsNullOrEmpty(filePath))
+            return;
+
+        var processes = await _configRepo.LoadAsync(filePath);
+        if (processes is null)
+            return;
+
+        Processes.Clear();
+        foreach (var process in processes)
+            Processes.Add(new(process));
     }
 }

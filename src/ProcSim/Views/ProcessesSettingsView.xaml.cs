@@ -2,9 +2,9 @@
 
 namespace ProcSim.Views;
 
-public partial class ProcessesView : UserControl
+public partial class ProcessesSettingsView : UserControl
 {
-    public ProcessesView()
+    public ProcessesSettingsView()
     {
         InitializeComponent();
     }
