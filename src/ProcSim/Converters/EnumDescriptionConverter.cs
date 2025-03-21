@@ -1,5 +1,4 @@
-﻿using ProcSim.Core.Enums;
-using System.Collections;
+﻿using System.Collections;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
@@ -24,13 +23,13 @@ public sealed class EnumDescriptionConverter : IValueConverter
         // Caso o valor seja uma única string, buscamos o enum correspondente.
         if (value is string description)
         {
-            var enumType = targetType.IsEnum ? targetType : Nullable.GetUnderlyingType(targetType);
+            Type enumType = targetType.IsEnum ? targetType : Nullable.GetUnderlyingType(targetType);
             if (enumType?.IsEnum == true)
             {
-                foreach (var enumValue in Enum.GetValues(enumType))
+                foreach (object enumValue in Enum.GetValues(enumType))
                 {
                     FieldInfo field = enumType.GetField(enumValue.ToString());
-                    var attr = field?.GetCustomAttribute<DescriptionAttribute>();
+                    DescriptionAttribute attr = field?.GetCustomAttribute<DescriptionAttribute>();
                     if (attr?.Description == description)
                         return enumValue;
 
@@ -49,17 +48,17 @@ public sealed class EnumDescriptionConverter : IValueConverter
             if (!genericType.IsEnum)
                 return Binding.DoNothing;
 
-            var listType = typeof(List<>).MakeGenericType(genericType);
-            var list = (IList)Activator.CreateInstance(listType);
+            Type listType = typeof(List<>).MakeGenericType(genericType);
+            IList list = (IList)Activator.CreateInstance(listType);
             foreach (object item in enumerable)
             {
                 if (item is not string desc)
                     continue;
 
-                foreach (var enumValue in Enum.GetValues(genericType))
+                foreach (object enumValue in Enum.GetValues(genericType))
                 {
                     FieldInfo field = genericType.GetField(enumValue.ToString());
-                    var attr = field?.GetCustomAttribute<DescriptionAttribute>();
+                    DescriptionAttribute attr = field?.GetCustomAttribute<DescriptionAttribute>();
                     if (attr?.Description == desc)
                     {
                         list.Add(enumValue);

@@ -1,15 +1,16 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
+using ProcSim.Core.IO;
 using ProcSim.Core.Logging;
 using ProcSim.Core.Models;
 using ProcSim.Core.Runtime;
-using ProcSim.Core.IO;
-using ProcSim.Core.SystemCalls;
 using ProcSim.Core.Scheduling;
+using ProcSim.Core.Scheduling.Algorithms;
+using ProcSim.Core.SystemCalls;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using ProcSim.Core.Simulation;
 using System.ComponentModel;
 using System.IO;
 
@@ -42,7 +43,7 @@ public partial class MainViewModel : ObservableObject
 
         VmSettingsVm = new VmSettingsViewModel(new VmConfigRepository());
         VmSettingsVm.PropertyChanged += VmSettingsVm_PropertyChanged;
-        var schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
+        ISchedulingAlgorithm schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
 
         _kernel = new Kernel(_tickManager, _cpuScheduler, _sysCallHandler, schedulingAlgorithm);
 
@@ -73,13 +74,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial int TotalTimeUnits { get; set; }
 
-    public string StatusBarMessage
-    {
-        get
-        {
-            return $"VM: {Path.GetFileNameWithoutExtension(VmSettingsVm.CurrentFile ?? "New")} | Processos: {Path.GetFileNameWithoutExtension(ProcessesSettingsVm.CurrentFile ?? "New")}";
-        }
-    }
+    public string StatusBarMessage => $"VM: {Path.GetFileNameWithoutExtension(VmSettingsVm.CurrentFile ?? "New")} | Processos: {Path.GetFileNameWithoutExtension(ProcessesSettingsVm.CurrentFile ?? "New")}";
 
     public bool IsRunning
     {
@@ -155,7 +150,7 @@ public partial class MainViewModel : ObservableObject
     {
         _cts = new CancellationTokenSource();
 
-        var schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
+        ISchedulingAlgorithm schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
         _kernel.SchedulingAlgorithm = schedulingAlgorithm;
 
         try

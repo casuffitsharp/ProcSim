@@ -4,9 +4,11 @@ using Microsoft.Win32;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
+using ProcSim.Core.IO.Devices;
 using ProcSim.Core.Scheduling.Algorithms;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace ProcSim.ViewModels;
 
@@ -22,12 +24,12 @@ public partial class VmSettingsViewModel : ObservableObject
         VmConfig = new VmConfig();
 
         // Inicializa os dispositivos disponíveis (considerando, por exemplo, Disk e Memory)
-        AvailableDevices = new ObservableCollection<DeviceViewModel>
-        {
+        AvailableDevices =
+        [
             new DeviceViewModel { Name = "Disco", DeviceType = IoDeviceType.Disk, IsSelected = false, Channels = 1 },
             new DeviceViewModel { Name = "Memória", DeviceType = IoDeviceType.Memory, IsSelected = false, Channels = 1 }
             // Poderiam ser adicionados outros dispositivos, se necessário.
-        };
+        ];
 
         AvailableIoDevices = [.. Enum.GetValues<IoDeviceType>()];
         SchedulingAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>()];
@@ -114,6 +116,7 @@ public partial class VmSettingsViewModel : ObservableObject
     }
     private async Task SaveConfigAsync()
     {
+        await Task.CompletedTask;
         //await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], CurrentFile);
     }
 
@@ -121,7 +124,7 @@ public partial class VmSettingsViewModel : ObservableObject
     {
         VmConfig.Devices = [.. AvailableDevices.Where(d => d.IsSelected).Select(d => d.MapToDeviceConfig())];
 
-        var dialog = new SaveFileDialog { Filter = _configRepo.FileFilter };
+        SaveFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         dialog.ShowDialog();
         string filePath = dialog.FileName;
 
@@ -134,23 +137,23 @@ public partial class VmSettingsViewModel : ObservableObject
 
     private async Task LoadConfigAsync()
     {
-        var dialog = new OpenFileDialog { Filter = _configRepo.FileFilter };
+        OpenFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         bool? result = dialog.ShowDialog();
         string filePath = dialog.FileName;
 
         if (string.IsNullOrEmpty(filePath))
             return;
 
-        var config = await _configRepo.LoadAsync(filePath);
+        VmConfig config = await _configRepo.LoadAsync(filePath);
         if (config is null)
             return;
 
         VmConfig = config;
         // Atualiza os dispositivos disponíveis com base na configuração carregada.
-        foreach (var deviceVM in AvailableDevices)
+        foreach (DeviceViewModel deviceVM in AvailableDevices)
         {
             // Verifica se existe um dispositivo do mesmo tipo na configuração.
-            var loadedDevice = VmConfig.Devices?.FirstOrDefault(d => d.DeviceType == deviceVM.DeviceType);
+            IoDeviceConfig loadedDevice = VmConfig.Devices?.FirstOrDefault(d => d.DeviceType == deviceVM.DeviceType);
             if (loadedDevice is null)
             {
                 deviceVM.IsSelected = false;

@@ -1,6 +1,6 @@
-﻿using ProcSim.Core.Enums;
+﻿using ProcSim.Core.Configuration;
+using ProcSim.Core.Enums;
 using ProcSim.Core.IO.Devices;
-using ProcSim.Core.Configuration;
 
 namespace ProcSim.Core.Tests.Configuration;
 
@@ -22,7 +22,7 @@ public class VmConfigRepositoryTests
 
         VmConfig vmConfig = new()
         {
-            Devices = 
+            Devices =
             [
                 new()
                 {
@@ -79,11 +79,11 @@ public class VmConfigRepositoryTests
     public async Task LoadAsync_NonExistentFile_ReturnsNull()
     {
         // Arrange
-        var repository = new VmConfigRepository();
+        VmConfigRepository repository = new();
         string nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + repository.FileExtension);
 
         // Act
-        var loadedConfig = await repository.LoadAsync(nonExistentFile);
+        VmConfig loadedConfig = await repository.LoadAsync(nonExistentFile);
 
         // Assert
         Assert.Null(loadedConfig);
@@ -93,11 +93,11 @@ public class VmConfigRepositoryTests
     public void FileExtensionAndFileFilter_AreCorrect()
     {
         // Arrange
-        var repository = new VmConfigRepository();
+        VmConfigRepository repository = new();
 
         // Act
-        var extension = repository.FileExtension;
-        var filter = repository.FileFilter;
+        string extension = repository.FileExtension;
+        string filter = repository.FileFilter;
 
         // Assert
         Assert.Equal(".psvmconfig", extension);

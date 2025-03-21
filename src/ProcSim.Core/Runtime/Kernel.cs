@@ -28,7 +28,7 @@ public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, I
         {
             await tickManager.WaitNextTickAsync(ct);
         }
-        
+
         tickManager.Resume();
 
         while (!linkedCts.Token.IsCancellationRequested)

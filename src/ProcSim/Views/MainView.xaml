@@ -6,12 +6,11 @@
     xmlns:views="clr-namespace:ProcSim.Views"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:local="clr-namespace:ProcSim.Converters"
-    xmlns:local1="clr-namespace:ProcSim.Helpers"
     Style="{StaticResource MaterialDesignWindow}"
     Background="{DynamicResource MaterialDesignPaper}"
     TextElement.Foreground="{DynamicResource MaterialDesignBody}"
     mc:Ignorable="av"
-    x:Class="ProcSim.Views.MainWindowView"
+    x:Class="ProcSim.Views.MainView"
     Icon="/Assets/procsim_icon.ico"
     Title="ProcSim" Height="690" Width="900"
     WindowStartupLocation="CenterScreen">

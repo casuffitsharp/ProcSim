@@ -56,6 +56,6 @@ public partial class OperationViewModel() : ObservableObject
     }
 
     public bool HasChanges => Duration != Model?.Duration || IsCpu != (Model is null or ICpuOperation) || IoDeviceType != (Model is IIoOperation ioOperation ? ioOperation.DeviceType : IoDeviceType.None);
-    
+
     public bool IsValid => Duration > 0 && (IsCpu || IoDeviceType is not IoDeviceType.None);
 }

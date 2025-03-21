@@ -9,7 +9,7 @@ public class IsCpuOperationConverter : IValueConverter
     {
         if (value is bool isCpu)
             return isCpu ? "CPU" : "IO";
-        
+
         return string.Empty;
     }
 

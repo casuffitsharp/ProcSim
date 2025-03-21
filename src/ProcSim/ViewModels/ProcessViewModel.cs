@@ -15,7 +15,7 @@ public partial class ProcessViewModel : ObservableObject
         Model = process;
         Name = process.Name;
         Operations = [.. process.Operations.Select(o => new OperationViewModel(o))];
-        foreach (var op in Operations)
+        foreach (OperationViewModel op in Operations)
             SubscribeOperation(op);
 
         AddOperationCommand = new RelayCommand(AddOperation);

@@ -25,6 +25,7 @@ public sealed class DiskDevice(string name, int channels, Func<CancellationToken
         List<Task> tasks = [];
 
         for (int i = 0; i < Channels; i++)
+        {
             tasks.Add(Task.Run(async () =>
             {
                 await foreach (IoRequest request in _requestChannel.Reader.ReadAllAsync(cancellationToken))
@@ -36,6 +37,8 @@ public sealed class DiskDevice(string name, int channels, Func<CancellationToken
                     RequestCompleted?.Invoke(request);
                 }
             }, cancellationToken));
+        }
+
         await Task.WhenAll(tasks);
     }
 }

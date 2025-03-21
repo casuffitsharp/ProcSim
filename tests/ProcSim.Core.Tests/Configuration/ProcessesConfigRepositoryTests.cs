@@ -1,7 +1,7 @@
-﻿using ProcSim.Core.Models;
-using ProcSim.Core.Models.Operations;
+﻿using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
-using ProcSim.Core.Configuration;
+using ProcSim.Core.Models;
+using ProcSim.Core.Models.Operations;
 
 namespace ProcSim.Core.Tests.Configuration;
 
@@ -45,8 +45,8 @@ public class ProcessesConfigRepositoryTests
 
             for (int i = 0; i < processes.Count; i++)
             {
-                var expectedProcess = processes[i];
-                var loadedProcess = loadedProcesses[i];
+                Process expectedProcess = processes[i];
+                Process loadedProcess = loadedProcesses[i];
 
                 Assert.Equal(expectedProcess.Id, loadedProcess.Id);
                 Assert.Equal(expectedProcess.Name, loadedProcess.Name);
@@ -54,8 +54,8 @@ public class ProcessesConfigRepositoryTests
 
                 for (int j = 0; j < expectedProcess.Operations.Count; j++)
                 {
-                    var expectedOp = expectedProcess.Operations[j];
-                    var loadedOp = loadedProcess.Operations[j];
+                    IOperation expectedOp = expectedProcess.Operations[j];
+                    IOperation loadedOp = loadedProcess.Operations[j];
 
                     Assert.Equal(expectedOp.Duration, loadedOp.Duration);
 
@@ -65,7 +65,7 @@ public class ProcessesConfigRepositoryTests
                             Assert.IsType<CpuOperation>(loadedOp);
                             break;
                         case IoOperation expectedIo:
-                            var loadedIo = Assert.IsType<IoOperation>(loadedOp);
+                            IoOperation loadedIo = Assert.IsType<IoOperation>(loadedOp);
                             Assert.Equal(expectedIo.DeviceType, loadedIo.DeviceType);
                             break;
                         default:
@@ -86,11 +86,11 @@ public class ProcessesConfigRepositoryTests
     public async Task LoadAsync_NonExistentFile_ReturnsNull_ForProcessesConfigRepository()
     {
         // Arrange
-        var repository = new ProcessesConfigRepository();
+        ProcessesConfigRepository repository = new();
         string nonExistentFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid() + repository.FileExtension);
 
         // Act
-        var loadedProcesses = await repository.LoadAsync(nonExistentFile);
+        List<Process> loadedProcesses = await repository.LoadAsync(nonExistentFile);
 
         // Assert
         Assert.Null(loadedProcesses);
@@ -100,11 +100,11 @@ public class ProcessesConfigRepositoryTests
     public void FileExtensionAndFileFilter_AreCorrect_ForProcessesConfigRepository()
     {
         // Arrange
-        var repository = new ProcessesConfigRepository();
+        ProcessesConfigRepository repository = new();
 
         // Act
-        var extension = repository.FileExtension;
-        var filter = repository.FileFilter;
+        string extension = repository.FileExtension;
+        string filter = repository.FileFilter;
 
         // Assert
         Assert.Equal(".pspconfig", extension);

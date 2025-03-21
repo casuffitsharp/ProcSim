@@ -6,11 +6,11 @@ using System.Windows.Data;
 
 namespace ProcSim.Views;
 
-public partial class MainWindowView : Window
+public partial class MainView : Window
 {
     private readonly MainViewModel _mainViewModel;
 
-    public MainWindowView()
+    public MainView()
     {
         InitializeComponent();
 

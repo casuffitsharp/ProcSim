@@ -148,7 +148,7 @@ public partial class ProcessesSettingsViewModel : ObservableObject
 
     private async Task SaveAsConfigAsync()
     {
-        var dialog = new SaveFileDialog { Filter = _configRepo.FileFilter };
+        SaveFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         dialog.ShowDialog();
         string filePath = dialog.FileName;
         if (!string.IsNullOrEmpty(filePath))
@@ -160,18 +160,18 @@ public partial class ProcessesSettingsViewModel : ObservableObject
 
     private async Task LoadConfigAsync()
     {
-        var dialog = new OpenFileDialog { Filter = _configRepo.FileFilter };
+        OpenFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         bool? result = dialog.ShowDialog();
         string filePath = dialog.FileName;
         if (string.IsNullOrEmpty(filePath))
             return;
 
-        var processes = await _configRepo.LoadAsync(filePath);
+        List<Process> processes = await _configRepo.LoadAsync(filePath);
         if (processes is null)
             return;
 
         Processes.Clear();
-        foreach (var process in processes)
+        foreach (Process process in processes)
             Processes.Add(new(process));
 
         CurrentFile = filePath;
