@@ -1,6 +1,6 @@
 ﻿using ProcSim.Core.Models;
 
-namespace ProcSim.Core.Simulation;
+namespace ProcSim.Core.Configuration;
 
 public class ProcessesConfigRepository : RepositoryBase<List<Process>>
 {

@@ -2,9 +2,9 @@
 
 namespace ProcSim.Views;
 
-public partial class SimulationSettingsView : UserControl
+public partial class VmSettingsView : UserControl
 {
-    public SimulationSettingsView()
+    public VmSettingsView()
     {
         InitializeComponent();
     }

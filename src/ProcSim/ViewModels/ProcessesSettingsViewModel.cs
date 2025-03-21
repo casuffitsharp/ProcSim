@@ -1,11 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
-using ProcSim.Core.Simulation;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 
 namespace ProcSim.ViewModels;
 
@@ -22,8 +23,14 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
         RemoveProcessCommand = new RelayCommand(RemoveProcess, CanRemoveProcess);
 
-        SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync);
+        SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync, CanSaveConfig);
+        SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
         LoadConfigCommand = new AsyncRelayCommand(LoadConfigAsync);
+
+        SaveCommand.NotifyCanExecuteChanged();
+        CancelCommand.NotifyCanExecuteChanged();
+        AddProcessCommand.NotifyCanExecuteChanged();
+        RemoveProcessCommand.NotifyCanExecuteChanged();
 
         Reset();
     }
@@ -34,9 +41,14 @@ public partial class ProcessesSettingsViewModel : ObservableObject
     public IRelayCommand RemoveProcessCommand { get; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
+    public IAsyncRelayCommand SaveAsConfigCommand { get; }
     public IAsyncRelayCommand LoadConfigCommand { get; }
 
-    public ObservableCollection<ProcessViewModel> Processes { get; }
+    public ObservableCollection<ProcessViewModel> Processes { get; } = [];
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveConfigCommand))]
+    public partial string CurrentFile { get; private set; }
 
     public List<IoDeviceType> IoDeviceTypes { get; } = [.. Enum.GetValues<IoDeviceType>()];
 
@@ -124,13 +136,26 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         return SelectedProcess is not null && Processes.Contains(SelectedProcess);
     }
 
+    private bool CanSaveConfig()
+    {
+        return Processes.Count > 0 && File.Exists(CurrentFile);
+    }
+
     private async Task SaveConfigAsync()
+    {
+        await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], CurrentFile);
+    }
+
+    private async Task SaveAsConfigAsync()
     {
         var dialog = new SaveFileDialog { Filter = _configRepo.FileFilter };
         dialog.ShowDialog();
         string filePath = dialog.FileName;
         if (!string.IsNullOrEmpty(filePath))
+        {
             await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], filePath);
+            CurrentFile = filePath;
+        }
     }
 
     private async Task LoadConfigAsync()
@@ -148,5 +173,7 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         Processes.Clear();
         foreach (var process in processes)
             Processes.Add(new(process));
+
+        CurrentFile = filePath;
     }
 }

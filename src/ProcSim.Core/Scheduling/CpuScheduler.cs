@@ -10,7 +10,6 @@ public sealed class CpuScheduler
     private readonly ConcurrentQueue<Process> _readyQueue = new();
     private readonly ILogger _logger;
 
-    // O CpuScheduler se inscreve no evento do IoManager para receber processos prontos.
     public CpuScheduler(IIoManager ioManager, ILogger logger)
     {
         ioManager.ProcessBecameReady += OnProcessBecameReady;

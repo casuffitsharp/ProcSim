@@ -47,7 +47,7 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Menu IsMainMenu="True" Grid.Column="0">
-                <MenuItem Header="_File" Padding="5" Height="30">
+                <MenuItem Header="_File" Padding="5" Height="25">
                     <MenuItem Header="VM Config">
                         <MenuItem Header="Open"
                               Icon="{materialDesign:PackIcon Kind=FolderOpen}"
@@ -55,7 +55,8 @@
                         <MenuItem Header="Save"
                               Icon="{materialDesign:PackIcon Kind=ContentSave}"
                               Command="{Binding VmSettingsVm.SaveConfigCommand}"/>
-                        <MenuItem Header="Save As.."/>
+                        <MenuItem Header="Save As.."
+                              Command="{Binding VmSettingsVm.SaveAsConfigCommand}"/>
                     </MenuItem>
                     <Separator />
                     <MenuItem Header="Proc. Config">
@@ -65,7 +66,8 @@
                         <MenuItem Header="Save"
                               Icon="{materialDesign:PackIcon Kind=ContentSave}"
                               Command="{Binding ProcessesSettingsVm.SaveConfigCommand}"/>
-                        <MenuItem Header="Save As.."/>
+                        <MenuItem Header="Save As.."
+                              Command="{Binding ProcessesSettingsVm.SaveAsConfigCommand}"/>
                     </MenuItem>
                 </MenuItem>
             </Menu>
@@ -102,7 +104,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- Cadastro de Processos -->
-            <views:ProcessesSettingsView DataContext="{Binding ProcessesViewModel}" HorizontalAlignment="Left"/>
+            <views:ProcessesSettingsView DataContext="{Binding ProcessesSettingsVm}" HorizontalAlignment="Left"/>
 
             <Grid Grid.Column="1" Margin="20,0,10,0">
                 <Grid.RowDefinitions>
@@ -116,7 +118,7 @@
 
                 <!-- Configuração da Simulação -->
 
-                <views:SimulationSettingsView DataContext="{Binding SimulationSettingsViewModel}" Grid.Row="1"/>
+                <views:VmSettingsView DataContext="{Binding VmSettingsVm}" Grid.Row="1"/>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="2">
                     <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
@@ -186,13 +188,7 @@
                        BorderThickness="0"
                        VerticalAlignment="Center"
                        materialDesign:ColorZoneAssist.Mode="PrimaryDark">
-                <!-- Exemplo de item único que exibe uma mensagem de status -->
-                <StatusBarItem Content="{Binding VmConfigStatusMessage, FallbackValue='Status message'}" />
-                <Separator />
-                <StatusBarItem Content="{Binding ProcessesConfigStatusMessage, FallbackValue='Status message'}" />
-
-                <!-- Se quiser mais itens, basta adicionar mais StatusBarItem -->
-                <!--<StatusBarItem Content="Outra Info" />-->
+                <StatusBarItem Content="{Binding StatusBarMessage, FallbackValue='Status message'}" />
             </StatusBar>
         </materialDesign:ColorZone>
     </Grid>

@@ -1,7 +1,7 @@
 ﻿using ProcSim.Core.Enums;
 using ProcSim.Core.IO.Devices;
 
-namespace ProcSim.Core.Simulation;
+namespace ProcSim.Core.Configuration;
 
 public record VmConfig
 {

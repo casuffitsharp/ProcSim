@@ -1,10 +1,18 @@
-﻿using System.Text.Json;
+﻿using ProcSim.Core.Extensions;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 
-namespace ProcSim.Core.Simulation;
+namespace ProcSim.Core.Configuration;
 
 public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
 {
-    private readonly JsonSerializerOptions _options = new() { WriteIndented = true };
+    private readonly JsonSerializerOptions _options = new()
+    {
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver { Modifiers = { JsonExtensions.InheritJsonIgnore } },
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public abstract string FileExtension { get; }
     public abstract string FileFilter { get; }
@@ -21,6 +29,6 @@ public abstract class RepositoryBase<T> : IRepositoryBase<T> where T : class
             return default;
 
         string json = await File.ReadAllTextAsync(filePath);
-        return JsonSerializer.Deserialize<T>(json);
+        return JsonSerializer.Deserialize<T>(json, _options);
     }
 }

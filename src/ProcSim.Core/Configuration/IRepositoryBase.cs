@@ -1,4 +1,4 @@
-﻿namespace ProcSim.Core.Simulation;
+﻿namespace ProcSim.Core.Configuration;
 
 public interface IRepositoryBase<T> where T : class
 {

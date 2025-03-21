@@ -10,6 +10,8 @@ using ProcSim.Core.Scheduling;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using ProcSim.Core.Simulation;
+using System.ComponentModel;
+using System.IO;
 
 namespace ProcSim.ViewModels;
 
@@ -39,6 +41,7 @@ public partial class MainViewModel : ObservableObject
         _sysCallHandler = new SystemCallHandler(_ioManager);
 
         VmSettingsVm = new VmSettingsViewModel(new VmConfigRepository());
+        VmSettingsVm.PropertyChanged += VmSettingsVm_PropertyChanged;
         var schedulingAlgorithm = VmSettingsVm.SelectedAlgorithmInstance;
 
         _kernel = new Kernel(_tickManager, _cpuScheduler, _sysCallHandler, schedulingAlgorithm);
@@ -46,6 +49,7 @@ public partial class MainViewModel : ObservableObject
         _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
 
         ProcessesSettingsVm = new ProcessesSettingsViewModel(new ProcessesConfigRepository());
+        ProcessesSettingsVm.PropertyChanged += ProcessesSettingsVm_PropertyChanged;
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 
@@ -67,13 +71,15 @@ public partial class MainViewModel : ObservableObject
     public IRelayCommand ResetSchedulingCommand { get; }
 
     [ObservableProperty]
-    public partial string VmConfigStatusMessage { get; private set; }
-
-    [ObservableProperty]
-    public partial string ProcessesConfigStatusMessage { get; private set; }
-
-    [ObservableProperty]
     public partial int TotalTimeUnits { get; set; }
+
+    public string StatusBarMessage
+    {
+        get
+        {
+            return $"VM: {Path.GetFileNameWithoutExtension(VmSettingsVm.CurrentFile ?? "New")} | Processos: {Path.GetFileNameWithoutExtension(ProcessesSettingsVm.CurrentFile ?? "New")}";
+        }
+    }
 
     public bool IsRunning
     {
@@ -215,5 +221,17 @@ public partial class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(BlockedProcesses));
         OnPropertyChanged(nameof(CompletedProcesses));
         OnPropertyChanged(nameof(Processes));
+    }
+
+    private void VmSettingsVm_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(VmSettingsVm.CurrentFile))
+            OnPropertyChanged(nameof(StatusBarMessage));
+    }
+
+    private void ProcessesSettingsVm_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProcessesSettingsVm.CurrentFile))
+            OnPropertyChanged(nameof(StatusBarMessage));
     }
 }

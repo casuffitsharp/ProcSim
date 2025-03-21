@@ -1,11 +1,12 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
 using ProcSim.Core.Scheduling.Algorithms;
-using ProcSim.Core.Simulation;
 using System.Collections.ObjectModel;
+using System.IO;
 
 namespace ProcSim.ViewModels;
 
@@ -31,8 +32,9 @@ public partial class VmSettingsViewModel : ObservableObject
         AvailableIoDevices = [.. Enum.GetValues<IoDeviceType>()];
         SchedulingAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>()];
 
-        SaveConfigCommand = new AsyncRelayCommand(async () => await SaveConfigAsync());
-        LoadConfigCommand = new AsyncRelayCommand(async () => await LoadConfigAsync());
+        SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync, CanSaveConfig);
+        SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync, CanSaveAsConfig);
+        LoadConfigCommand = new AsyncRelayCommand(LoadConfigAsync);
 
         SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(SelectedAlgorithm);
         Quantum = 1;
@@ -48,7 +50,12 @@ public partial class VmSettingsViewModel : ObservableObject
     public ObservableCollection<SchedulingAlgorithmType> SchedulingAlgorithms { get; set; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
+    public IAsyncRelayCommand SaveAsConfigCommand { get; }
     public IAsyncRelayCommand LoadConfigCommand { get; }
+
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(SaveConfigCommand))]
+    public partial string CurrentFile { get; private set; }
 
     public SchedulingAlgorithmType SelectedAlgorithm
     {
@@ -96,7 +103,21 @@ public partial class VmSettingsViewModel : ObservableObject
         }
     }
 
+    private bool CanSaveConfig()
+    {
+        return File.Exists(CurrentFile);
+    }
+
+    private bool CanSaveAsConfig()
+    {
+        return true;
+    }
     private async Task SaveConfigAsync()
+    {
+        //await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], CurrentFile);
+    }
+
+    private async Task SaveAsConfigAsync()
     {
         VmConfig.Devices = [.. AvailableDevices.Where(d => d.IsSelected).Select(d => d.MapToDeviceConfig())];
 
@@ -105,7 +126,10 @@ public partial class VmSettingsViewModel : ObservableObject
         string filePath = dialog.FileName;
 
         if (!string.IsNullOrEmpty(filePath))
+        {
             await _configRepo.SaveAsync(VmConfig, filePath);
+            CurrentFile = filePath;
+        }
     }
 
     private async Task LoadConfigAsync()
@@ -138,5 +162,7 @@ public partial class VmSettingsViewModel : ObservableObject
             // Se necessário, faça um cast para o tipo específico (ex.: DiskDevice ou MemoryDevice).
             deviceVM.Channels = loadedDevice.Channels;
         }
+
+        CurrentFile = filePath;
     }
 }
