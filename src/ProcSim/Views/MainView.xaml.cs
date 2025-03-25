@@ -1,5 +1,7 @@
 ﻿using MaterialDesignThemes.Wpf;
+using ProcSim.Assets;
 using ProcSim.ViewModels;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -8,14 +10,25 @@ namespace ProcSim.Views;
 
 public partial class MainView : Window
 {
-    private readonly MainViewModel _mainViewModel;
-
     public MainView()
     {
         InitializeComponent();
+        
+        if (Settings.Default.DarkMode)
+        {
+            ModifyTheme(true);
+            DarkModeToggleButton.IsChecked = true;
+        }
+    }
 
-        _mainViewModel = new MainViewModel();
-        DataContext = _mainViewModel;
+    protected override void OnClosing(CancelEventArgs e)
+    {
+        MainViewModel viewModel = (MainViewModel)DataContext;
+        viewModel.VmSettingsVm.SaveConfig();
+        viewModel.ProcessesSettingsVm.SaveConfig();
+
+        Settings.Default.Save();
+        base.OnClosing(e);
     }
 
     private static void ModifyTheme(bool isDarkTheme)
@@ -29,6 +42,7 @@ public partial class MainView : Window
 
     private void MenuDarkModeButton_Click(object sender, RoutedEventArgs e)
     {
+        Settings.Default.DarkMode = DarkModeToggleButton.IsChecked == true;
         ModifyTheme(DarkModeToggleButton.IsChecked == true);
     }
 
@@ -39,5 +53,12 @@ public partial class MainView : Window
             BindingExpression binding = slider.GetBindingExpression(Slider.ValueProperty);
             binding?.UpdateSource();
         }
+    }
+    
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        ClearValue(SizeToContentProperty);
+        SetValue(MinWidthProperty, Width);
+        SetValue(MinHeightProperty, Height);
     }
 }

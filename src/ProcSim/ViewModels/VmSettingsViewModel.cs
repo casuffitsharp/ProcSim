@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using ProcSim.Assets;
+using ProcSim.Converters;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
@@ -8,7 +10,6 @@ using ProcSim.Core.IO.Devices;
 using ProcSim.Core.Scheduling.Algorithms;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Threading.Tasks;
 
 namespace ProcSim.ViewModels;
 
@@ -20,35 +21,27 @@ public partial class VmSettingsViewModel : ObservableObject
     {
         _configRepo = configRepo;
 
-        // Inicializa a configuração da VM e os processos
-        VmConfig = new VmConfig();
+        IoDeviceType[] availableIoDevices = [.. Enum.GetValues<IoDeviceType>().Where(v => v > 0)];
+        EnumDescriptionConverter converter = new();
+        foreach (IoDeviceType ioDeviceType in availableIoDevices)
+        {
+            string name = converter.Convert(ioDeviceType, typeof(string), null, null) as string;
+            AvailableDevices.Add(new DeviceViewModel { Name = name, DeviceType = ioDeviceType, IsEnabled = false, Channels = 1 });
+        }
 
-        // Inicializa os dispositivos disponíveis (considerando, por exemplo, Disk e Memory)
-        AvailableDevices =
-        [
-            new DeviceViewModel { Name = "Disco", DeviceType = IoDeviceType.Disk, IsSelected = false, Channels = 1 },
-            new DeviceViewModel { Name = "Memória", DeviceType = IoDeviceType.Memory, IsSelected = false, Channels = 1 }
-            // Poderiam ser adicionados outros dispositivos, se necessário.
-        ];
-
-        AvailableIoDevices = [.. Enum.GetValues<IoDeviceType>()];
         SchedulingAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>()];
 
-        SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync, CanSaveConfig);
-        SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync, CanSaveAsConfig);
-        LoadConfigCommand = new AsyncRelayCommand(LoadConfigAsync);
+        SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
+        SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
+        LoadConfigCommand = new AsyncRelayCommand(LoadConfigFromFileAsync);
 
-        SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(SelectedAlgorithm);
         Quantum = 1;
         CanChangeAlgorithm = true;
+        
+        LoadConfig(_configRepo.Deserialize(Settings.Default.VmConfig));
     }
 
-    public List<SchedulingAlgorithmType> Algorithms { get; } = [.. Enum.GetValues<SchedulingAlgorithmType>()];
-
-    public VmConfig VmConfig { get; set; }
-
-    public ObservableCollection<DeviceViewModel> AvailableDevices { get; set; }
-    public ObservableCollection<IoDeviceType> AvailableIoDevices { get; set; }
+    public ObservableCollection<DeviceViewModel> AvailableDevices { get; set; } = [];
     public ObservableCollection<SchedulingAlgorithmType> SchedulingAlgorithms { get; set; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
@@ -64,17 +57,15 @@ public partial class VmSettingsViewModel : ObservableObject
         get;
         set
         {
-            if (field != value)
+            if (SetProperty(ref field, value))
             {
-                field = value;
                 SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(value);
 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsPreemptive));
-                OnPropertyChanged(nameof(SelectedAlgorithmInstance));
             }
         }
-    } = SchedulingAlgorithmType.Fcfs;
+    }
 
     public ISchedulingAlgorithm SelectedAlgorithmInstance { get; private set; }
 
@@ -97,6 +88,11 @@ public partial class VmSettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial bool CanChangeAlgorithm { get; set; }
 
+    internal void SaveConfig()
+    {
+        Settings.Default.VmConfig = _configRepo.Serialize(ToVmConfig());
+    }
+
     private void UpdateSchedulerQuantum()
     {
         if (SelectedAlgorithmInstance is IPreemptiveAlgorithm preemptiveAlgorithm)
@@ -110,62 +106,63 @@ public partial class VmSettingsViewModel : ObservableObject
         return File.Exists(CurrentFile);
     }
 
-    private bool CanSaveAsConfig()
+    private async Task SaveConfigToFileAsync()
     {
-        return true;
-    }
-    private async Task SaveConfigAsync()
-    {
-        await Task.CompletedTask;
-        //await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], CurrentFile);
+        await _configRepo.SaveAsync(ToVmConfig(), CurrentFile);
     }
 
     private async Task SaveAsConfigAsync()
     {
-        VmConfig.Devices = [.. AvailableDevices.Where(d => d.IsSelected).Select(d => d.MapToDeviceConfig())];
-
         SaveFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         dialog.ShowDialog();
         string filePath = dialog.FileName;
 
         if (!string.IsNullOrEmpty(filePath))
         {
-            await _configRepo.SaveAsync(VmConfig, filePath);
+            await _configRepo.SaveAsync(ToVmConfig(), filePath);
             CurrentFile = filePath;
         }
     }
 
-    private async Task LoadConfigAsync()
+    private async Task LoadConfigFromFileAsync()
     {
         OpenFileDialog dialog = new() { Filter = _configRepo.FileFilter };
-        bool? result = dialog.ShowDialog();
+        dialog.ShowDialog();
         string filePath = dialog.FileName;
 
         if (string.IsNullOrEmpty(filePath))
             return;
 
-        VmConfig config = await _configRepo.LoadAsync(filePath);
-        if (config is null)
+        VmConfig vmConfig = await _configRepo.LoadAsync(filePath);
+        LoadConfig(vmConfig);
+
+        CurrentFile = filePath;
+    }
+
+    private void LoadConfig(VmConfig vmConfig)
+    {
+        if (vmConfig is null)
             return;
 
-        VmConfig = config;
-        // Atualiza os dispositivos disponíveis com base na configuração carregada.
         foreach (DeviceViewModel deviceVM in AvailableDevices)
         {
-            // Verifica se existe um dispositivo do mesmo tipo na configuração.
-            IoDeviceConfig loadedDevice = VmConfig.Devices?.FirstOrDefault(d => d.DeviceType == deviceVM.DeviceType);
+            IoDeviceConfig loadedDevice = vmConfig.Devices?.FirstOrDefault(d => d.DeviceType == deviceVM.DeviceType);
             if (loadedDevice is null)
             {
-                deviceVM.IsSelected = false;
+                deviceVM.IsEnabled = false;
                 continue;
             }
 
-            deviceVM.IsSelected = true;
-            // Supondo que os dispositivos para disco e memória possuam a propriedade Channels.
-            // Se necessário, faça um cast para o tipo específico (ex.: DiskDevice ou MemoryDevice).
-            deviceVM.Channels = loadedDevice.Channels;
+            deviceVM.UpdateFromDeviceConfig(loadedDevice);
         }
+    }
 
-        CurrentFile = filePath;
+    private VmConfig ToVmConfig()
+    {
+        return new()
+        {
+            SchedulingAlgorithmType = SelectedAlgorithm,
+            Devices = [.. AvailableDevices.Select(d => d.MapToDeviceConfig())]
+        };
     }
 }

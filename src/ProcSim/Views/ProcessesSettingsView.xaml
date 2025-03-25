@@ -44,6 +44,29 @@
                     <Separator Width="8" Visibility="Hidden"/>
                     <Button Command="{Binding RemoveProcessCommand}" Content="{materialDesign:PackIcon Kind=Delete}" ToolTip="Remover" />
                     <Separator Width="8" Visibility="Hidden"/>
+                    <materialDesign:PopupBox 
+                         PlacementMode="BottomAndAlignRightEdges" 
+                         StaysOpen="False"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Center">
+                        <Menu IsMainMenu="True">
+                            <MenuItem Header="Open"
+                                    Icon="{materialDesign:PackIcon Kind=FolderOpen}"
+                                    Command="{Binding LoadConfigCommand}"/>
+                            <MenuItem Header="Save"
+                                    Icon="{materialDesign:PackIcon Kind=ContentSave}"
+                                    Command="{Binding SaveConfigCommand}"/>
+                            <MenuItem Header="Save As.."
+                                    Icon="{materialDesign:PackIcon Kind=ContentSaveEdit}"
+                                    Command="{Binding SaveAsConfigCommand}"/>
+                            <Menu.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <VirtualizingStackPanel Orientation = "Vertical" VerticalAlignment="Center" />
+                                </ItemsPanelTemplate>
+                            </Menu.ItemsPanel>
+                        </Menu>
+                    </materialDesign:PopupBox>
+                    <Separator Width="8" Visibility="Hidden"/>
                 </StackPanel>
             </DockPanel>
         </materialDesign:ColorZone>
@@ -131,7 +154,9 @@
                           dd:DragDrop.IsDropTarget="True">
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Duração" Binding="{Binding Duration, UpdateSourceTrigger=PropertyChanged}" Width="Auto" />
+                        <DataGridTextColumn Header="Duração"
+                                            Binding="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
+                                            Width="Auto" />
                         <materialDesign:DataGridComboBoxColumn
                             Width="Auto"
                             Header="Tipo"

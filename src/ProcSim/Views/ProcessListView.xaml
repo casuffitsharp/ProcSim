@@ -1,9 +1,11 @@
 ﻿<UserControl x:Class="ProcSim.Views.ProcessListView"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    xmlns:conv="clr-namespace:ProcSim.Converters"
-             Height="Auto" Width="Auto">
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:conv="clr-namespace:ProcSim.Converters"
+             Height="Auto"
+             MinHeight="200"
+             Width="Auto">
 
     <UserControl.Resources>
         <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
@@ -12,7 +14,7 @@
     <materialDesign:Card>
         <StackPanel Margin="5">
             <TextBlock Text="{Binding Header, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue='My Header'}"
-                   Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
+                       Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
 
             <Separator Margin="0,8"/>
 
@@ -51,11 +53,8 @@
                     </Style>
                 </DataGrid.CellStyle>
                 <DataGrid.Resources>
-                    <!-- Remove o fundo de seleção -->
                     <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
-                    <!-- Remove o contorno de célula selecionada -->
                     <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
-                    <!-- Mantém o texto na cor preta mesmo quando selecionado -->
                     <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
                 </DataGrid.Resources>
             </DataGrid>

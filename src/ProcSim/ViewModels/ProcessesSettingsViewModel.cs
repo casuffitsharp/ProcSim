@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using ProcSim.Assets;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
@@ -23,14 +24,16 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
         RemoveProcessCommand = new RelayCommand(RemoveProcess, CanRemoveProcess);
 
-        SaveConfigCommand = new AsyncRelayCommand(SaveConfigAsync, CanSaveConfig);
+        SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
         SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
-        LoadConfigCommand = new AsyncRelayCommand(LoadConfigAsync);
+        LoadConfigCommand = new AsyncRelayCommand(LoadConfigFromFileAsync);
 
         SaveCommand.NotifyCanExecuteChanged();
         CancelCommand.NotifyCanExecuteChanged();
         AddProcessCommand.NotifyCanExecuteChanged();
         RemoveProcessCommand.NotifyCanExecuteChanged();
+
+        LoadConfig(_configRepo.Deserialize(Settings.Default.ProcessesConfig));
 
         Reset();
     }
@@ -77,6 +80,11 @@ public partial class ProcessesSettingsViewModel : ObservableObject
     }
 
     public bool IsProcessSelected => SelectedProcess is not null;
+
+    internal void SaveConfig()
+    {
+        Settings.Default.ProcessesConfig = _configRepo.Serialize(ToProcesses());
+    }
 
     private void SelectedProcess_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
@@ -141,9 +149,9 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         return Processes.Count > 0 && File.Exists(CurrentFile);
     }
 
-    private async Task SaveConfigAsync()
+    private async Task SaveConfigToFileAsync()
     {
-        await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], CurrentFile);
+        await _configRepo.SaveAsync(ToProcesses(), CurrentFile);
     }
 
     private async Task SaveAsConfigAsync()
@@ -153,12 +161,12 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         string filePath = dialog.FileName;
         if (!string.IsNullOrEmpty(filePath))
         {
-            await _configRepo.SaveAsync([.. Processes.Select(p => p.Model)], filePath);
+            await _configRepo.SaveAsync(ToProcesses(), filePath);
             CurrentFile = filePath;
         }
     }
 
-    private async Task LoadConfigAsync()
+    private async Task LoadConfigFromFileAsync()
     {
         OpenFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         bool? result = dialog.ShowDialog();
@@ -167,13 +175,23 @@ public partial class ProcessesSettingsViewModel : ObservableObject
             return;
 
         List<Process> processes = await _configRepo.LoadAsync(filePath);
+        LoadConfig(processes);
+
+        CurrentFile = filePath;
+    }
+
+    private void LoadConfig(List<Process> processes)
+    {
         if (processes is null)
             return;
 
         Processes.Clear();
         foreach (Process process in processes)
             Processes.Add(new(process));
+    }
 
-        CurrentFile = filePath;
+    private List<Process> ToProcesses()
+    {
+        return [.. Processes.Select(p => p.Model)];
     }
 }
