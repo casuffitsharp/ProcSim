@@ -1,0 +1,39 @@
+﻿<UserControl x:Class="ProcSim.Controls.NumericUpDown"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             MinHeight="10">
+    <Grid>
+        <TextBox x:Name="NumericTextBox"
+                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                 Text="{Binding Value, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 VerticalAlignment="Center"
+                 HorizontalAlignment="Stretch"
+                 materialDesign:HintAssist.Hint="Valor"
+                 materialDesign:HintAssist.HintHorizontalAlignment="Left"/>
+
+        <StackPanel Background="Transparent"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Orientation="Vertical">
+            <Button Command="{Binding IncrementCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Style="{StaticResource MaterialDesignToolButton}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
+                    ToolTip="Incrementar"
+                    DockPanel.Dock="Top">
+                <materialDesign:PackIcon Kind="ChevronUp" />
+            </Button>
+            <Button Command="{Binding DecrementCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    Style="{StaticResource MaterialDesignToolButton}"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    Padding="0"
+                    ToolTip="Decrementar"
+                    DockPanel.Dock="Bottom">
+                <materialDesign:PackIcon Kind="ChevronDown" Width="16" />
+            </Button>
+        </StackPanel>
+    </Grid>
+</UserControl>

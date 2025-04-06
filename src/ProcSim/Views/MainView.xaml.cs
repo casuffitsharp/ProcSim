@@ -26,6 +26,7 @@ public partial class MainView : Window
         MainViewModel viewModel = (MainViewModel)DataContext;
         viewModel.VmSettingsVm.SaveConfig();
         viewModel.ProcessesSettingsVm.SaveConfig();
+        Settings.Default.CpuTime = viewModel.CpuTime;
 
         Settings.Default.Save();
         base.OnClosing(e);
@@ -53,12 +54,5 @@ public partial class MainView : Window
             BindingExpression binding = slider.GetBindingExpression(Slider.ValueProperty);
             binding?.UpdateSource();
         }
-    }
-    
-    private void Window_Loaded(object sender, RoutedEventArgs e)
-    {
-        ClearValue(SizeToContentProperty);
-        SetValue(MinWidthProperty, Width);
-        SetValue(MinHeightProperty, Height);
     }
 }

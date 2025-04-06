@@ -1,27 +1,18 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace ProcSim.Core.Logging;
 
-public sealed class StructuredLogger : ILogger
+public class StructuredLogger : IStructuredLogger
 {
-    private readonly ConcurrentQueue<LogEvent> _events = new();
+    private readonly ConcurrentQueue<SimEvent> _eventQueue = new();
 
-    public void Log(LogEvent logEvent)
+    public event Action<SimEvent> OnLog;
+
+    public void Log(SimEvent simEvent)
     {
-        _events.Enqueue(logEvent);
-        Debug.WriteLine(logEvent);
+        _eventQueue.Enqueue(simEvent);
+        OnLog?.Invoke(simEvent);
     }
 
-    // Método auxiliar para registrar mensagens simples, usando um tipo de evento padrão.
-    public void Log(string message)
-    {
-        Log(new LogEvent(null, "Info", message));
-    }
-
-    // Permite a recuperação dos eventos para visualização gráfica ou persistência.
-    public IEnumerable<LogEvent> GetLogEvents()
-    {
-        return [.. _events];
-    }
+    public IEnumerable<SimEvent> GetAllEvents() => [.. _eventQueue];
 }

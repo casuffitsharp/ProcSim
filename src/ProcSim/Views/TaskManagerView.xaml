@@ -1,0 +1,104 @@
+﻿<UserControl x:Class="ProcSim.Views.TaskManagerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
+             xmlns:vm="clr-namespace:ProcSim.ViewModels"
+             mc:Ignorable="d"
+             d:DesignHeight="600"
+             d:DesignWidth="800">
+    <Grid Margin="16">
+        <TabControl materialDesign:ColorZoneAssist.Mode="PrimaryDark">
+            <TabItem Header="CPU">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding CpuCharts}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="4" 
+                                        BorderBrush="Gray"
+                                        BorderThickness="1"
+                                        Padding="4"
+                                        VerticalAlignment="Stretch" 
+                                        HorizontalAlignment="Stretch">
+                                    <lvc:CartesianChart VerticalAlignment="Stretch"
+                                                        HorizontalAlignment="Stretch"
+                                                        Series="{Binding Series}"
+                                                        XAxes="{Binding XAxes}"
+                                                        YAxes="{Binding YAxes}"
+                                                        DrawMargin="{Binding Margin}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+
+            </TabItem>
+
+            <!-- Aba Dispositivos: exibe um gráfico por dispositivo (por exemplo, Disco, Memória, etc.) -->
+            <TabItem Header="Dispositivos">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding IoCharts}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="4">
+                                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Margin="0,0,0,4"/>
+                                    <lvc:CartesianChart
+                                        Series="{Binding Series}"
+                                        XAxes="{Binding XAxes}"
+                                        YAxes="{Binding YAxes}" />
+                                    <!-- Exemplo de informação adicional, se disponível -->
+                                    <TextBlock Text="{Binding AdditionalInfo}" 
+                                               FontStyle="Italic" 
+                                               FontSize="12" 
+                                               Foreground="Gray" 
+                                               Margin="0,4,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Aba Eventos Gerais: lista os eventos não classificados como CPU ou I/O -->
+            <TabItem Header="Eventos Gerais">
+                <DataGrid ItemsSource="{Binding GeneralEvents}" AutoGenerateColumns="False" 
+                          materialDesign:DataGridAssist.CellPadding="8" IsReadOnly="True">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="150"/>
+                        <DataGridTextColumn Header="Tipo" Binding="{Binding EventType}" Width="100"/>
+                        <DataGridTextColumn Header="Componente" Binding="{Binding Component}" Width="120"/>
+                        <DataGridTextColumn Header="Processo" Binding="{Binding ProcessId}" Width="80"/>
+                        <DataGridTextColumn Header="Core" Binding="{Binding CoreId}" Width="80"/>
+                        <DataGridTextColumn Header="Mensagem" Binding="{Binding Message}" Width="*"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- Aba Informações Adicionais: apresenta dados do sistema, como CPU, memória, etc.
+                 Essa seção pode ser ajustada conforme as informações disponíveis no seu SystemInfoViewModel. -->
+            <TabItem Header="Informações">
+                <StackPanel Margin="8">
+                    <TextBlock Text="Informações do Sistema" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
+                    <!-- Exemplo: se TaskManagerViewModel tiver uma propriedade SystemInfo do tipo SystemInfoViewModel -->
+                    <TextBlock Text="{Binding SystemInfo.ProcessorName}" FontSize="14"/>
+                    <TextBlock Text="{Binding SystemInfo.BaseSpeed}" FontSize="14"/>
+                    <TextBlock Text="{Binding SystemInfo.CoreCount, StringFormat='Cores: {0}'}" FontSize="14"/>
+                    <TextBlock Text="{Binding SystemInfo.LogicalProcessorCount, StringFormat='Logical Processors: {0}'}" FontSize="14"/>
+                    <!-- Adicione outras informações conforme necessário -->
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

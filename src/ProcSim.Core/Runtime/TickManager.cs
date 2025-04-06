@@ -12,12 +12,12 @@ public sealed class TickManager
     private readonly Lock _pauseLock = new();
     private TaskCompletionSource<bool> _resumeTcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-    private readonly ILogger _logger;
+    private readonly IStructuredLogger _logger;
 
-    public TickManager(ILogger logger)
+    public TickManager(IStructuredLogger logger)
     {
         _logger = logger;
-        _logger.Log(new LogEvent(null, "TickManager", "TickManager iniciado."));
+        //_logger.Log(new LogEvent(null, "TickManager", "TickManager iniciado."));
 
         // Tarefa central que aguarda ticks e notifica os aguardadores.
         Task.Run(async () =>
@@ -39,7 +39,7 @@ public sealed class TickManager
                     tcs.TrySetResult(true);
 
                 TickOccurred?.Invoke();
-                _logger.Log(new LogEvent(null, "TickManager", "Tick ocorrido."));
+                //_logger.Log(new LogEvent(null, "TickManager", "Tick ocorrido."));
             }
         });
     }
@@ -71,7 +71,7 @@ public sealed class TickManager
 
             IsPaused = true;
             RunStateChanged?.Invoke();
-            _logger.Log(new LogEvent(null, "TickManager", "TickManager pausado."));
+            //_logger.Log(new LogEvent(null, "TickManager", "TickManager pausado."));
         }
     }
 
@@ -86,7 +86,7 @@ public sealed class TickManager
             _resumeTcs.TrySetResult(true);
             _resumeTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             RunStateChanged?.Invoke();
-            _logger.Log(new LogEvent(null, "TickManager", "TickManager retomado."));
+            //_logger.Log(new LogEvent(null, "TickManager", "TickManager retomado."));
         }
     }
 
@@ -102,5 +102,10 @@ public sealed class TickManager
 
         using (ct.Register(() => tcs.TrySetCanceled()))
             await tcs.Task;
+    }
+
+    public async Task DelayFunc(CancellationToken ct)
+    {
+        await WaitNextTickAsync(ct);
     }
 }

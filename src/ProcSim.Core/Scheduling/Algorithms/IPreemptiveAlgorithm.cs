@@ -2,5 +2,5 @@
 
 public interface IPreemptiveAlgorithm
 {
-    int Quantum { get; set; }
+    uint Quantum { get; set; }
 }

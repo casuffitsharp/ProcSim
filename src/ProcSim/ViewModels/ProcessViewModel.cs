@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using ProcSim.Core.Models.Operations;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -14,6 +15,9 @@ public partial class ProcessViewModel : ObservableObject
     {
         Model = process;
         Name = process.Name;
+        Model.StateChanged += OnStateChanged;
+        Model.OperationChanged += OnOperationChanged;
+
         Operations = [.. process.Operations.Select(o => new OperationViewModel(o))];
         foreach (OperationViewModel op in Operations)
             SubscribeOperation(op);
@@ -21,12 +25,16 @@ public partial class ProcessViewModel : ObservableObject
         AddOperationCommand = new RelayCommand(AddOperation);
         RemoveOperationCommand = new RelayCommand<OperationViewModel>(RemoveOperation);
         Operations.CollectionChanged += Operations_CollectionChanged;
+        OnOperationChanged();
     }
 
     public ProcessViewModel(int id) : this(new Process(id, string.Empty, [])) { }
 
     [ObservableProperty]
     public partial OperationViewModel SelectedOperation { get; set; }
+
+    [ObservableProperty]
+    public partial OperationViewModel CurrentOperation { get; private set; }
 
     public IRelayCommand AddOperationCommand { get; }
     public IRelayCommand<OperationViewModel> RemoveOperationCommand { get; }
@@ -88,17 +96,11 @@ public partial class ProcessViewModel : ObservableObject
 
     private void Operations_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        if (e.NewItems != null)
-        {
-            foreach (OperationViewModel newOp in e.NewItems)
-                SubscribeOperation(newOp);
-        }
+        foreach (OperationViewModel newOp in e.NewItems?.OfType<OperationViewModel>())
+            SubscribeOperation(newOp);
 
-        if (e.OldItems != null)
-        {
-            foreach (OperationViewModel oldOp in e.OldItems)
-                UnsubscribeOperation(oldOp);
-        }
+        foreach (OperationViewModel oldOp in e.OldItems?.OfType<OperationViewModel>())
+            UnsubscribeOperation(oldOp);
 
         OnPropertyChanged(nameof(IsValid));
         OnPropertyChanged(nameof(HasChanges));
@@ -134,5 +136,16 @@ public partial class ProcessViewModel : ObservableObject
     {
         if (operation is not null && Operations.Contains(operation))
             Operations.Remove(operation);
+    }
+
+    private void OnStateChanged()
+    {
+        OnPropertyChanged(nameof(State));
+    }
+
+    private void OnOperationChanged()
+    {
+        IOperation operation = Model.GetCurrentOperation();
+        CurrentOperation = Operations.FirstOrDefault(o => o.Model == operation);
     }
 }

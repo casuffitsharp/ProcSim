@@ -47,6 +47,8 @@ public partial class ProcessesSettingsViewModel : ObservableObject
     public IAsyncRelayCommand SaveAsConfigCommand { get; }
     public IAsyncRelayCommand LoadConfigCommand { get; }
 
+    public event Action<ProcessViewModel> ProcessStateChanged;
+
     public ObservableCollection<ProcessViewModel> Processes { get; } = [];
 
     [ObservableProperty]
@@ -98,10 +100,16 @@ public partial class ProcessesSettingsViewModel : ObservableObject
             return;
 
         int index = Processes.IndexOf(SelectedProcess);
+        ProcessViewModel processVm = SelectedProcess.Commit();
+        processVm.PropertyChanged += Process_PropertyChanged;
         if (index >= 0)
-            Processes[index] = SelectedProcess.Commit();
+        {
+            Processes[index] = processVm;
+        }
         else
-            Processes.Add(SelectedProcess.Commit());
+        {
+            Processes.Add(processVm);
+        }
 
         Reset();
     }
@@ -187,11 +195,21 @@ public partial class ProcessesSettingsViewModel : ObservableObject
 
         Processes.Clear();
         foreach (Process process in processes)
-            Processes.Add(new(process));
+        {
+            ProcessViewModel processVm = new(process);
+            Processes.Add(processVm);
+            processVm.PropertyChanged += Process_PropertyChanged;
+        }
     }
 
     private List<Process> ToProcesses()
     {
         return [.. Processes.Select(p => p.Model)];
+    }
+
+    private void Process_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(ProcessViewModel.State))
+            ProcessStateChanged?.Invoke(sender as ProcessViewModel);
     }
 }

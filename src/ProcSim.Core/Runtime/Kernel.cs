@@ -2,75 +2,58 @@
 using ProcSim.Core.Models;
 using ProcSim.Core.Scheduling;
 using ProcSim.Core.Scheduling.Algorithms;
-using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Runtime;
 
-// todo: adicionar multicore
-public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, ISysCallHandler sysCallHandler, ISchedulingAlgorithm schedulingAlgorithm) : IKernel
+public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, ISchedulingAlgorithm schedulingAlgorithm, int cores) : IKernel
 {
     private readonly CancellationTokenSource _cts = new();
-    private readonly Queue<Process> _processTable = new();
+    private readonly List<Process> _processTable = [];
 
-    public ISchedulingAlgorithm SchedulingAlgorithm { get; set; } = schedulingAlgorithm;
+    public ISchedulingAlgorithm SchedulingAlgorithm { get; } = schedulingAlgorithm;
+    public int Cores { get; } = cores;
 
     public void RegisterProcess(Process process)
     {
-        _processTable.Enqueue(process);
-        cpuScheduler.EnqueueProcess(process);
+        if (!_processTable.Contains(process))
+            _processTable.Add(process);
     }
 
-    public async Task RunAsync(CancellationToken token)
+    public void UnRegisterProcess(Process process)
     {
-        using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(token, _cts.Token);
-
-        async Task DelayFunc(CancellationToken ct)
-        {
-            await tickManager.WaitNextTickAsync(ct);
-        }
-
-        tickManager.Resume();
-
-        while (!linkedCts.Token.IsCancellationRequested)
-        {
-            Queue<Process> readyQueue = new();
-            while (cpuScheduler.TryDequeueProcess(out Process process))
-            {
-                if (process.State == ProcessState.Ready)
-                    process.State = ProcessState.Running;
-
-                readyQueue.Enqueue(process);
-            }
-
-            if (readyQueue.Count == 0)
-            {
-                await DelayFunc(linkedCts.Token);
-                continue;
-            }
-
-            Queue<Process> nextReadyQueue = new();
-            foreach (Process process in readyQueue)
-            {
-                process.AdvanceTick(sysCallHandler);
-
-                if (process.State is ProcessState.Blocked or ProcessState.Blocked)
-                    continue;
-
-                nextReadyQueue.Enqueue(process);
-            }
-
-            // Aplica o algoritmo de escalonamento somente aos processos aptos à CPU.
-            await SchedulingAlgorithm.RunAsync(nextReadyQueue, proc => { }, DelayFunc, linkedCts.Token);
-
-            while (nextReadyQueue.Count > 0)
-                cpuScheduler.EnqueueProcess(nextReadyQueue.Dequeue());
-        }
-
-        tickManager.Pause();
+        _processTable.Remove(process);
     }
 
-    public void Stop()
+    public async Task RunAsync(Func<CancellationToken> tokenProvider)
     {
-        _cts.Cancel();
+        try
+        {
+            cpuScheduler.ClearQueue();
+            foreach (Process process in _processTable)
+                cpuScheduler.EnqueueProcess(process);
+
+            tickManager.Resume();
+
+            List<Task> coreTasks = [];
+            for (int core = 0; core < Cores; core++)
+            {
+                int currentCore = core + 1;
+                coreTasks.Add(Task.Run(async () =>
+                {
+                    while (!tokenProvider().IsCancellationRequested && _processTable.Any(p => p.State != ProcessState.Completed))
+                    {
+                        await SchedulingAlgorithm.RunAsync(cpuScheduler, currentCore, tickManager.DelayFunc, tokenProvider);
+                        await tickManager.DelayFunc(tokenProvider());
+                    }
+                }, tokenProvider()));
+            }
+
+            await Task.WhenAll(coreTasks);
+        }
+        finally
+        {
+            tickManager.Pause();
+            cpuScheduler.ClearQueue();
+        }
     }
 }

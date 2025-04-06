@@ -1,12 +1,25 @@
-﻿using ProcSim.Core.Models;
+﻿using ProcSim.Core.Enums;
+using ProcSim.Core.Models;
+using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Scheduling.Algorithms;
 
-public sealed class FcfsScheduling : ISchedulingAlgorithm
+public sealed class FcfsScheduling(ISysCallHandler sysCallHandler) : ISchedulingAlgorithm
 {
-    public async Task RunAsync(Queue<Process> processes, System.Action<Process> onProcessUpdated, Func<CancellationToken, Task> delayFunc, CancellationToken token)
+    public async Task RunAsync(CpuScheduler scheduler, int coreId, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider)
     {
-        // No FCFS a ordem permanece inalterada; apenas simula um atraso para representar o overhead.
-        await delayFunc(token);
+        if (!scheduler.TryDequeueProcess(out Process current))
+            return;
+
+        current.GetCurrentOperation().Channel = coreId;
+
+        if (current.State == ProcessState.Ready)
+            current.State = ProcessState.Running;
+
+        while (!tokenProvider().IsCancellationRequested && current.State == ProcessState.Running)
+        {
+            current.AdvanceTick(sysCallHandler);
+            await delayFunc(tokenProvider());
+        }
     }
 }

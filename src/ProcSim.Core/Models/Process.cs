@@ -7,14 +7,43 @@ namespace ProcSim.Core.Models;
 
 public sealed class Process(int id, string name, List<IOperation> operations)
 {
+    private int _currentOpChannel = 0;
+
+    public event Action StateChanged;
+    public event Action OperationChanged;
+
     public int Id { get; } = id;
     public string Name { get; } = name;
     public List<IOperation> Operations { get; } = operations;
 
     [JsonIgnore]
-    public int CurrentOperationIndex { get; internal set; } = 0;
+    public int CurrentOperationIndex
+    {
+        get;
+        internal set
+        {
+            if (field != value)
+            {
+                field = value;
+                OperationChanged?.Invoke();
+            }
+        }
+    } = 0;
+
     [JsonIgnore]
-    public ProcessState State { get; set; } = ProcessState.Ready;
+    public ProcessState State
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                StateChanged?.Invoke();
+            }
+        }
+    } = ProcessState.Ready;
+
 
     public IOperation GetCurrentOperation()
     {
@@ -24,10 +53,15 @@ public sealed class Process(int id, string name, List<IOperation> operations)
     public void AdvanceTick(ISysCallHandler sysCallHandler)
     {
         IOperation currentOp = GetCurrentOperation();
-        if (currentOp is IIoOperation operation)
+        if (currentOp.Channel == 0)
+            currentOp.Channel = _currentOpChannel;
+        else
+            _currentOpChannel = currentOp.Channel;
+
+        if (currentOp is IoOperation operation)
         {
             // Se já estiver em I/O, o processo já deve estar bloqueado.
-            sysCallHandler.RequestIo(this, currentOp.RemainingTime, operation.DeviceType);
+            sysCallHandler.RequestIo(this, operation);
             State = ProcessState.Blocked;
             return;
         }

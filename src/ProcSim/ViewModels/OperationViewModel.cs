@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using ProcSim.Converters;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Models.Operations;
 
@@ -9,6 +10,7 @@ public partial class OperationViewModel() : ObservableObject
     public OperationViewModel(IOperation operation) : this()
     {
         Model = operation;
+        Model.RemainingTimeChanged += OnRemainingTimeChanged;
         Reset();
     }
 
@@ -18,8 +20,8 @@ public partial class OperationViewModel() : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasChanges), nameof(IsValid))]
     public partial int Duration { get; set; }
 
-    [ObservableProperty]
-    public partial int RemainingTime { get; set; }
+    public int RemainingTime => Model.RemainingTime;
+    private int Channel => Model.Channel;
 
     [ObservableProperty]
     public partial bool IsCompleted { get; set; }
@@ -34,13 +36,24 @@ public partial class OperationViewModel() : ObservableObject
                 IoDeviceType = IoDeviceType.None;
                 OnPropertyChanged(nameof(HasChanges));
                 OnPropertyChanged(nameof(IsValid));
+                OnPropertyChanged(nameof(Type));
             }
         }
     } = true;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasChanges), nameof(IsValid))]
+    [NotifyPropertyChangedFor(nameof(HasChanges), nameof(IsValid), nameof(Type))]
     public partial IoDeviceType IoDeviceType { get; set; }
+
+    public string Type
+    {
+        get
+        {
+            string prefix = IsCpu ? "CPU" : new EnumDescriptionConverter().Convert(IoDeviceType, typeof(string)) as string;
+            string suffix = Channel > 0 ? $"({Channel})" : string.Empty;
+            return $"{prefix}{suffix}";
+        }
+    }
 
     public OperationViewModel Commit()
     {
@@ -58,4 +71,11 @@ public partial class OperationViewModel() : ObservableObject
     public bool HasChanges => Duration != Model?.Duration || IsCpu != (Model is null or ICpuOperation) || IoDeviceType != (Model is IIoOperation ioOperation ? ioOperation.DeviceType : IoDeviceType.None);
 
     public bool IsValid => Duration > 0 && (IsCpu || IoDeviceType is not IoDeviceType.None);
+
+    private void OnRemainingTimeChanged()
+    {
+        OnPropertyChanged(nameof(RemainingTime));
+        if (RemainingTime > Duration - 4)
+            OnPropertyChanged(nameof(Type));
+    }
 }

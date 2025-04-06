@@ -1,8 +1,6 @@
-﻿using ProcSim.Core.Models;
-
-namespace ProcSim.Core.Scheduling.Algorithms;
+﻿namespace ProcSim.Core.Scheduling.Algorithms;
 
 public interface ISchedulingAlgorithm
 {
-    Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, Func<CancellationToken, Task> delayFunc, CancellationToken token);
+    Task RunAsync(CpuScheduler scheduler, int coreId, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider);
 }

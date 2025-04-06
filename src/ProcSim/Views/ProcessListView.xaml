@@ -36,15 +36,9 @@
                   IsHitTestVisible="False">
 
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="SizeToHeader" />
-                    <DataGridTextColumn Header="Timer" Binding="{Binding RemainingTime}" Width="SizeToHeader" />
-                    <DataGridTemplateColumn Header="Tipo" Width="SizeToHeader">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Type, Converter={StaticResource EnumDescriptionConverter}}"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="SizeToCells" MinWidth="80" />
+                    <DataGridTextColumn Header="Op." Binding="{Binding CurrentOperation.Type}" Width="SizeToCells" MinWidth="80"/>
+                    <DataGridTextColumn Header="Timer" Binding="{Binding CurrentOperation.RemainingTime}" Width="SizeToCells" MinWidth="80" />
                 </DataGrid.Columns>
 
                 <DataGrid.CellStyle>

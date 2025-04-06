@@ -2,8 +2,15 @@
 
 public class PreemptiveAlgorithmBase : IPreemptiveAlgorithm
 {
-    public int Quantum
+    public uint Quantum
     {
-        get; set => field = value > 0 ? value : throw new ArgumentException("Quantum must be greater than 0.");
+        get;
+        set
+        {
+            if (value == 0)
+                throw new ArgumentException("Quantum must be greater than 0.");
+
+            field = value;
+        }
     } = 1;
 }

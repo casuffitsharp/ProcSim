@@ -3,7 +3,7 @@ using System.Threading.Channels;
 
 namespace ProcSim.Core.IO.Devices;
 
-public sealed class DiskDevice(string name, int channels, Func<CancellationToken, Task> delayFunc, CancellationToken cancellationToken) : IIoDevice
+public sealed class DiskDevice(string name, int channels, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider) : IIoDevice
 {
     public string Name { get; } = name;
     public IoDeviceType DeviceType { get; } = IoDeviceType.Disk;
@@ -13,32 +13,33 @@ public sealed class DiskDevice(string name, int channels, Func<CancellationToken
 
     private readonly Channel<IoRequest> _requestChannel = Channel.CreateUnbounded<IoRequest>();
 
-    // Enfileira a requisição de I/O diretamente na fila interna do dispositivo.
     public void EnqueueRequest(IoRequest request)
     {
         _requestChannel.Writer.TryWrite(request);
     }
 
-    // Método que inicia o processamento da fila, simulando o tempo de I/O para cada requisição.
-    public async Task StartProcessingAsync()
+    public void StartProcessing()
     {
-        List<Task> tasks = [];
-
         for (int i = 0; i < Channels; i++)
         {
-            tasks.Add(Task.Run(async () =>
+            int channel = i + 1;
+            Task.Run(async () =>
             {
-                await foreach (IoRequest request in _requestChannel.Reader.ReadAllAsync(cancellationToken))
+                while (await _requestChannel.Reader.WaitToReadAsync(tokenProvider()))
                 {
-                    // Simula o tempo de operação de I/O.
-                    for (int j = 0; j < request.IoTime && !cancellationToken.IsCancellationRequested; j++)
-                        await delayFunc(cancellationToken);
-                    // Notifica a conclusão da requisição (simulando a interrupção do hardware).
+                    if (!_requestChannel.Reader.TryRead(out IoRequest request))
+                        continue;
+
+                    request.Operation.Channel = channel;
+                    for (int j = 0; j < request.Operation.Duration && !tokenProvider().IsCancellationRequested; j++)
+                    {
+                        await delayFunc(tokenProvider());
+                        request.Operation.ExecuteTick();
+                    }
+
                     RequestCompleted?.Invoke(request);
                 }
-            }, cancellationToken));
+            }, tokenProvider());
         }
-
-        await Task.WhenAll(tasks);
     }
 }

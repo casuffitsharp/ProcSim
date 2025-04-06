@@ -8,9 +8,9 @@ namespace ProcSim.Core.Scheduling;
 public sealed class CpuScheduler
 {
     private readonly ConcurrentQueue<Process> _readyQueue = new();
-    private readonly ILogger _logger;
+    private readonly IStructuredLogger _logger;
 
-    public CpuScheduler(IIoManager ioManager, ILogger logger)
+    public CpuScheduler(IIoManager ioManager, IStructuredLogger logger)
     {
         ioManager.ProcessBecameReady += OnProcessBecameReady;
         _logger = logger;
@@ -19,7 +19,7 @@ public sealed class CpuScheduler
     private void OnProcessBecameReady(Process process)
     {
         EnqueueProcess(process);
-        _logger.Log(new LogEvent(process.Id, "CpuScheduler", $"Processo {process.Id} enfileirado após I/O."));
+        //_logger.Log(new LogEvent(process.Id, "CpuScheduler", $"Processo {process.Id} enfileirado após I/O."));
     }
 
     public void EnqueueProcess(Process process)
@@ -35,5 +35,10 @@ public sealed class CpuScheduler
     public IEnumerable<Process> GetReadyProcesses()
     {
         return [.. _readyQueue];
+    }
+
+    public void ClearQueue()
+    {
+        _readyQueue.Clear();
     }
 }

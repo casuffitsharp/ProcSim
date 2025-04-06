@@ -14,5 +14,5 @@ public interface IIoDevice
     // Enfileira uma requisição diretamente na fila interna do dispositivo.
     void EnqueueRequest(IoRequest request);
 
-    Task StartProcessingAsync();
+    void StartProcessing();
 }

@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
-             xmlns:conv="clr-namespace:ProcSim.Converters" 
+             xmlns:conv="clr-namespace:ProcSim.Converters"
+             xmlns:controls="clr-namespace:ProcSim.Controls"
              mc:Ignorable="d"
              Height="Auto"
              Width="Auto">
@@ -53,29 +54,36 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Algoritmo de Escalonamento -->
+                <!-- Algoritmo -->
                 <ComboBox Grid.Row="0"
-                  Height="40"
-                  materialDesign:HintAssist.Hint="Algoritmo"
-                  IsEnabled="{Binding CanChangeAlgorithm}"
-                  Style="{StaticResource MaterialDesignFilledComboBox}"
-                  ItemsSource="{Binding SchedulingAlgorithms, Converter={StaticResource EnumDescriptionConverter}}"
-                  SelectedItem="{Binding SelectedAlgorithm}"
-                  SelectedIndex="0"/>
+                              IsEnabled="{Binding CanChangeAlgorithm}"
+                              Style="{StaticResource MaterialDesignFilledComboBox}"
+                              ItemsSource="{Binding SchedulingAlgorithms, Converter={StaticResource EnumDescriptionConverter}}"
+                              SelectedItem="{Binding SelectedAlgorithm, Converter={StaticResource EnumDescriptionConverter}}"
+                              materialDesign:HintAssist.Hint="Algoritmo"
+                              SelectedIndex="0"/>
 
-                <!-- Quantum -->
-                <TextBox Grid.Row="2"
-                 MaxWidth="400"
-                 VerticalAlignment="Top"
-                 materialDesign:HintAssist.Hint="Quantum"
-                 Style="{StaticResource MaterialDesignFilledTextBox}"
-                 TextWrapping="Wrap"
-                 Text="{Binding Quantum}"
-                 Height="40"
-                 HorizontalAlignment="Left"
-                 Width="100"
-                 Visibility="{Binding IsPreemptive, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
+                <!--Quantum-->
+                <DockPanel Grid.Row="2" LastChildFill="False">
+                    <TextBox Text="{Binding CpuCores}"
+                             VerticalAlignment="Top"
+                             Style="{StaticResource MaterialDesignFilledTextBox}"
+                             TextWrapping="Wrap"
+                             HorizontalAlignment="Left"
+                             Width="100"
+                             materialDesign:HintAssist.Hint="CPU Cores"
+                             DockPanel.Dock="Left"/>
+                    <TextBox Text="{Binding Quantum}"
+                             VerticalAlignment="Top"
+                             Visibility="{Binding IsPreemptive, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             Style="{StaticResource MaterialDesignFilledTextBox}"
+                             TextWrapping="Wrap"
+                             HorizontalAlignment="Left"
+                             Width="100"
+                             materialDesign:HintAssist.Hint="Quantum"
+                             DockPanel.Dock="Right"/>
+                </DockPanel>
+                
                 <!--Dispositivos-->
                 <StackPanel Grid.Row="4">
                     <TextBlock Text="Dispositivos" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />

@@ -8,7 +8,7 @@ namespace ProcSim.Converters;
 
 public sealed class EnumDescriptionConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object Convert(object value, Type targetType, object parameter = null, CultureInfo culture = null)
     {
         return value switch
         {

@@ -14,11 +14,10 @@
     x:Class="ProcSim.Views.MainView"
     Icon="/Assets/procsim_icon.ico"
     Title="ProcSim"
-    Height="750"
+    MinHeight="750"
     Width="800"
     SizeToContent="WidthAndHeight"
-    WindowStartupLocation="CenterScreen"
-    Loaded="Window_Loaded">
+    WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
         <vm:MainViewModel />
@@ -38,22 +37,20 @@
     </Window.Resources>
 
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="73*"/>
-            <ColumnDefinition Width="7*"/>
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Margin="10,10,10,10" Grid.Row="0" Grid.ColumnSpan="2">
+        <Grid Margin="10,10,10,10" Grid.Row="0">
             <Grid.RowDefinitions>
-                <!-- Menu -->
+                <!-- PopupBox -->
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="10"/>
                 <!-- Cadastro e Configuração -->
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="200"/>
                 <RowDefinition Height="10"/>
+                <!-- Task Manager -->
+                <RowDefinition Height="*"/>
                 <!-- Listagem de Processos -->
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
@@ -116,7 +113,7 @@
                             Value="{Binding CpuTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
                             Style="{StaticResource DelayedUpdateSliderStyle}"
                             VerticalContentAlignment="Bottom"
-                            ToolTip="CPU Time"/>
+                            ToolTip="Tempo de CPU"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="4">
                         <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
@@ -147,8 +144,11 @@
                 </Grid>
             </Grid>
 
-            <!-- Lista de Processos -->
-            <Grid Grid.Row="4">
+            <!-- Task Manager -->
+            <views:TaskManagerView DataContext="{Binding TaskManagerVm}" Grid.Row="4"/>
+            
+            <!-- Lista de Processos --><!--
+            <Grid Grid.Row="5">
                 <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -158,17 +158,17 @@
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
 
-                        <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcesses}" 
+                        <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcessesView}" 
                                            CardBackground="{StaticResource ReadyCardBrush}" Grid.Column="0"/>
-                        <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcesses}" 
+                        <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcessesView}" 
                                            CardBackground="{StaticResource RunningCardBrush}" Grid.Column="1"/>
-                        <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcesses}" 
+                        <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcessesView}" 
                                            CardBackground="{StaticResource BlockedCardBrush}" Grid.Column="2"/>
-                        <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcesses}" 
+                        <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcessesView}" 
                                            CardBackground="{StaticResource CompletedCardBrush}" Grid.Column="3"/>
                     </Grid>
                 </GroupBox>
-            </Grid>
+            </Grid>-->
         </Grid>
 
         <!-- Status Bar -->

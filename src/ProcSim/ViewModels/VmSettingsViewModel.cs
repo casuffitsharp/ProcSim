@@ -6,8 +6,11 @@ using ProcSim.Converters;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
+using ProcSim.Core.IO;
 using ProcSim.Core.IO.Devices;
+using ProcSim.Core.Runtime;
 using ProcSim.Core.Scheduling.Algorithms;
+using ProcSim.Core.SystemCalls;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -16,28 +19,26 @@ namespace ProcSim.ViewModels;
 public partial class VmSettingsViewModel : ObservableObject
 {
     private readonly IRepositoryBase<VmConfig> _configRepo;
+    private readonly ISysCallHandler _sysCallHandler;
 
-    public VmSettingsViewModel(IRepositoryBase<VmConfig> configRepo)
+    public VmSettingsViewModel(IRepositoryBase<VmConfig> configRepo, IIoManager ioManager)
     {
         _configRepo = configRepo;
 
-        IoDeviceType[] availableIoDevices = [.. Enum.GetValues<IoDeviceType>().Where(v => v > 0)];
-        EnumDescriptionConverter converter = new();
-        foreach (IoDeviceType ioDeviceType in availableIoDevices)
-        {
-            string name = converter.Convert(ioDeviceType, typeof(string), null, null) as string;
-            AvailableDevices.Add(new DeviceViewModel { Name = name, DeviceType = ioDeviceType, IsEnabled = false, Channels = 1 });
-        }
+        _sysCallHandler = new SystemCallHandler(ioManager);
 
-        SchedulingAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>()];
+        LoadDevices();
+
+        SchedulingAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>().Where(v => v > 0)];
 
         SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
         SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
         LoadConfigCommand = new AsyncRelayCommand(LoadConfigFromFileAsync);
 
         Quantum = 1;
+        CpuCores = 1;
         CanChangeAlgorithm = true;
-        
+
         LoadConfig(_configRepo.Deserialize(Settings.Default.VmConfig));
     }
 
@@ -59,7 +60,7 @@ public partial class VmSettingsViewModel : ObservableObject
         {
             if (SetProperty(ref field, value))
             {
-                SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(value);
+                SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(_sysCallHandler, value);
 
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(IsPreemptive));
@@ -71,7 +72,7 @@ public partial class VmSettingsViewModel : ObservableObject
 
     public bool IsPreemptive => SelectedAlgorithmInstance is IPreemptiveAlgorithm;
 
-    public int Quantum
+    public uint Quantum
     {
         get;
         set
@@ -81,6 +82,19 @@ public partial class VmSettingsViewModel : ObservableObject
                 field = value;
                 OnPropertyChanged();
                 UpdateSchedulerQuantum();
+            }
+        }
+    }
+
+    public ushort CpuCores
+    {
+        get;
+        set
+        {
+            if (field != value && value > 0)
+            {
+                field = value;
+                OnPropertyChanged();
             }
         }
     }
@@ -96,9 +110,7 @@ public partial class VmSettingsViewModel : ObservableObject
     private void UpdateSchedulerQuantum()
     {
         if (SelectedAlgorithmInstance is IPreemptiveAlgorithm preemptiveAlgorithm)
-        {
             preemptiveAlgorithm.Quantum = Quantum;
-        }
     }
 
     private bool CanSaveConfig()
@@ -144,6 +156,10 @@ public partial class VmSettingsViewModel : ObservableObject
         if (vmConfig is null)
             return;
 
+        SelectedAlgorithm = vmConfig.SchedulingAlgorithmType;
+        Quantum = vmConfig.Quantum;
+        CpuCores = vmConfig.CpuCores;
+
         foreach (DeviceViewModel deviceVM in AvailableDevices)
         {
             IoDeviceConfig loadedDevice = vmConfig.Devices?.FirstOrDefault(d => d.DeviceType == deviceVM.DeviceType);
@@ -162,7 +178,21 @@ public partial class VmSettingsViewModel : ObservableObject
         return new()
         {
             SchedulingAlgorithmType = SelectedAlgorithm,
+            Quantum = Quantum,
+            CpuCores = CpuCores,
             Devices = [.. AvailableDevices.Select(d => d.MapToDeviceConfig())]
         };
+    }
+
+    private void LoadDevices()
+    {
+        IoDeviceType[] availableIoDevices = [.. Enum.GetValues<IoDeviceType>().Where(v => v > 0)];
+        EnumDescriptionConverter converter = new();
+        foreach (IoDeviceType ioDeviceType in availableIoDevices)
+        {
+            string name = converter.Convert(ioDeviceType, typeof(string)) as string;
+            DeviceViewModel deviceViewModel = new() { Name = name, DeviceType = ioDeviceType, IsEnabled = false, Channels = 1 };
+            AvailableDevices.Add(deviceViewModel);
+        }
     }
 }

@@ -5,17 +5,17 @@ namespace ProcSim.Core.Factories;
 
 public static class IoDeviceFactory
 {
-    public static async Task<IIoDevice> CreateDeviceAsync(IoDeviceType deviceType, string name, int channels, Func<CancellationToken, Task> delayFunc, CancellationToken cancellationToken)
+    public static IIoDevice CreateDevice(IoDeviceType deviceType, string name, int channels, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider)
     {
         IIoDevice device = deviceType switch
         {
-            IoDeviceType.Disk => new DiskDevice(name, channels, delayFunc, cancellationToken),
+            IoDeviceType.Disk => new DiskDevice(name, channels, delayFunc, tokenProvider),
             IoDeviceType.Memory => throw new NotImplementedException(),
             IoDeviceType.USB => throw new NotImplementedException(),
             _ => throw new ArgumentException($"Tipo de dispositivo desconhecido: {deviceType}", nameof(deviceType))
         };
 
-        await device.StartProcessingAsync();
+        device.StartProcessing();
         return device;
     }
 }

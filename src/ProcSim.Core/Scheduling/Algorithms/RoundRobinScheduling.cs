@@ -1,25 +1,36 @@
-﻿using ProcSim.Core.Models;
+﻿using ProcSim.Core.Enums;
+using ProcSim.Core.Models;
+using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Scheduling.Algorithms;
 
-public sealed class RoundRobinScheduling : PreemptiveAlgorithmBase, ISchedulingAlgorithm
+public sealed class RoundRobinScheduling(ISysCallHandler sysCallHandler) : PreemptiveAlgorithmBase, ISchedulingAlgorithm
 {
-    public async Task RunAsync(Queue<Process> processes, Action<Process> onProcessUpdated, Func<CancellationToken, Task> delayFunc, CancellationToken token)
+    public async Task RunAsync(CpuScheduler scheduler, int coreId, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider)
     {
-        // Simula um quantum: aguarda ticks equivalentes ao quantum (representando a fatia de tempo do processo).
-        int remainingQuantum = Quantum;
-        while (processes.Count > 0 && remainingQuantum-- > 0 && !token.IsCancellationRequested)
+        if (!scheduler.TryDequeueProcess(out Process current))
+            return;
+
+        current.GetCurrentOperation().Channel = coreId;
+
+        if (current.State == ProcessState.Ready)
+            current.State = ProcessState.Running;
+
+        uint remainingQuantum = Quantum;
+
+        while (remainingQuantum-- > 0 && !tokenProvider().IsCancellationRequested)
         {
-            // Notifica o processo atual (simplesmente para efeitos de log/atualização).
-            onProcessUpdated(processes.Peek());
-            await delayFunc(token);
+            current.AdvanceTick(sysCallHandler);
+            await delayFunc(tokenProvider());
+
+            if (current.State is ProcessState.Blocked or ProcessState.Completed)
+                break;
         }
 
-        // Ao final do quantum, rotaciona a fila: retira o primeiro processo e o coloca no final.
-        if (processes.Count > 0)
-        {
-            Process proc = processes.Dequeue();
-            processes.Enqueue(proc);
-        }
+        if (current.State == ProcessState.Running)
+            current.State = ProcessState.Ready;
+
+        if (current.State == ProcessState.Ready)
+            scheduler.EnqueueProcess(current);
     }
 }

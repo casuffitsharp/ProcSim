@@ -4,6 +4,9 @@ namespace ProcSim.Core.Enums;
 
 public enum SchedulingAlgorithmType
 {
+    [Description("")]
+    None,
+
     [Description("FCFS")]
     Fcfs,
 
