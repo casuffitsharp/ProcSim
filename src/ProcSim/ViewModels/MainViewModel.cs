@@ -18,7 +18,7 @@ using System.Windows.Data;
 
 namespace ProcSim.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IDisposable
 {
     private readonly StructuredLogger _logger;
     private readonly TickManager _tickManager;
@@ -51,13 +51,13 @@ public partial class MainViewModel : ObservableObject
 
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new AsyncRelayCommand(ResetSchedulingAsync, CanResetScheduling);
-        
+
         ReadyProcessesView = new CollectionViewSource { Source = Processes }.View;
         ReadyProcessesView = CollectionViewSource.GetDefaultView(Processes);
         ReadyProcessesView.Filter = o => o is ProcessViewModel e && e.State == ProcessState.Ready;
         ((ICollectionViewLiveShaping)ReadyProcessesView).LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
         ((ICollectionViewLiveShaping)ReadyProcessesView).IsLiveFiltering = true;
-        
+
         RunningProcessesView = new CollectionViewSource { Source = Processes }.View;
         RunningProcessesView.Filter = o => o is ProcessViewModel e && e.State == ProcessState.Running;
         ((ICollectionViewLiveShaping)RunningProcessesView).LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
@@ -172,7 +172,7 @@ public partial class MainViewModel : ObservableObject
         {
             //_logger.Log("Simulação pausada pelo usuário.");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             //_logger.Log($"Erro inesperado: {ex.Message}");
         }
@@ -222,5 +222,10 @@ public partial class MainViewModel : ObservableObject
     {
         if (e.PropertyName == nameof(ProcessesSettingsVm.CurrentFile))
             OnPropertyChanged(nameof(StatusBarMessage));
+    }
+
+    public void Dispose()
+    {
+        _logger?.Dispose();
     }
 }

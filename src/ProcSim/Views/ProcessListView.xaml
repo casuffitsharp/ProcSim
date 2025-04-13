@@ -10,30 +10,30 @@
     <UserControl.Resources>
         <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
     </UserControl.Resources>
-    <!--<materialDesign:Card Background="{Binding CardBackground, RelativeSource={RelativeSource AncestorType=UserControl}}">-->
     <materialDesign:Card>
         <StackPanel Margin="5">
-            <TextBlock Text="{Binding Header, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue='My Header'}"
+            <TextBlock Text="{Binding Header, RelativeSource={RelativeSource AncestorType=UserControl}, FallbackValue='Header'}"
                        Style="{StaticResource MaterialDesignSubtitle1TextBlock}" />
 
             <Separator Margin="0,8"/>
 
             <DataGrid ItemsSource="{Binding ItemsSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  CanUserReorderColumns="False"
-                  CanUserResizeColumns="False"
-                  CanUserSortColumns="False"
-                  HeadersVisibility="Column"
-                  RowHeaderWidth="0"
-                  GridLinesVisibility="None"
-                  SelectionMode="Single"
-                  BorderThickness="0"
-                  Padding="0"
-                  Focusable="False"
-                  IsHitTestVisible="False">
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      CanUserReorderColumns="False"
+                      CanUserResizeColumns="False"
+                      CanUserSortColumns="False"
+                      HeadersVisibility="Column"
+                      RowHeaderWidth="0"
+                      GridLinesVisibility="None"
+                      SelectionMode="Single"
+                      BorderThickness="0"
+                      Padding="0"
+                      Focusable="False"
+                      IsHitTestVisible="False"
+                      HorizontalScrollBarVisibility="Hidden">
 
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="SizeToCells" MinWidth="80" />

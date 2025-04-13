@@ -1,12 +1,28 @@
-﻿namespace ProcSim.Core.Logging;
+﻿using System.Text.Json.Serialization;
+using ProcSim.Core.Enums;
 
-public class SimEvent
+namespace ProcSim.Core.Logging;
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "EventDiscriminator")]
+[JsonDerivedType(typeof(ProcessStateChangeEvent), nameof(ProcessStateChangeEvent))]
+[JsonDerivedType(typeof(IoDeviceStateChangeEvent), nameof(IoDeviceStateChangeEvent))]
+public abstract class SimEvent
 {
     public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-    public string EventType { get; set; }
-    public int? ProcessId { get; set; }
-    public int? CoreId { get; set; }
-    public string Component { get; set; }
+    public SimEventType EventType { get; set; }
+    public int Channel { get; set; }
     public string Message { get; set; }
-    public Dictionary<string, object> AdditionalData { get; set; } = new();
+    // public Dictionary<string, object> AdditionalData { get; set; } = new();
+}
+
+public class ProcessStateChangeEvent : SimEvent
+{
+    public int ProcessId { get; set; }
+    public ProcessState NewState { get; set; }
+}
+
+public class IoDeviceStateChangeEvent : SimEvent
+{
+    public string Device { get; set; }
+    public bool IsActive { get; set; }
 }

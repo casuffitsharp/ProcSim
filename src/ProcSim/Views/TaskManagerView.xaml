@@ -25,6 +25,7 @@
                                         BorderBrush="Gray"
                                         BorderThickness="1"
                                         Padding="4"
+                                        MinHeight="200"
                                         VerticalAlignment="Stretch" 
                                         HorizontalAlignment="Stretch">
                                     <lvc:CartesianChart VerticalAlignment="Stretch"

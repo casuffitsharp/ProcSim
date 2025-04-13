@@ -15,14 +15,12 @@
     Icon="/Assets/procsim_icon.ico"
     Title="ProcSim"
     MinHeight="750"
-    Width="800"
-    SizeToContent="WidthAndHeight"
+    Width="1000"
     WindowStartupLocation="CenterScreen">
 
     <Window.DataContext>
         <vm:MainViewModel />
     </Window.DataContext>
-
     <Window.Resources>
         <!-- Brushes para os cartões das listas -->
         <SolidColorBrush x:Key="ReadyCardBrush" Color="#E8F5E9" />
@@ -41,25 +39,69 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+
         <Grid Margin="10,10,10,10" Grid.Row="0">
             <Grid.RowDefinitions>
                 <!-- PopupBox -->
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="10"/>
-                <!-- Cadastro e Configuração -->
-                <RowDefinition Height="200"/>
-                <RowDefinition Height="10"/>
-                <!-- Task Manager -->
-                <RowDefinition Height="*"/>
-                <!-- Listagem de Processos -->
-                <RowDefinition Height="*"/>
+                <!-- Tabs -->
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <materialDesign:PopupBox Grid.Row="0"
-                                         PlacementMode="BottomAndAlignRightEdges" 
-                                         StaysOpen="False"
-                                         VerticalAlignment="Top"
-                                         HorizontalAlignment="Right">
+            <Grid Grid.Row="0" HorizontalAlignment="Center">
+                <Grid.ColumnDefinitions>
+                    <!-- PlayPause Button -->
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <!-- Reset Button -->
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="20"/>
+                    <!-- Simulation Speed Slider -->
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Button Grid.Column="0"
+                            Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
+                            Command="{Binding RunPauseSchedulingCommand}"
+                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Iniciar">
+                    <materialDesign:PackIcon>
+                        <materialDesign:PackIcon.Style>
+                            <Style TargetType="materialDesign:PackIcon" BasedOn="{StaticResource {x:Type materialDesign:PackIcon}}">
+                                <Setter Property="Kind" Value="Play" />
+                                <Setter Property="ToolTip" Value="Iniciar" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsRunning}" Value="True">
+                                        <Setter Property="Kind" Value="Pause" />
+                                        <Setter Property="ToolTip" Value="Pausar" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </materialDesign:PackIcon.Style>
+                    </materialDesign:PackIcon>
+                </Button>
+                <Button Grid.Column="2"
+                        Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
+                        Command="{Binding ResetSchedulingCommand}"
+                        Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
+                    <materialDesign:PackIcon Kind="Refresh" />
+                </Button>
+                <Slider Grid.Column="4"
+                        Minimum="10"
+                        Maximum="1000"
+                        IsDirectionReversed="True"
+                        TickFrequency="10"
+                        TickPlacement="TopLeft"
+                        Width="300"
+                        Height="30"
+                        Value="{Binding CpuTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
+                        Style="{StaticResource DelayedUpdateSliderStyle}"
+                        VerticalContentAlignment="Bottom"
+                        ToolTip="Tempo de CPU"/>
+            </Grid>
+            <materialDesign:PopupBox PlacementMode="BottomAndAlignRightEdges" 
+                                    StaysOpen="False"
+                                    VerticalAlignment="Top"
+                                    HorizontalAlignment="Right">
                 <StackPanel>
                     <Grid Margin="10">
                         <Grid.ColumnDefinitions>
@@ -75,100 +117,57 @@
                 </StackPanel>
             </materialDesign:PopupBox>
 
-            <!-- Configuração e Cadastro de Processos -->
-            <Grid Grid.Row="2">
-                <Grid.ColumnDefinitions>
-                    <!-- Cadastro de Processos -->
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <!-- Configuração -->
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- Cadastro de Processos -->
-                <views:ProcessesSettingsView DataContext="{Binding ProcessesSettingsVm}"/>
-
-                <Grid Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <!-- Configuração -->
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="20"/>
-                        <!-- Vel Simulação -->
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="10"/>
-                        <!-- Botões-->
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Configuração da Simulação -->
-                    <views:VmSettingsView DataContext="{Binding VmSettingsVm}" Grid.Row="0"/>
-
-                    <Slider Grid.Row="2"
-                            Minimum="10"
-                            Maximum="1000"
-                            IsDirectionReversed="True"
-                            TickFrequency="10"
-                            TickPlacement="TopLeft"
-                            Height="30"
-                            Value="{Binding CpuTime, Mode=TwoWay, UpdateSourceTrigger=Explicit}"
-                            Style="{StaticResource DelayedUpdateSliderStyle}"
-                            VerticalContentAlignment="Bottom"
-                            ToolTip="Tempo de CPU"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Grid.Row="4">
-                        <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
-                            Command="{Binding RunPauseSchedulingCommand}"
-                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Iniciar">
-                            <materialDesign:PackIcon>
-                                <materialDesign:PackIcon.Style>
-                                    <Style TargetType="materialDesign:PackIcon" BasedOn="{StaticResource {x:Type materialDesign:PackIcon}}">
-                                        <Setter Property="Kind" Value="Play" />
-                                        <Setter Property="ToolTip" Value="Iniciar" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsRunning}" Value="True">
-                                                <Setter Property="Kind" Value="Pause" />
-                                                <Setter Property="ToolTip" Value="Pausar" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </materialDesign:PackIcon.Style>
-                            </materialDesign:PackIcon>
-                        </Button>
-                        <Separator Width="20" Visibility="Hidden"/>
-                        <Button Background="{DynamicResource MaterialDesignTextFieldBoxBackground}" 
-                            Command="{Binding ResetSchedulingCommand}"
-                            Style="{StaticResource MaterialDesignIconButton}" ToolTip="Reiniciar">
-                            <materialDesign:PackIcon Kind="Refresh" />
-                        </Button>
-                    </StackPanel>
-                </Grid>
-            </Grid>
-
-            <!-- Task Manager -->
-            <views:TaskManagerView DataContext="{Binding TaskManagerVm}" Grid.Row="4"/>
-            
-            <!-- Lista de Processos --><!--
-            <Grid Grid.Row="5">
-                <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
+            <TabControl materialDesign:ColorZoneAssist.Mode="PrimaryDark" Grid.Row="2">
+                <TabItem Header="Configurações">
                     <Grid>
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="*"/>
+                            <!-- Cadastro de Processos -->
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="20"/>
+                            <!-- Configuração -->
+                            <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
 
-                        <views:ProcessListView Header="Ready" ItemsSource="{Binding ReadyProcessesView}" 
-                                           CardBackground="{StaticResource ReadyCardBrush}" Grid.Column="0"/>
-                        <views:ProcessListView Header="Running" ItemsSource="{Binding RunningProcessesView}" 
-                                           CardBackground="{StaticResource RunningCardBrush}" Grid.Column="1"/>
-                        <views:ProcessListView Header="Blocked" ItemsSource="{Binding BlockedProcessesView}" 
-                                           CardBackground="{StaticResource BlockedCardBrush}" Grid.Column="2"/>
-                        <views:ProcessListView Header="Completed" ItemsSource="{Binding CompletedProcessesView}" 
-                                           CardBackground="{StaticResource CompletedCardBrush}" Grid.Column="3"/>
+                        <!-- Cadastro de Processos -->
+                        <views:ProcessesSettingsView DataContext="{Binding ProcessesSettingsVm}"/>
+
+                        <!-- Configuração da Simulação -->
+                        <views:VmSettingsView DataContext="{Binding VmSettingsVm}" Grid.Column="2"/>
                     </Grid>
-                </GroupBox>
-            </Grid>-->
+                </TabItem>
+                <TabItem Header="Monitoramento">
+                    <views:TaskManagerView DataContext="{Binding TaskManagerVm}"/>
+                </TabItem>
+                <TabItem Header="Processos">
+                    <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <views:ProcessListView Header="Ready"
+                                                   ItemsSource="{Binding ReadyProcessesView}" 
+                                                   CardBackground="{StaticResource ReadyCardBrush}"
+                                                   Grid.Column="0"/>
+                            <views:ProcessListView Header="Running"
+                                                   ItemsSource="{Binding RunningProcessesView}" 
+                                                   CardBackground="{StaticResource RunningCardBrush}"
+                                                   Grid.Column="1"/>
+                            <views:ProcessListView Header="Blocked"
+                                                   ItemsSource="{Binding BlockedProcessesView}" 
+                                                   CardBackground="{StaticResource BlockedCardBrush}"
+                                                   Grid.Column="2"/>
+                            <views:ProcessListView Header="Completed"
+                                                   ItemsSource="{Binding CompletedProcessesView}" 
+                                                   CardBackground="{StaticResource CompletedCardBrush}"
+                                                   Grid.Column="3"/>
+                        </Grid>
+                    </GroupBox>
+                </TabItem>
+            </TabControl>
         </Grid>
 
         <!-- Status Bar -->

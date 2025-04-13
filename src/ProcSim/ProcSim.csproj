@@ -1,28 +1,28 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <ItemGroup>
-      <Compile Remove="Views\GanttCellControl.xaml.cs" />
-      <Compile Remove="Views\GanttControl.xaml.cs" />
+        <Compile Remove="Views\GanttCellControl.xaml.cs" />
+        <Compile Remove="Views\GanttControl.xaml.cs" />
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Assets\procsim_icon.ico" />
+        <None Remove="Assets\procsim_icon.ico" />
     </ItemGroup>
 
     <ItemGroup>
-      <Page Remove="Views\GanttCellControl.xaml" />
-      <Page Remove="Views\GanttControl.xaml" />
+        <Page Remove="Views\GanttCellControl.xaml" />
+        <Page Remove="Views\GanttControl.xaml" />
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-      <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
-      <PackageReference Include="LiveCharts.Wpf.Core" Version="0.9.8" />
-      <PackageReference Include="LiveChartsCore" Version="2.0.0-rc5.4" />
-      <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc5.4" />
-      <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
-      <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
-      <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+        <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
+        <PackageReference Include="LiveCharts.Wpf.Core" Version="0.9.8" />
+        <PackageReference Include="LiveChartsCore" Version="2.0.0-rc5.4" />
+        <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc5.4" />
+        <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
+        <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
+        <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -30,33 +30,33 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Resource Include="Assets\procsim_icon.ico">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Resource>
+        <Resource Include="Assets\procsim_icon.ico">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Resource>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="Assets\Settings.Designer.cs">
-        <DesignTimeSharedInput>True</DesignTimeSharedInput>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>Settings.settings</DependentUpon>
-      </Compile>
-      <Compile Update="Controls\Settings.Designer.cs">
-        <DesignTimeSharedInput>True</DesignTimeSharedInput>
-        <AutoGen>True</AutoGen>
-        <DependentUpon>Settings.settings</DependentUpon>
-      </Compile>
+        <Compile Update="Assets\Settings.Designer.cs">
+            <DesignTimeSharedInput>True</DesignTimeSharedInput>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Settings.settings</DependentUpon>
+        </Compile>
+        <Compile Update="Controls\Settings.Designer.cs">
+            <DesignTimeSharedInput>True</DesignTimeSharedInput>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Settings.settings</DependentUpon>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Assets\Settings.settings">
-        <Generator>SettingsSingleFileGenerator</Generator>
-        <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-      </None>
-      <None Update="Controls\Settings.settings">
-        <Generator>SettingsSingleFileGenerator</Generator>
-        <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-      </None>
+        <None Update="Assets\Settings.settings">
+            <Generator>SettingsSingleFileGenerator</Generator>
+            <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
+        <None Update="Controls\Settings.settings">
+            <Generator>SettingsSingleFileGenerator</Generator>
+            <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+        </None>
     </ItemGroup>
 
     <PropertyGroup>

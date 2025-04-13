@@ -1,5 +1,5 @@
-﻿using LiveChartsCore.SkiaSharpView.Painting;
-using LiveChartsCore.SkiaSharpView;
+﻿using LiveChartsCore.SkiaSharpView;
+using LiveChartsCore.SkiaSharpView.Painting;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 
@@ -46,6 +46,13 @@ public partial class CoreChartViewModel : ChartViewModelBase
                 TextSize = 12,
             }
         ];
+
+        CpuValues.CollectionChanged += CpuValues_CollectionChanged;
+    }
+
+    private void CpuValues_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+    {
+        CurrentTime = CpuValues.Count > 0 ? CpuValues.Count - 1 : 0;
     }
 
     public int CoreId { get; }

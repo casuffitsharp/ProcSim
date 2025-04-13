@@ -13,7 +13,7 @@ public partial class MainView : Window
     public MainView()
     {
         InitializeComponent();
-        
+
         if (Settings.Default.DarkMode)
         {
             ModifyTheme(true);
@@ -29,6 +29,8 @@ public partial class MainView : Window
         Settings.Default.CpuTime = viewModel.CpuTime;
 
         Settings.Default.Save();
+
+        viewModel.Dispose();
         base.OnClosing(e);
     }
 

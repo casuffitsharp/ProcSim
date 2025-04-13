@@ -8,7 +8,6 @@ using ProcSim.Core.Enums;
 using ProcSim.Core.Factories;
 using ProcSim.Core.IO;
 using ProcSim.Core.IO.Devices;
-using ProcSim.Core.Runtime;
 using ProcSim.Core.Scheduling.Algorithms;
 using ProcSim.Core.SystemCalls;
 using System.Collections.ObjectModel;

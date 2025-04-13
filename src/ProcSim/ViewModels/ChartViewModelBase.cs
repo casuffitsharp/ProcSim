@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore;
 using LiveChartsCore.Measure;
+using LiveChartsCore.SkiaSharpView;
 
 namespace ProcSim.ViewModels;
 
@@ -17,7 +17,7 @@ public abstract partial class ChartViewModelBase(double windowSizeSeconds) : Obs
     [ObservableProperty]
     public partial double XMax { get; set; } = 0;
 
-    public Margin Margin { get; set; } = new(0, 10, 10, 10);
+    public Margin Margin { get; set; } = new(0, 10, 50, 10);
 
     public int CurrentTime
     {
