@@ -40,9 +40,9 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <Grid Margin="10,10,10,10" Grid.Row="0">
+        <Grid Margin="10,20,10,10" Grid.Row="0">
             <Grid.RowDefinitions>
-                <!-- PopupBox -->
+                <!-- Simulation Controls and PopupBox -->
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="10"/>
                 <!-- Tabs -->
@@ -98,10 +98,11 @@
                         VerticalContentAlignment="Bottom"
                         ToolTip="Tempo de CPU"/>
             </Grid>
-            <materialDesign:PopupBox PlacementMode="BottomAndAlignRightEdges" 
-                                    StaysOpen="False"
-                                    VerticalAlignment="Top"
-                                    HorizontalAlignment="Right">
+            <materialDesign:PopupBox Grid.Row="0"
+                                     PlacementMode="BottomAndAlignRightEdges" 
+                                     StaysOpen="False"
+                                     VerticalAlignment="Top"
+                                     HorizontalAlignment="Right">
                 <StackPanel>
                     <Grid Margin="10">
                         <Grid.ColumnDefinitions>
@@ -129,14 +130,14 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Cadastro de Processos -->
-                        <views:ProcessesSettingsView DataContext="{Binding ProcessesSettingsVm}"/>
+                        <views:ProcessesSettingsControl DataContext="{Binding ProcessesSettingsVm}"/>
 
                         <!-- Configuração da Simulação -->
-                        <views:VmSettingsView DataContext="{Binding VmSettingsVm}" Grid.Column="2"/>
+                        <views:VmSettingsControl DataContext="{Binding VmSettingsVm}" Grid.Column="2"/>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Monitoramento">
-                    <views:TaskManagerView DataContext="{Binding TaskManagerVm}"/>
+                    <views:TaskManagerControl DataContext="{Binding TaskManagerVm}"/>
                 </TabItem>
                 <TabItem Header="Processos">
                     <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
@@ -148,19 +149,19 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <views:ProcessListView Header="Ready"
+                            <views:ProcessListControl Header="Ready"
                                                    ItemsSource="{Binding ReadyProcessesView}" 
                                                    CardBackground="{StaticResource ReadyCardBrush}"
                                                    Grid.Column="0"/>
-                            <views:ProcessListView Header="Running"
+                            <views:ProcessListControl Header="Running"
                                                    ItemsSource="{Binding RunningProcessesView}" 
                                                    CardBackground="{StaticResource RunningCardBrush}"
                                                    Grid.Column="1"/>
-                            <views:ProcessListView Header="Blocked"
+                            <views:ProcessListControl Header="Blocked"
                                                    ItemsSource="{Binding BlockedProcessesView}" 
                                                    CardBackground="{StaticResource BlockedCardBrush}"
                                                    Grid.Column="2"/>
-                            <views:ProcessListView Header="Completed"
+                            <views:ProcessListControl Header="Completed"
                                                    ItemsSource="{Binding CompletedProcessesView}" 
                                                    CardBackground="{StaticResource CompletedCardBrush}"
                                                    Grid.Column="3"/>

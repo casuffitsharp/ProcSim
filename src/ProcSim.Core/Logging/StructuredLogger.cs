@@ -28,7 +28,10 @@ public class StructuredLogger : IStructuredLogger, IDisposable
         OnLog?.Invoke(simEvent);
     }
 
-    public IEnumerable<SimEvent> GetAllEvents() => [.. _events];
+    public IEnumerable<SimEvent> GetAllEvents()
+    {
+        return [.. _events];
+    }
 
     public void Dispose()
     {
@@ -43,7 +46,7 @@ public class StructuredLogger : IStructuredLogger, IDisposable
 
         string filePath = Path.Combine(directoryPath, $"SimEvents_{DateTime.UtcNow:yyyyMMdd_HHmmss}.json");
 
-        var events = GetAllEvents();
+        IEnumerable<SimEvent> events = GetAllEvents();
 
         string json = JsonSerializer.Serialize(events, _options);
         File.WriteAllText(filePath, json);

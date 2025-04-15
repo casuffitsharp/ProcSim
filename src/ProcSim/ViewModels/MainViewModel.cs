@@ -7,6 +7,7 @@ using ProcSim.Core.Factories;
 using ProcSim.Core.IO;
 using ProcSim.Core.IO.Devices;
 using ProcSim.Core.Logging;
+using ProcSim.Core.Monitoring;
 using ProcSim.Core.Runtime;
 using ProcSim.Core.Scheduling;
 using System.Collections.ObjectModel;
@@ -47,7 +48,11 @@ public partial class MainViewModel : ObservableObject, IDisposable
         Processes.CollectionChanged += Processes_CollectionChanged;
         ProcessesSettingsVm.ProcessStateChanged += OnProcessStateChanged;
 
-        TaskManagerVm = new(_logger);
+
+        PerformanceMonitor _perfMonitor = new(_logger);
+        _perfMonitor.Start();
+
+        TaskManagerVm = new(_perfMonitor);
 
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ResetSchedulingCommand = new AsyncRelayCommand(ResetSchedulingAsync, CanResetScheduling);

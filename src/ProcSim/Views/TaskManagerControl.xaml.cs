@@ -2,9 +2,9 @@
 
 namespace ProcSim.Views;
 
-public partial class TaskManagerView : UserControl
+public partial class TaskManagerControl : UserControl
 {
-    public TaskManagerView()
+    public TaskManagerControl()
     {
         InitializeComponent();
     }

@@ -33,7 +33,6 @@ public sealed class SimulationDataGenerator
                 _logger.Log(new ProcessStateChangeEvent
                 {
                     Timestamp = now,
-                    EventType = SimEventType.ProcessStateChange,
                     ProcessId = _random.Next(1, 10),
                     Channel = i,
                     Message = $"Core {i} mudou para {state}",
@@ -47,7 +46,6 @@ public sealed class SimulationDataGenerator
                 _logger.Log(new IoDeviceStateChangeEvent
                 {
                     Timestamp = now,
-                    EventType = SimEventType.IoDeviceStateChange,
                     Device = device,
                     IsActive = active,
                     Message = $"{device} está {(active ? "Ativo" : "Inativo")}",

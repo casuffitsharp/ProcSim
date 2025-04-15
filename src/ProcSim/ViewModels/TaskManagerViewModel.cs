@@ -3,43 +3,39 @@ using ProcSim.Core.Logging;
 using ProcSim.Core.Monitoring;
 using System.Collections.ObjectModel;
 using System.Windows;
-using System.Windows.Threading;
 
 namespace ProcSim.ViewModels;
 
 public sealed partial class TaskManagerViewModel : ObservableObject
 {
-    private readonly IStructuredLogger _logger;
-    private readonly DispatcherTimer _windowTimer;
     private readonly PerformanceMonitor _perfMonitor;
-    private readonly SimulationDataGenerator _simDataGenerator;
 
-    public TaskManagerViewModel(IStructuredLogger logger)
+    public TaskManagerViewModel(PerformanceMonitor perfMonitor)
     {
-        _logger = logger;
-        //_logger.OnLog += Logger_OnLog;
-
-        SeparateCpuCharts = true;
-        NumberOfCores = 4;
-        InitializeCpuCharts();
-        InitializeIoCharts();
-
-        List<string> ioDevices = [.. IoCharts.Select(x => x.DeviceName)];
-        _perfMonitor = new PerformanceMonitor(_logger, NumberOfCores, ioDevices);
+        _perfMonitor = perfMonitor;
         _perfMonitor.OnCpuUsageUpdated += PerfMonitor_OnCpuUsageUpdated;
         _perfMonitor.OnIoUsageUpdated += PerfMonitor_OnIoUsageUpdated;
-        _perfMonitor.Start();
 
-        // Para testes, usamos o gerador de dados simulados.
-        _simDataGenerator = new SimulationDataGenerator(_logger, NumberOfCores, ioDevices);
+        SeparateCpuCharts = true;
 
-        _windowTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _windowTimer.Tick += WindowTimer_Tick;
-        _windowTimer.Start();
+        List<string> ioDevices = [.. IoCharts.Select(x => x.DeviceName)];
+
+        //_ = new SimulationDataGenerator(_logger, NumberOfCores, ioDevices);
     }
 
     public bool SeparateCpuCharts { get; set; }
-    public int NumberOfCores { get; set; }
+    public int NumberOfCores
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                InitializeCpuCharts();
+            }
+        }
+    }
 
     public ObservableCollection<CoreChartViewModel> CpuCharts { get; } = [];
     public ObservableCollection<IoChartViewModel> IoCharts { get; } = [];
@@ -61,23 +57,6 @@ public sealed partial class TaskManagerViewModel : ObservableObject
         IoCharts.Add(new IoChartViewModel("Memory", 10));
     }
 
-    private void WindowTimer_Tick(object sender, EventArgs e)
-    {
-        //foreach (CoreChartViewModel coreChart in CpuCharts)
-        //{
-        //    coreChart.CurrentTime++;
-        //    coreChart.XMax = coreChart.CurrentTime;
-        //    coreChart.XMin = coreChart.XMax - WINDOW_SIZE;
-        //}
-
-        //foreach (IoChartViewModel ioChart in IoCharts)
-        //{
-        //    ioChart.CurrentTime++;
-        //    ioChart.XMax = ioChart.CurrentTime;
-        //    ioChart.XMin = ioChart.XMax - WINDOW_SIZE;
-        //}
-    }
-
     private void PerfMonitor_OnCpuUsageUpdated(Dictionary<int, double> usageByCore)
     {
         Application.Current.Dispatcher.Invoke(() =>
@@ -87,13 +66,13 @@ public sealed partial class TaskManagerViewModel : ObservableObject
                 foreach (CoreChartViewModel chart in CpuCharts)
                 {
                     if (usageByCore.TryGetValue(chart.CoreId, out double usage))
-                        chart.CpuValues.Add(usage);
+                        chart.Values.Add(usage);
                 }
             }
             else
             {
                 double avgUsage = usageByCore.Values.Average();
-                CpuCharts[0].CpuValues.Add(avgUsage);
+                CpuCharts[0].Values.Add(avgUsage);
             }
         });
     }
@@ -105,20 +84,8 @@ public sealed partial class TaskManagerViewModel : ObservableObject
             foreach (IoChartViewModel ioChart in IoCharts)
             {
                 if (usageByDevice.TryGetValue(ioChart.DeviceName, out double usage))
-                    ioChart.IoValues.Add(usage);
+                    ioChart.Values.Add(usage);
             }
         });
     }
-
-    //private void Logger_OnLog(SimEvent simEvent)
-    //{
-    //    if (simEvent.EventType.Equals("I/O", StringComparison.OrdinalIgnoreCase))
-    //    {
-    //        Application.Current.Dispatcher.Invoke(() => DeviceEvents.Add(simEvent));
-    //    }
-    //    else if (!simEvent.EventType.Equals("CPU", StringComparison.OrdinalIgnoreCase))
-    //    {
-    //        Application.Current.Dispatcher.Invoke(() => GeneralEvents.Add(simEvent));
-    //    }
-    //}
 }
