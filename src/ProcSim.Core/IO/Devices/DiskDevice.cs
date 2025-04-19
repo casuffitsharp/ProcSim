@@ -1,9 +1,10 @@
 ﻿using ProcSim.Core.Enums;
+using ProcSim.Core.Logging;
 using System.Threading.Channels;
 
 namespace ProcSim.Core.IO.Devices;
 
-public sealed class DiskDevice(string name, int channels, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider) : IIoDevice
+public sealed class DiskDevice(string name, int channels, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider, IStructuredLogger logger) : IIoDevice
 {
     public string Name { get; } = name;
     public IoDeviceType DeviceType { get; } = IoDeviceType.Disk;
@@ -22,7 +23,7 @@ public sealed class DiskDevice(string name, int channels, Func<CancellationToken
     {
         for (int i = 0; i < Channels; i++)
         {
-            int channel = i + 1;
+            int channel = i;
             Task.Run(async () =>
             {
                 while (await _requestChannel.Reader.WaitToReadAsync(tokenProvider()))
@@ -30,7 +31,16 @@ public sealed class DiskDevice(string name, int channels, Func<CancellationToken
                     if (!_requestChannel.Reader.TryRead(out IoRequest request))
                         continue;
 
+                    request.Operation.DeviceName = Name;
                     request.Operation.Channel = channel;
+
+                    logger.Log(new IoDeviceStateChangeEvent
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        Device = Name,
+                        IsActive = true,
+                    });
+
                     for (int j = 0; j < request.Operation.Duration && !tokenProvider().IsCancellationRequested; j++)
                     {
                         await delayFunc(tokenProvider());

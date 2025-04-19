@@ -1,236 +1,140 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ProcSim.Assets;
-using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
-using ProcSim.Core.Factories;
-using ProcSim.Core.IO;
 using ProcSim.Core.IO.Devices;
-using ProcSim.Core.Logging;
-using ProcSim.Core.Monitoring;
-using ProcSim.Core.Runtime;
-using ProcSim.Core.Scheduling;
+using ProcSim.Core.Models;
+using ProcSim.Core.Simulation;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
-using System.Windows;
 using System.Windows.Data;
 
 namespace ProcSim.ViewModels;
 
-public partial class MainViewModel : ObservableObject, IDisposable
+public partial class MainViewModel : ObservableObject
 {
-    private readonly StructuredLogger _logger;
-    private readonly TickManager _tickManager;
-    private readonly IoManager _ioManager;
-    private readonly CpuScheduler _cpuScheduler;
-    private readonly GlobalCancellationTokenService _globalCtsService = new();
-    private Kernel _kernel;
+    private readonly ISimulationController _simulator;
 
-    public MainViewModel()
+    public MainViewModel(ISimulationController simulationController, VmSettingsViewModel vmSettingsVm, ProcessesSettingsViewModel processesSettingsVm, TaskManagerViewModel taskManagerVm)
     {
-        _logger = new StructuredLogger();
+        _simulator = simulationController;
 
-        _tickManager = new(_logger);
-        CpuTime = Settings.Default.CpuTime;
+        VmSettingsVm = vmSettingsVm;
+        ProcessesSettingsVm = processesSettingsVm;
+        TaskManagerVm = taskManagerVm;
 
-        _ioManager = new(_logger);
-        _cpuScheduler = new(_ioManager, _logger);
-
-        VmSettingsVm = new VmSettingsViewModel(new VmConfigRepository(), _ioManager);
-        VmSettingsVm.PropertyChanged += VmSettingsVm_PropertyChanged;
-
-        _tickManager.RunStateChanged += () => IsRunning = !_tickManager.IsPaused;
-
-        ProcessesSettingsVm = new ProcessesSettingsViewModel(new ProcessesConfigRepository());
-        ProcessesSettingsVm.PropertyChanged += ProcessesSettingsVm_PropertyChanged;
-        Processes.CollectionChanged += Processes_CollectionChanged;
-        ProcessesSettingsVm.ProcessStateChanged += OnProcessStateChanged;
-
-
-        PerformanceMonitor _perfMonitor = new(_logger);
-        _perfMonitor.Start();
-
-        TaskManagerVm = new(_perfMonitor);
+        ReadyProcessesView = CreateView(Processes, p => p.State == ProcessState.Ready);
+        RunningProcessesView = CreateView(Processes, p => p.State == ProcessState.Running);
+        BlockedProcessesView = CreateView(Processes, p => p.State == ProcessState.Blocked);
+        CompletedProcessesView = CreateView(Processes, p => p.State == ProcessState.Completed);
 
         RunPauseSchedulingCommand = new AsyncRelayCommand(RunPauseSchedulingAsync, CanRunPauseScheduling, AsyncRelayCommandOptions.AllowConcurrentExecutions);
-        ResetSchedulingCommand = new AsyncRelayCommand(ResetSchedulingAsync, CanResetScheduling);
+        ResetSchedulingCommand = new RelayCommand(ResetScheduling, CanResetScheduling);
 
-        ReadyProcessesView = new CollectionViewSource { Source = Processes }.View;
-        ReadyProcessesView = CollectionViewSource.GetDefaultView(Processes);
-        ReadyProcessesView.Filter = o => o is ProcessViewModel e && e.State == ProcessState.Ready;
-        ((ICollectionViewLiveShaping)ReadyProcessesView).LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
-        ((ICollectionViewLiveShaping)ReadyProcessesView).IsLiveFiltering = true;
+        VmSettingsVm.PropertyChanged += CurrentFile_PropertyChanged;
+        ProcessesSettingsVm.PropertyChanged += CurrentFile_PropertyChanged;
 
-        RunningProcessesView = new CollectionViewSource { Source = Processes }.View;
-        RunningProcessesView.Filter = o => o is ProcessViewModel e && e.State == ProcessState.Running;
-        ((ICollectionViewLiveShaping)RunningProcessesView).LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
-        ((ICollectionViewLiveShaping)RunningProcessesView).IsLiveFiltering = true;
-
-        BlockedProcessesView = new CollectionViewSource { Source = Processes }.View;
-        BlockedProcessesView.Filter = o => o is ProcessViewModel e && e.State == ProcessState.Blocked;
-        ((ICollectionViewLiveShaping)BlockedProcessesView).LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
-        ((ICollectionViewLiveShaping)BlockedProcessesView).IsLiveFiltering = true;
-
-        CompletedProcessesView = new CollectionViewSource { Source = Processes }.View;
-        CompletedProcessesView.Filter = o => o is ProcessViewModel e && e.State == ProcessState.Completed;
-        ((ICollectionViewLiveShaping)CompletedProcessesView).LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
-        ((ICollectionViewLiveShaping)CompletedProcessesView).IsLiveFiltering = true;
+        _simulator.TickManager.RunStateChanged += UpdateRunState;
+        _simulator.SimulationStateChanged += UpdateRunState;
     }
 
+    public VmSettingsViewModel VmSettingsVm { get; }
+    public ProcessesSettingsViewModel ProcessesSettingsVm { get; }
+    public TaskManagerViewModel TaskManagerVm { get; }
+
     public ObservableCollection<ProcessViewModel> Processes => ProcessesSettingsVm.Processes;
+
     public ICollectionView ReadyProcessesView { get; }
     public ICollectionView RunningProcessesView { get; }
     public ICollectionView BlockedProcessesView { get; }
     public ICollectionView CompletedProcessesView { get; }
 
-    public ProcessesSettingsViewModel ProcessesSettingsVm { get; }
-    public VmSettingsViewModel VmSettingsVm { get; }
-    public TaskManagerViewModel TaskManagerVm { get; }
-
     public IAsyncRelayCommand RunPauseSchedulingCommand { get; }
-    public IAsyncRelayCommand ResetSchedulingCommand { get; }
+    public IRelayCommand ResetSchedulingCommand { get; }
 
-    [ObservableProperty]
-    public partial int TotalTimeUnits { get; set; }
-
-    public string StatusBarMessage => $"VM: {Path.GetFileNameWithoutExtension(VmSettingsVm.CurrentFile ?? "New")} | Processos: {Path.GetFileNameWithoutExtension(ProcessesSettingsVm.CurrentFile ?? "New")}";
-
-    public bool IsRunning
+    public ushort TickInterval
     {
-        get => field;
-        private set
-        {
-            if (SetProperty(ref field, value))
-            {
-                VmSettingsVm.CanChangeAlgorithm = !value;
-                RunPauseSchedulingCommand.NotifyCanExecuteChanged();
-                ResetSchedulingCommand.NotifyCanExecuteChanged();
-            }
-        }
-    }
-
-    public ushort CpuTime
-    {
-        get => field;
+        get => _simulator.TickManager.TickInterval;
         set
         {
-            if (SetProperty(ref field, value))
+            if (TickInterval != value)
             {
-                _tickManager.CpuTime = value;
-                OnPropertyChanged(nameof(CpuTimeTs));
+                _simulator.TickManager.TickInterval = value;
+                OnPropertyChanged();
             }
         }
     }
 
-    public TimeSpan CpuTimeTs => TimeSpan.FromMilliseconds(CpuTime);
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RunPauseSchedulingCommand))]
+    [NotifyCanExecuteChangedFor(nameof(ResetSchedulingCommand))]
+    public partial bool IsRunning { get; private set; }
 
-    public void PauseScheduling()
-    {
-        _tickManager.Pause();
-    }
-
-    public async Task ResetSchedulingAsync()
-    {
-        await _globalCtsService.ResetAsync();
-        _kernel = null;
-
-        foreach (ProcessViewModel process in Processes)
-            process.Model.Reset();
-
-        RunPauseSchedulingCommand.NotifyCanExecuteChanged();
-    }
+    public string StatusBarMessage => $"VM: {Path.GetFileNameWithoutExtension(VmSettingsVm.CurrentFile ?? "New")} | Proc: {Path.GetFileNameWithoutExtension(ProcessesSettingsVm.CurrentFile ?? "New")}";
 
     private bool CanRunPauseScheduling()
     {
         return IsRunning || Processes.Any(p => p.State != ProcessState.Completed);
     }
 
-    private bool CanResetScheduling()
-    {
-        return _tickManager.IsPaused && _kernel is not null;
-    }
-
     private async Task RunPauseSchedulingAsync()
     {
-        if (IsRunning)
+        if (_simulator.IsRunning)
         {
-            PauseScheduling();
+            _simulator.Pause();
         }
         else
         {
-            await RunSchedulingAsync();
-        }
-    }
-
-    private async Task RunSchedulingAsync()
-    {
-        if (_kernel is null)
-            LoadKernel();
-
-        try
-        {
-            await _kernel.RunAsync(_globalCtsService.TokenProvider);
-        }
-        catch (OperationCanceledException)
-        {
-            //_logger.Log("Simulação pausada pelo usuário.");
-        }
-        catch (Exception)
-        {
-            //_logger.Log($"Erro inesperado: {ex.Message}");
-        }
-    }
-
-    private void LoadKernel()
-    {
-        _kernel = new(_tickManager, _cpuScheduler, VmSettingsVm.SelectedAlgorithmInstance, VmSettingsVm.CpuCores);
-        foreach (ProcessViewModel process in Processes)
-            _kernel.RegisterProcess(process.Model);
-
-        foreach (DeviceViewModel vm in VmSettingsVm.AvailableDevices)
-        {
-            _ioManager.RemoveDevice(vm.Name);
-            if (vm.IsEnabled)
+            if (!_simulator.HasStarted)
             {
-                IIoDevice ioDevice = IoDeviceFactory.CreateDevice(vm.DeviceType, vm.Name, vm.Channels, _tickManager.DelayFunc, _globalCtsService.TokenProvider);
-                _ioManager.AddDevice(ioDevice);
+                List<Process> processes = [.. Processes.Select(p => p.Model)];
+                List<IoDeviceConfig> devices = [.. VmSettingsVm.AvailableDevices.Where(d => d.IsEnabled).Select(d => d.MapToDeviceConfig())];
+
+                _simulator.Initialize(processes, devices, algorithmType: VmSettingsVm.SelectedAlgorithm, quantum: VmSettingsVm.Quantum, cores: VmSettingsVm.CpuCores);
+                TaskManagerVm.Initialize(_simulator.PerformanceMonitor);
             }
+
+            await _simulator.StartAsync();
         }
     }
 
-    private void OnProcessStateChanged(ProcessViewModel model)
+    private bool CanResetScheduling()
     {
-        if (!Application.Current.Dispatcher.CheckAccess())
-        {
-            Application.Current.Dispatcher.Invoke(() => OnProcessStateChanged(model));
-            return;
-        }
+        return !IsRunning;
     }
 
-    private void Processes_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+    private void ResetScheduling()
     {
-        foreach (ProcessViewModel item in e.NewItems?.OfType<ProcessViewModel>())
-            OnProcessStateChanged(item);
+        _simulator.ResetAsync();
+
+        foreach (ProcessViewModel vm in Processes)
+            vm.Model.Reset();
 
         RunPauseSchedulingCommand.NotifyCanExecuteChanged();
     }
 
-    private void VmSettingsVm_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    private void UpdateRunState()
     {
-        if (e.PropertyName == nameof(VmSettingsVm.CurrentFile))
+        IsRunning = _simulator.IsRunning;
+        VmSettingsVm.CanChangeConfigs = !_simulator.HasStarted;
+        ProcessesSettingsVm.CanChangeConfigs = !_simulator.HasStarted;
+    }
+
+    private void CurrentFile_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(VmSettingsVm.CurrentFile) or nameof(ProcessesSettingsVm.CurrentFile))
             OnPropertyChanged(nameof(StatusBarMessage));
     }
 
-    private void ProcessesSettingsVm_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    private static ICollectionView CreateView<T>(ObservableCollection<T> source, Func<T, bool> predicate)
     {
-        if (e.PropertyName == nameof(ProcessesSettingsVm.CurrentFile))
-            OnPropertyChanged(nameof(StatusBarMessage));
-    }
-
-    public void Dispose()
-    {
-        _logger?.Dispose();
+        ICollectionView view = new CollectionViewSource { Source = source }.View;
+        view.Filter = o => o is T t && predicate(t);
+        if (view is ICollectionViewLiveShaping live)
+        {
+            live.IsLiveFiltering = true;
+            live.LiveFilteringProperties.Add(nameof(ProcessViewModel.State));
+        }
+        return view;
     }
 }

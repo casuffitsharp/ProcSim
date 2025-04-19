@@ -5,13 +5,25 @@ using ProcSim.Core.Scheduling.Algorithms;
 
 namespace ProcSim.Core.Runtime;
 
-public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, ISchedulingAlgorithm schedulingAlgorithm, int cores) : IKernel
+public sealed class Kernel : IKernel
 {
-    private readonly CancellationTokenSource _cts = new();
     private readonly List<Process> _processTable = [];
+    private readonly CpuScheduler _cpuScheduler;
+    private readonly ISchedulingAlgorithm _schedulingAlgorithm;
 
-    public ISchedulingAlgorithm SchedulingAlgorithm { get; } = schedulingAlgorithm;
-    public int Cores { get; } = cores;
+    public Kernel(TickManager tickManager, CpuScheduler cpuScheduler, ISchedulingAlgorithm schedulingAlgorithm, int cores)
+    {
+        TickManager = tickManager;
+        _cpuScheduler = cpuScheduler;
+        _schedulingAlgorithm = schedulingAlgorithm;
+        Cores = cores;
+
+        _schedulingAlgorithm.OnProcessTick += (coreId, pid) => OnCoreAccounting?.Invoke(coreId, pid);
+    }
+
+    public event Action<int, int?> OnCoreAccounting;
+    public TickManager TickManager { get; }
+    public int Cores { get; }
 
     public void RegisterProcess(Process process)
     {
@@ -24,36 +36,41 @@ public sealed class Kernel(TickManager tickManager, CpuScheduler cpuScheduler, I
         _processTable.Remove(process);
     }
 
+    public void ClearProcesses()
+    {
+        _processTable.Clear();
+    }
+
     public async Task RunAsync(Func<CancellationToken> tokenProvider)
     {
         try
         {
-            cpuScheduler.ClearQueue();
-            foreach (Process process in _processTable)
-                cpuScheduler.EnqueueProcess(process);
+            _cpuScheduler.ClearQueue();
+            foreach (Process proc in _processTable)
+                _cpuScheduler.EnqueueProcess(proc);
 
-            tickManager.Resume();
+            TickManager.Resume();
 
-            List<Task> coreTasks = [];
-            for (int core = 0; core < Cores; core++)
+            List<Task> tasks = [];
+            for (int i = 0; i < Cores; i++)
             {
-                int currentCore = core + 1;
-                coreTasks.Add(Task.Run(async () =>
+                int coreId = i;
+                tasks.Add(Task.Run(async () =>
                 {
                     while (!tokenProvider().IsCancellationRequested && _processTable.Any(p => p.State != ProcessState.Completed))
                     {
-                        await SchedulingAlgorithm.RunAsync(cpuScheduler, currentCore, tickManager.DelayFunc, tokenProvider);
-                        await tickManager.DelayFunc(tokenProvider());
+                        await _schedulingAlgorithm.RunAsync(_cpuScheduler, coreId, TickManager.DelayFunc, tokenProvider);
+                        await TickManager.DelayFunc(tokenProvider());
                     }
                 }, tokenProvider()));
             }
 
-            await Task.WhenAll(coreTasks);
+            await Task.WhenAll(tasks);
         }
         finally
         {
-            tickManager.Pause();
-            cpuScheduler.ClearQueue();
+            TickManager.Pause();
+            _cpuScheduler.ClearQueue();
         }
     }
 }

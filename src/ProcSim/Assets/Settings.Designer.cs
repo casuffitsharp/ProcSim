@@ -62,12 +62,12 @@ namespace ProcSim.Assets {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("10")]
-        public ushort CpuTime {
+        public ushort TickInterval {
             get {
-                return ((ushort)(this["CpuTime"]));
+                return ((ushort)(this["TickInterval"]));
             }
             set {
-                this["CpuTime"] = value;
+                this["TickInterval"] = value;
             }
         }
     }

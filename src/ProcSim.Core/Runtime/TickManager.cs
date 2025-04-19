@@ -4,8 +4,8 @@ namespace ProcSim.Core.Runtime;
 
 public sealed class TickManager
 {
-    private const ushort DEFAULT_CPU_TIME = 1000;
-    private readonly PeriodicTimer _timer = new(TimeSpan.FromMilliseconds(DEFAULT_CPU_TIME));
+    private const ushort DEFAULT_TICK_INTERVAL = 1000;
+    private readonly PeriodicTimer _timer = new(TimeSpan.FromMilliseconds(DEFAULT_TICK_INTERVAL));
     private readonly Lock _waitersLock = new();
     private readonly List<TaskCompletionSource<bool>> _tickWaiters = [];
 
@@ -17,36 +17,32 @@ public sealed class TickManager
     public TickManager(IStructuredLogger logger)
     {
         _logger = logger;
-        //_logger.Log(new LogEvent(null, "TickManager", "TickManager iniciado."));
 
-        // Tarefa central que aguarda ticks e notifica os aguardadores.
         Task.Run(async () =>
         {
             while (await _timer.WaitForNextTickAsync(CancellationToken.None))
             {
-                // Se estiver pausado, espera o resume.
                 while (IsPaused)
                     await _resumeTcs.Task;
 
-                // Notifica os inscritos no tick.
                 List<TaskCompletionSource<bool>> waiters;
                 lock (_waitersLock)
                 {
                     waiters = [.. _tickWaiters];
                     _tickWaiters.Clear();
                 }
+
                 foreach (TaskCompletionSource<bool> tcs in waiters)
                     tcs.TrySetResult(true);
 
-                TickOccurred?.Invoke();
-                //_logger.Log(new LogEvent(null, "TickManager", "Tick ocorrido."));
+                OnTick?.Invoke();
             }
         });
     }
 
     public bool IsPaused { get; private set; } = true;
 
-    public ushort CpuTime
+    public ushort TickInterval
     {
         get;
         set
@@ -57,9 +53,9 @@ public sealed class TickManager
             field = value;
             _timer.Period = TimeSpan.FromMilliseconds(value);
         }
-    } = DEFAULT_CPU_TIME;
+    } = DEFAULT_TICK_INTERVAL;
 
-    public event Action TickOccurred;
+    public event Action OnTick;
     public event Action RunStateChanged;
 
     public void Pause()
@@ -71,7 +67,6 @@ public sealed class TickManager
 
             IsPaused = true;
             RunStateChanged?.Invoke();
-            //_logger.Log(new LogEvent(null, "TickManager", "TickManager pausado."));
         }
     }
 
@@ -86,7 +81,6 @@ public sealed class TickManager
             _resumeTcs.TrySetResult(true);
             _resumeTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             RunStateChanged?.Invoke();
-            //_logger.Log(new LogEvent(null, "TickManager", "TickManager retomado."));
         }
     }
 

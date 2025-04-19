@@ -41,7 +41,7 @@ public class KernelTests
         // Arrange
         TickManager tickManager = new(_logger)
         {
-            CpuTime = 10
+            TickInterval = 10
         };
 
         // Cria o SystemCallHandler real, injetando o FakeIoManager.

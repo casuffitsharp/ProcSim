@@ -11,7 +11,7 @@ public class TickManagerTests
         StructuredLogger logger = new();
         TickManager tickManager = new(logger)
         {
-            CpuTime = 10
+            TickInterval = 10
         };
         bool tickFired = false;
         tickManager.TickOccurred += () => tickFired = true;

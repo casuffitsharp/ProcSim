@@ -45,7 +45,7 @@ public class IntegrationTests
         StructuredLogger logger = new();
         TickManager tickManager = new(logger)
         {
-            CpuTime = 10
+            TickInterval = 10
         };
 
         // Use o IoManager real e adicione um dispositivo fake que simula a conclusão do I/O.

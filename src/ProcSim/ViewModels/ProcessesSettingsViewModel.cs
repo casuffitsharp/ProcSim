@@ -33,8 +33,9 @@ public partial class ProcessesSettingsViewModel : ObservableObject
         AddProcessCommand.NotifyCanExecuteChanged();
         RemoveProcessCommand.NotifyCanExecuteChanged();
 
-        LoadConfig(_configRepo.Deserialize(Settings.Default.ProcessesConfig));
+        CanChangeConfigs = true;
 
+        LoadConfig(_configRepo.Deserialize(Settings.Default.ProcessesConfig));
         Reset();
     }
 
@@ -54,6 +55,9 @@ public partial class ProcessesSettingsViewModel : ObservableObject
     [ObservableProperty]
     [NotifyCanExecuteChangedFor(nameof(SaveConfigCommand))]
     public partial string CurrentFile { get; private set; }
+
+    [ObservableProperty]
+    public partial bool CanChangeConfigs { get; set; }
 
     public List<IoDeviceType> IoDeviceTypes { get; } = [.. Enum.GetValues<IoDeviceType>()];
 

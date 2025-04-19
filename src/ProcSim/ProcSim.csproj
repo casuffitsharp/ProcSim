@@ -23,6 +23,7 @@
         <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
         <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
         <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
     </ItemGroup>
 
     <ItemGroup>
@@ -61,7 +62,7 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>net9.0-windows</TargetFramework>
+        <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
         <LangVersion>preview</LangVersion>
         <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
         <Nullable>disable</Nullable>

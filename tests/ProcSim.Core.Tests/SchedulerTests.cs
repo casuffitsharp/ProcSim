@@ -41,7 +41,7 @@ public class SchedulerTests
         // Arrange
         TickManager tickManager = new(_logger)
         {
-            CpuTime = 10
+            TickInterval = 10
         };
 
         ISysCallHandler sysCallHandler = new SystemCallHandler(_ioManagerMock);

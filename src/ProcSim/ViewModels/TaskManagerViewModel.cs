@@ -1,78 +1,76 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ProcSim.Core.Logging;
 using ProcSim.Core.Monitoring;
+using ProcSim.ViewModels;
 using System.Collections.ObjectModel;
 using System.Windows;
 
-namespace ProcSim.ViewModels;
-
 public sealed partial class TaskManagerViewModel : ObservableObject
 {
-    private readonly PerformanceMonitor _perfMonitor;
+    private PerformanceMonitor _perfMonitor;
+    private readonly double _windowSizeSeconds = 10;
 
-    public TaskManagerViewModel(PerformanceMonitor perfMonitor)
+    public ObservableCollection<CoreChartViewModel> CpuCharts { get; } = new();
+    public ObservableCollection<IoChartViewModel> IoCharts { get; } = new();
+
+    public void Initialize(PerformanceMonitor perfMonitor)
     {
+        if (_perfMonitor != null)
+        {
+            _perfMonitor.OnCpuUsageUpdated -= PerfMonitor_OnCpuUsageUpdated;
+            _perfMonitor.OnIoUsageUpdated -= PerfMonitor_OnIoUsageUpdated;
+            _perfMonitor.OnHardwareChanged -= PerfMonitor_OnHardwareChanged;
+        }
+
         _perfMonitor = perfMonitor;
         _perfMonitor.OnCpuUsageUpdated += PerfMonitor_OnCpuUsageUpdated;
         _perfMonitor.OnIoUsageUpdated += PerfMonitor_OnIoUsageUpdated;
+        _perfMonitor.OnHardwareChanged += PerfMonitor_OnHardwareChanged;
 
-        SeparateCpuCharts = true;
-
-        List<string> ioDevices = [.. IoCharts.Select(x => x.DeviceName)];
-
-        //_ = new SimulationDataGenerator(_logger, NumberOfCores, ioDevices);
+        RebuildCharts();
     }
 
-    public bool SeparateCpuCharts { get; set; }
-    public int NumberOfCores
+    private void PerfMonitor_OnHardwareChanged()
     {
-        get;
-        set
+        RebuildCharts();
+    }
+
+    private void RebuildCharts()
+    {
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            if (field != value)
-            {
-                field = value;
-                InitializeCpuCharts();
-            }
-        }
-    }
+            var coreIds = _perfMonitor.GetCpuCoreIds();
+            foreach (var old in CpuCharts.ToList())
+                if (!coreIds.Contains(old.CoreId))
+                    CpuCharts.Remove(old);
 
-    public ObservableCollection<CoreChartViewModel> CpuCharts { get; } = [];
-    public ObservableCollection<IoChartViewModel> IoCharts { get; } = [];
-    public ObservableCollection<SimEvent> DeviceEvents { get; } = [];
-    public ObservableCollection<SimEvent> GeneralEvents { get; } = [];
+            foreach (int id in coreIds)
+                if (CpuCharts.All(c => c.CoreId != id))
+                    CpuCharts.Add(new CoreChartViewModel(id, _windowSizeSeconds));
 
-    private void InitializeCpuCharts()
-    {
-        CpuCharts.Clear();
-        int numberOfCharts = SeparateCpuCharts ? NumberOfCores : 1;
-        for (int i = 0; i < numberOfCharts; i++)
-            CpuCharts.Add(new CoreChartViewModel(i, 10));
-    }
-
-    private void InitializeIoCharts()
-    {
-        IoCharts.Clear();
-        IoCharts.Add(new IoChartViewModel("Disk", 10));
-        IoCharts.Add(new IoChartViewModel("Memory", 10));
+            var devNames = _perfMonitor.GetIoDeviceNames();
+            foreach (var old in IoCharts.ToList())
+                if (!devNames.Contains(old.DeviceName))
+                    IoCharts.Remove(old);
+            
+            foreach (string name in devNames)
+                if (IoCharts.All(d => d.DeviceName != name))
+                    IoCharts.Add(new IoChartViewModel(name, _windowSizeSeconds));
+        });
     }
 
     private void PerfMonitor_OnCpuUsageUpdated(Dictionary<int, double> usageByCore)
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
-            if (SeparateCpuCharts && NumberOfCores > 1)
+            if (CpuCharts.Count == 0 && usageByCore.Count > 0)
+                RebuildCharts();
+
+            foreach (var chart in CpuCharts)
             {
-                foreach (CoreChartViewModel chart in CpuCharts)
-                {
-                    if (usageByCore.TryGetValue(chart.CoreId, out double usage))
-                        chart.Values.Add(usage);
-                }
-            }
-            else
-            {
-                double avgUsage = usageByCore.Values.Average();
-                CpuCharts[0].Values.Add(avgUsage);
+                if (usageByCore.TryGetValue(chart.CoreId, out var u))
+                    chart.Values.Add(u);
+                else
+                    chart.Values.Add(0);
             }
         });
     }
@@ -81,10 +79,15 @@ public sealed partial class TaskManagerViewModel : ObservableObject
     {
         Application.Current.Dispatcher.Invoke(() =>
         {
-            foreach (IoChartViewModel ioChart in IoCharts)
+            if (IoCharts.Count == 0 && usageByDevice.Count > 0)
+                RebuildCharts();
+
+            foreach (var chart in IoCharts)
             {
-                if (usageByDevice.TryGetValue(ioChart.DeviceName, out double usage))
-                    ioChart.Values.Add(usage);
+                if (usageByDevice.TryGetValue(chart.DeviceName, out var u))
+                    chart.Values.Add(u);
+                else
+                    chart.Values.Add(0);
             }
         });
     }

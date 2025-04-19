@@ -5,11 +5,8 @@ using ProcSim.Assets;
 using ProcSim.Converters;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Enums;
-using ProcSim.Core.Factories;
-using ProcSim.Core.IO;
 using ProcSim.Core.IO.Devices;
 using ProcSim.Core.Scheduling.Algorithms;
-using ProcSim.Core.SystemCalls;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -18,31 +15,29 @@ namespace ProcSim.ViewModels;
 public partial class VmSettingsViewModel : ObservableObject
 {
     private readonly IRepositoryBase<VmConfig> _configRepo;
-    private readonly ISysCallHandler _sysCallHandler;
 
-    public VmSettingsViewModel(IRepositoryBase<VmConfig> configRepo, IIoManager ioManager)
+    public VmSettingsViewModel(IRepositoryBase<VmConfig> configRepo)
     {
         _configRepo = configRepo;
 
-        _sysCallHandler = new SystemCallHandler(ioManager);
+        AvailableAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>().Where(t => t > 0)];
 
         LoadDevices();
-
-        SchedulingAlgorithms = [.. Enum.GetValues<SchedulingAlgorithmType>().Where(v => v > 0)];
 
         SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
         SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
         LoadConfigCommand = new AsyncRelayCommand(LoadConfigFromFileAsync);
 
+        SelectedAlgorithm = AvailableAlgorithms[0];
         Quantum = 1;
         CpuCores = 1;
-        CanChangeAlgorithm = true;
+        CanChangeConfigs = true;
 
         LoadConfig(_configRepo.Deserialize(Settings.Default.VmConfig));
     }
 
-    public ObservableCollection<DeviceViewModel> AvailableDevices { get; set; } = [];
-    public ObservableCollection<SchedulingAlgorithmType> SchedulingAlgorithms { get; set; }
+    public ObservableCollection<SchedulingAlgorithmType> AvailableAlgorithms { get; }
+    public ObservableCollection<DeviceViewModel> AvailableDevices { get; private set; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
     public IAsyncRelayCommand SaveAsConfigCommand { get; }
@@ -52,64 +47,24 @@ public partial class VmSettingsViewModel : ObservableObject
     [NotifyCanExecuteChangedFor(nameof(SaveConfigCommand))]
     public partial string CurrentFile { get; private set; }
 
-    public SchedulingAlgorithmType SelectedAlgorithm
-    {
-        get;
-        set
-        {
-            if (SetProperty(ref field, value))
-            {
-                SelectedAlgorithmInstance = SchedulingAlgorithmFactory.Create(_sysCallHandler, value);
-
-                OnPropertyChanged();
-                OnPropertyChanged(nameof(IsPreemptive));
-            }
-        }
-    }
-
-    public ISchedulingAlgorithm SelectedAlgorithmInstance { get; private set; }
-
-    public bool IsPreemptive => SelectedAlgorithmInstance is IPreemptiveAlgorithm;
-
-    public uint Quantum
-    {
-        get;
-        set
-        {
-            if (field != value && value > 0)
-            {
-                field = value;
-                OnPropertyChanged();
-                UpdateSchedulerQuantum();
-            }
-        }
-    }
-
-    public ushort CpuCores
-    {
-        get;
-        set
-        {
-            if (field != value && value > 0)
-            {
-                field = value;
-                OnPropertyChanged();
-            }
-        }
-    }
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPreemptive))]
+    public partial SchedulingAlgorithmType SelectedAlgorithm { get; set; }
 
     [ObservableProperty]
-    public partial bool CanChangeAlgorithm { get; set; }
+    public partial ushort CpuCores { get; set; }
+
+    [ObservableProperty]
+    public partial uint Quantum { get; set; }
+
+    public bool IsPreemptive => SelectedAlgorithm.IsPreemptive();
+
+    [ObservableProperty]
+    public partial bool CanChangeConfigs { get; set; }
 
     internal void SaveConfig()
     {
         Settings.Default.VmConfig = _configRepo.Serialize(ToVmConfig());
-    }
-
-    private void UpdateSchedulerQuantum()
-    {
-        if (SelectedAlgorithmInstance is IPreemptiveAlgorithm preemptiveAlgorithm)
-            preemptiveAlgorithm.Quantum = Quantum;
     }
 
     private bool CanSaveConfig()
@@ -185,13 +140,17 @@ public partial class VmSettingsViewModel : ObservableObject
 
     private void LoadDevices()
     {
-        IoDeviceType[] availableIoDevices = [.. Enum.GetValues<IoDeviceType>().Where(v => v > 0)];
+        AvailableDevices = [];
         EnumDescriptionConverter converter = new();
-        foreach (IoDeviceType ioDeviceType in availableIoDevices)
+        foreach (IoDeviceType type in Enum.GetValues<IoDeviceType>().Where(t => t > 0))
         {
-            string name = converter.Convert(ioDeviceType, typeof(string)) as string;
-            DeviceViewModel deviceViewModel = new() { Name = name, DeviceType = ioDeviceType, IsEnabled = false, Channels = 1 };
-            AvailableDevices.Add(deviceViewModel);
+            AvailableDevices.Add(new DeviceViewModel
+            {
+                DeviceType = type,
+                Name = converter.Convert(type, typeof(string)) as string ?? type.ToString(),
+                Channels = 1,
+                IsEnabled = false
+            });
         }
     }
 }

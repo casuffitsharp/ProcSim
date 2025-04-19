@@ -1,7 +1,7 @@
 ﻿using ProcSim.Core.Enums;
 using ProcSim.Core.Logging;
 
-namespace ProcSim.Core.Monitoring;
+namespace ProcSim.Core.Simulation;
 
 public sealed class SimulationDataGenerator
 {
@@ -29,7 +29,7 @@ public sealed class SimulationDataGenerator
             // Exemplo de geração mais realista: simulação de bursts
             for (int i = 0; i < _numberOfCores; i++)
             {
-                ProcessState state = (_random.NextDouble() > 0.3) ? ProcessState.Running : ProcessState.Blocked;
+                ProcessState state = _random.NextDouble() > 0.3 ? ProcessState.Running : ProcessState.Blocked;
                 _logger.Log(new ProcessStateChangeEvent
                 {
                     Timestamp = now,

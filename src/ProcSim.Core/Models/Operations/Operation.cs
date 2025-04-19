@@ -23,7 +23,7 @@ public abstract class Operation(int duration) : IOperation
     } = duration;
 
     [JsonIgnore]
-    public int Channel { get; set; }
+    public int? Channel { get; set; }
 
     [JsonIgnore]
     public bool IsCompleted => RemainingTime <= 0;
@@ -37,6 +37,6 @@ public abstract class Operation(int duration) : IOperation
     public void Reset()
     {
         RemainingTime = Duration;
-        Channel = 0;
+        Channel = null;
     }
 }

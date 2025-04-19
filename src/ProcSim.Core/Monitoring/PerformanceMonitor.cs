@@ -1,208 +1,230 @@
-﻿using ProcSim.Core.Enums;
-using ProcSim.Core.Logging;
+﻿using ProcSim.Core.Logging;
+using ProcSim.Core.Runtime;
+using System.Collections.Concurrent;
 
 namespace ProcSim.Core.Monitoring;
 
-public sealed partial class PerformanceMonitor
+public sealed class PerformanceMonitor
 {
-    private readonly IStructuredLogger _logger;
+    private const int SmoothSampleCount = 5;
 
-    private readonly Dictionary<int, CpuCounter> _cpuCounters = [];
-    private readonly Dictionary<string, IoCounter> _ioCounters = [];
-
+    private readonly ConcurrentDictionary<int, CpuTickCounter> _cpuCounters = new();
+    private readonly ConcurrentDictionary<string, DeviceTickCounter> _ioCounters = new();
+    private readonly ConcurrentDictionary<int, bool> _cpuWasRunning = new();
+    private readonly ConcurrentDictionary<int, Queue<double>> _cpuHistory = new();
+    private readonly ConcurrentDictionary<string, Queue<double>> _ioHistory = new();
     private readonly PeriodicTimer _calcTimer;
-    private bool _started;
 
-    private readonly Dictionary<int, Queue<double>> _cpuUsageSamples = [];
-    private readonly Dictionary<string, Queue<double>> _ioUsageSamples = [];
-    private const int SmoothingWindowSize = 5;
-
-    public PerformanceMonitor(IStructuredLogger logger)
+    public PerformanceMonitor(Kernel kernel, IStructuredLogger logger)
     {
-        _logger = logger;
+        logger.OnLog += HandleLoggerEvent;
+        kernel.OnCoreAccounting += CoreAccount;
+        kernel.TickManager.OnTick += HandleTick;
 
         _calcTimer = new PeriodicTimer(TimeSpan.FromSeconds(1));
-        _logger.OnLog += OnLogReceived;
+        _ = RunCalculationLoopAsync();
     }
 
     public event Action<Dictionary<int, double>> OnCpuUsageUpdated;
     public event Action<Dictionary<string, double>> OnIoUsageUpdated;
+    public event Action OnHardwareChanged;
 
-    public void Start()
+    public void Reset()
     {
-        if (!_started)
-        {
-            _started = true;
-            _ = RunCalculationLoopAsync();
-        }
+        _cpuCounters.Clear();
+        _ioCounters.Clear();
+        _cpuWasRunning.Clear();
+        _cpuHistory.Clear();
+        _ioHistory.Clear();
+        OnHardwareChanged?.Invoke();
     }
 
-    public void Stop()
+    public IReadOnlyList<int> GetCpuCoreIds()
     {
-        _calcTimer.Dispose();
+        return [.. _cpuCounters.Keys];
     }
 
-    private void OnLogReceived(SimEvent simEvent)
+    public IReadOnlyList<string> GetIoDeviceNames()
+    {
+        return [.. _ioCounters.Keys];
+    }
+
+    private void HandleLoggerEvent(SimEvent simEvent)
     {
         switch (simEvent)
         {
-            case ProcessStateChangeEvent cpuEvent:
-                ProcessCpuEvent(cpuEvent);
+            case CpuConfigurationChangeEvent cpuCfg:
+                HandleCpuConfigurationChange(cpuCfg.OldCpuCount, cpuCfg.NewCpuCount);
                 break;
-            case IoDeviceStateChangeEvent ioEvent:
-                ProcessIoEvent(ioEvent);
+            case DeviceConfigurationChangeEvent devCfg:
+                HandleDeviceConfigurationChange(devCfg.Device, devCfg.IsAdded);
                 break;
-            case CpuConfigurationChangeEvent cpuConfigEvent:
-            {
-                if (cpuConfigEvent.NewCpuCount < cpuConfigEvent.OldCpuCount)
-                {
-                    _cpuCounters.Keys.Where(k => k >= cpuConfigEvent.NewCpuCount).ToList().ForEach(k => _cpuCounters.Remove(k));
-                    _cpuUsageSamples.Keys.Where(k => k >= cpuConfigEvent.NewCpuCount).ToList().ForEach(k => _cpuUsageSamples.Remove(k));
-                }
-                else if (cpuConfigEvent.NewCpuCount > cpuConfigEvent.OldCpuCount)
-                {
-                    for (int i = cpuConfigEvent.OldCpuCount; i < cpuConfigEvent.NewCpuCount; i++)
-                    {
-                        _cpuCounters[i] = new CpuCounter { SamplingStart = DateTime.UtcNow, LastEventTime = DateTime.UtcNow };
-                        _cpuUsageSamples[i] = new Queue<double>();
-                    }
-                }
+            case IoDeviceStateChangeEvent ioEvt:
+                ProcessIoStateChange(ioEvt.Device, ioEvt.IsActive);
                 break;
-            }
-            case DeviceConfigurationChangeEvent deviceConfigEvent:
-            {
-                if (!deviceConfigEvent.IsAdded)
-                {
-                    _ioCounters[deviceConfigEvent.Device] = new IoCounter { SamplingStart = DateTime.UtcNow, LastEventTime = DateTime.UtcNow };
-                    _ioUsageSamples[deviceConfigEvent.Device] = new Queue<double>();
-                }
-                else
-                {
-                    _ioCounters.Remove(deviceConfigEvent.Device);
-                    _ioUsageSamples.Remove(deviceConfigEvent.Device);
-                }
-                break;
-            }
         }
     }
 
-    private void CalculateCpuUsage()
+    private void ProcessIoStateChange(string device, bool isActive)
     {
-        Dictionary<int, double> cpuUsage = [];
-        DateTime now = DateTime.UtcNow;
-        foreach ((int coreId, CpuCounter counter) in _cpuCounters)
-        {
-            if (counter.IsRunning)
-            {
-                double delta = (now - counter.LastEventTime).TotalSeconds;
-                counter.RunningTime += delta;
-                counter.LastEventTime = now;
-            }
-
-            double intervalTime = (now - counter.SamplingStart).TotalSeconds;
-            double rawUsage = intervalTime > 0 ? counter.RunningTime / intervalTime * 100 : 0;
-
-            Queue<double> samples = _cpuUsageSamples[coreId];
-            samples.Enqueue(rawUsage);
-            if (samples.Count > SmoothingWindowSize)
-                samples.Dequeue();
-
-            cpuUsage[coreId] = samples.Average();
-
-            counter.SamplingStart = now;
-            counter.RunningTime = 0;
-        }
-
-        OnCpuUsageUpdated?.Invoke(cpuUsage);
+        DeviceTickCounter counter = _ioCounters.GetOrAdd(device, _ => new DeviceTickCounter());
+        _ioHistory.TryAdd(device, new Queue<double>());
+        counter.IsBusy = isActive;
     }
 
-    private void ProcessCpuEvent(ProcessStateChangeEvent simEvent)
+    private void CoreAccount(int coreId, int? pid)
     {
-        if (!_cpuCounters.TryGetValue(simEvent.Channel, out CpuCounter counter))
-        {
-            counter = new CpuCounter { SamplingStart = DateTime.UtcNow, LastEventTime = DateTime.UtcNow };
-            _cpuCounters[simEvent.Channel] = counter;
-            _cpuUsageSamples[simEvent.Channel] = new Queue<double>();
-        }
-
-        DateTime eventTime = simEvent.Timestamp;
-        double delta = (eventTime - counter.LastEventTime).TotalSeconds;
-
-        if (counter.IsRunning)
-            counter.RunningTime += delta;
-
-        counter.IsRunning = simEvent.NewState == ProcessState.Running;
-        counter.LastEventTime = eventTime;
+        CpuTickCounter counter = _cpuCounters.GetOrAdd(coreId, _ => new CpuTickCounter());
+        _cpuHistory.TryAdd(coreId, new Queue<double>());
+        _cpuWasRunning[coreId] = pid.HasValue;
+        if (pid.HasValue)
+            counter.RunningTicks++;
     }
 
-    private void ProcessIoEvent(IoDeviceStateChangeEvent simEvent)
+    private void HandleTick()
     {
-        if (!_ioCounters.TryGetValue(simEvent.Device, out IoCounter counter))
+        UpdateCpuCounters();
+        UpdateIoCounters();
+    }
+
+    private void UpdateCpuCounters()
+    {
+        foreach (int coreId in _cpuCounters.Keys)
         {
-            counter = new IoCounter { SamplingStart = DateTime.UtcNow, LastEventTime = DateTime.UtcNow };
-            _ioCounters[simEvent.Device] = counter;
-            _ioUsageSamples[simEvent.Device] = new Queue<double>();
+            if (!_cpuCounters.TryGetValue(coreId, out CpuTickCounter counter))
+                continue;
+
+            counter.TotalTicks++;
+
+            bool wasRunning = _cpuWasRunning.GetOrAdd(coreId, false);
+            if (!wasRunning)
+                counter.IdleTicks++;
+
+            _cpuWasRunning[coreId] = false;
+        }
+    }
+
+    private void UpdateIoCounters()
+    {
+        foreach (string deviceName in _ioCounters.Keys)
+        {
+            if (!_ioCounters.TryGetValue(deviceName, out DeviceTickCounter counter))
+                continue;
+
+            counter.TotalTicks++;
+
+            if (counter.IsBusy)
+                counter.ActiveTicks++;
+        }
+    }
+
+    private void HandleCpuConfigurationChange(int oldCount, int newCount)
+    {
+        List<int> coresToRemove = _cpuCounters.Keys.Where(id => id > newCount).ToList();
+        foreach (int coreId in coresToRemove)
+        {
+            _cpuCounters.TryRemove(coreId, out _);
+            _cpuHistory.TryRemove(coreId, out _);
+            _cpuWasRunning.TryRemove(coreId, out _);
         }
 
-        DateTime eventTime = simEvent.Timestamp;
-        if (simEvent.IsActive)
+        OnHardwareChanged?.Invoke();
+    }
+
+    private void HandleDeviceConfigurationChange(string device, bool isAdded)
+    {
+        if (isAdded)
         {
-            if (!counter.IsActive)
-            {
-                counter.IsActive = true;
-                counter.LastEventTime = eventTime;
-            }
+            _ioCounters.TryRemove(device, out _);
+            _ioHistory.TryRemove(device, out _);
         }
         else
         {
-            if (counter.IsActive)
-            {
-                double delta = (eventTime - counter.LastEventTime).TotalSeconds;
-                counter.ActiveTime += delta;
-                counter.IsActive = false;
-                counter.LastEventTime = eventTime;
-            }
+            _ioCounters.TryAdd(device, new DeviceTickCounter());
+            _ioHistory.TryAdd(device, new Queue<double>());
         }
 
-        counter.TotalTime = (eventTime - counter.SamplingStart).TotalSeconds;
+        OnHardwareChanged?.Invoke();
     }
 
-    private void CalculateIoUsage()
+    private void SampleAndReset()
     {
-        Dictionary<string, double> ioUsage = [];
-        DateTime now = DateTime.UtcNow;
-        foreach ((string device, IoCounter counter) in _ioCounters)
+        UpdateCpuUsage();
+        UpdateIoUsage();
+    }
+
+    private void UpdateCpuUsage()
+    {
+        Dictionary<int, double> cpuResult = [];
+        foreach (KeyValuePair<int, CpuTickCounter> kv in _cpuCounters)
         {
-            if (counter.IsActive)
-            {
-                double delta = (now - counter.LastEventTime).TotalSeconds;
-                counter.ActiveTime += delta;
-                counter.LastEventTime = now;
-            }
+            int coreId = kv.Key;
+            CpuTickCounter counter = kv.Value;
+            double usage = counter.TotalTicks > 0 ? counter.RunningTicks / (double)counter.TotalTicks * 100 : 0;
 
-            double intervalTime = (now - counter.SamplingStart).TotalSeconds;
-            double rawUsage = intervalTime > 0 ? counter.ActiveTime / intervalTime * 100 : 0;
+            Queue<double> history = _cpuHistory[coreId];
+            EnqueueValue(history, usage);
+            cpuResult[coreId] = history.Average();
 
-            Queue<double> samples = _ioUsageSamples[device];
-            samples.Enqueue(rawUsage);
-            if (samples.Count > SmoothingWindowSize)
-                samples.Dequeue();
-
-            ioUsage[device] = samples.Average();
-
-            counter.SamplingStart = now;
-            counter.ActiveTime = 0;
+            counter.Reset();
         }
 
-        OnIoUsageUpdated?.Invoke(ioUsage);
+        OnCpuUsageUpdated?.Invoke(cpuResult);
+    }
+
+    private void UpdateIoUsage()
+    {
+        Dictionary<string, double> ioResult = [];
+        foreach (KeyValuePair<string, DeviceTickCounter> kv in _ioCounters)
+        {
+            string device = kv.Key;
+            DeviceTickCounter counter = kv.Value;
+            double usage = counter.TotalTicks > 0 ? counter.ActiveTicks / (double)counter.TotalTicks * 100 : 0;
+
+            Queue<double> history = _ioHistory[device];
+            EnqueueValue(history, usage);
+            ioResult[device] = history.Average();
+
+            counter.Reset();
+        }
+
+        OnIoUsageUpdated?.Invoke(ioResult);
+    }
+
+    private static void EnqueueValue(Queue<double> queue, double value)
+    {
+        queue.Enqueue(value);
+        if (queue.Count > SmoothSampleCount)
+            queue.Dequeue();
     }
 
     private async Task RunCalculationLoopAsync()
     {
         while (await _calcTimer.WaitForNextTickAsync())
+            SampleAndReset();
+    }
+
+    private class CpuTickCounter
+    {
+        public long RunningTicks;
+        public long IdleTicks;
+        public long TotalTicks;
+
+        public void Reset()
         {
-            CalculateCpuUsage();
-            CalculateIoUsage();
+            RunningTicks = IdleTicks = TotalTicks = 0;
+        }
+    }
+
+    private class DeviceTickCounter
+    {
+        public long ActiveTicks;
+        public long TotalTicks;
+        public bool IsBusy;
+
+        public void Reset()
+        {
+            ActiveTicks = TotalTicks = 0;
         }
     }
 }

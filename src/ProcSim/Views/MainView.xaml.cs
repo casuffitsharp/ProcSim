@@ -10,9 +10,10 @@ namespace ProcSim.Views;
 
 public partial class MainView : Window
 {
-    public MainView()
+    public MainView(MainViewModel mainViewModel)
     {
         InitializeComponent();
+        DataContext = mainViewModel;
 
         if (Settings.Default.DarkMode)
         {
@@ -26,11 +27,10 @@ public partial class MainView : Window
         MainViewModel viewModel = (MainViewModel)DataContext;
         viewModel.VmSettingsVm.SaveConfig();
         viewModel.ProcessesSettingsVm.SaveConfig();
-        Settings.Default.CpuTime = viewModel.CpuTime;
+        Settings.Default.TickInterval = viewModel.TickInterval;
 
         Settings.Default.Save();
 
-        viewModel.Dispose();
         base.OnClosing(e);
     }
 

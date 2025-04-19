@@ -6,10 +6,16 @@ namespace ProcSim.Core.Scheduling.Algorithms;
 
 public sealed class RoundRobinScheduling(ISysCallHandler sysCallHandler) : PreemptiveAlgorithmBase, ISchedulingAlgorithm
 {
+    public event Action<int, int?> OnProcessTick;
+
     public async Task RunAsync(CpuScheduler scheduler, int coreId, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider)
     {
         if (!scheduler.TryDequeueProcess(out Process current))
+        {
+            OnProcessTick?.Invoke(coreId, null);
+            await delayFunc(tokenProvider());
             return;
+        }
 
         current.GetCurrentOperation().Channel = coreId;
 
@@ -20,6 +26,7 @@ public sealed class RoundRobinScheduling(ISysCallHandler sysCallHandler) : Preem
 
         while (remainingQuantum-- > 0 && !tokenProvider().IsCancellationRequested)
         {
+            OnProcessTick?.Invoke(coreId, current.Id);
             current.AdvanceTick(sysCallHandler);
             await delayFunc(tokenProvider());
 

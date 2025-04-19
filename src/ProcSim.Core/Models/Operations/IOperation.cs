@@ -10,7 +10,7 @@ public interface IOperation
     int Duration { get; }
     int RemainingTime { get; }
     bool IsCompleted { get; }
-    int Channel { get; set; }
+    int? Channel { get; set; }
 
     event Action RemainingTimeChanged;
 

@@ -22,7 +22,7 @@
         <converters:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
     </UserControl.Resources>
 
-    <Grid>
+    <Grid IsEnabled="{Binding CanChangeConfigs}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

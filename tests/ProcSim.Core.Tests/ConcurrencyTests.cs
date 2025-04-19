@@ -45,7 +45,7 @@ public class ConcurrencyTests
         StructuredLogger logger = new();
         TickManager tickManager = new(logger)
         {
-            CpuTime = 5
+            TickInterval = 5
         };
 
         IoManager ioManager = new(logger);

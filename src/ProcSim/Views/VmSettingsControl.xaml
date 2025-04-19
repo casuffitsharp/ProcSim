@@ -13,7 +13,8 @@
         <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
     </UserControl.Resources>
 
-    <StackPanel Orientation="Vertical">
+    <StackPanel Orientation="Vertical"
+                IsEnabled="{Binding CanChangeConfigs}">
         <materialDesign:ColorZone Grid.Row="0" Grid.ColumnSpan="3" Mode="PrimaryMid" Height="48"  HorizontalAlignment="Stretch" VerticalAlignment="Top">
             <DockPanel LastChildFill="False">
                 <TextBlock DockPanel.Dock="Left" Text="Configuração de VM" VerticalAlignment="Center" Foreground="White" Margin="16,0"/>
@@ -55,9 +56,8 @@
 
                 <!-- Algoritmo -->
                 <ComboBox Grid.Row="0"
-                              IsEnabled="{Binding CanChangeAlgorithm}"
                               Style="{StaticResource MaterialDesignFilledComboBox}"
-                              ItemsSource="{Binding SchedulingAlgorithms, Converter={StaticResource EnumDescriptionConverter}}"
+                              ItemsSource="{Binding AvailableAlgorithms, Converter={StaticResource EnumDescriptionConverter}}"
                               SelectedItem="{Binding SelectedAlgorithm, Converter={StaticResource EnumDescriptionConverter}}"
                               materialDesign:HintAssist.Hint="Algoritmo"
                               SelectedIndex="0"/>

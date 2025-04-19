@@ -19,7 +19,6 @@ public sealed class CpuScheduler
     private void OnProcessBecameReady(Process process)
     {
         EnqueueProcess(process);
-        //_logger.Log(new LogEvent(process.Id, "CpuScheduler", $"Processo {process.Id} enfileirado após I/O."));
     }
 
     public void EnqueueProcess(Process process)

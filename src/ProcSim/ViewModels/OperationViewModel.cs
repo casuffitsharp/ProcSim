@@ -21,7 +21,7 @@ public partial class OperationViewModel() : ObservableObject
     public partial int Duration { get; set; }
 
     public int RemainingTime => Model.RemainingTime;
-    private int Channel => Model.Channel;
+    private int? Channel => Model.Channel;
 
     [ObservableProperty]
     public partial bool IsCompleted { get; set; }
@@ -50,7 +50,7 @@ public partial class OperationViewModel() : ObservableObject
         get
         {
             string prefix = IsCpu ? "CPU" : new EnumDescriptionConverter().Convert(IoDeviceType, typeof(string)) as string;
-            string suffix = Channel > 0 ? $"({Channel})" : string.Empty;
+            string suffix = Channel.HasValue ? $"({Channel})" : string.Empty;
             return $"{prefix}{suffix}";
         }
     }
