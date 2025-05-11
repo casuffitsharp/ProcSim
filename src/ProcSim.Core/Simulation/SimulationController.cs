@@ -85,6 +85,7 @@ public class SimulationController : ISimulationController
         if (HasStarted)
         {
             TickManager.Resume();
+            PerformanceMonitor.Resume();
         }
         else
         {
@@ -101,12 +102,15 @@ public class SimulationController : ISimulationController
 
             try { await Kernel.RunAsync(CancellationService.TokenProvider); }
             catch (OperationCanceledException) { /*swallow*/}
+
+            Pause();
         }
     }
 
     public void Pause()
     {
         TickManager.Pause();
+        PerformanceMonitor.Pause();
     }
 
     public async Task ResetAsync()

@@ -96,11 +96,17 @@ public partial class ProcessViewModel : ObservableObject
 
     private void Operations_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
     {
-        foreach (OperationViewModel newOp in e.NewItems?.OfType<OperationViewModel>())
-            SubscribeOperation(newOp);
+        if (e.NewItems is not null)
+        {
+            foreach (OperationViewModel newOp in e.NewItems.OfType<OperationViewModel>())
+                SubscribeOperation(newOp);
+        }
 
-        foreach (OperationViewModel oldOp in e.OldItems?.OfType<OperationViewModel>())
-            UnsubscribeOperation(oldOp);
+        if (e.OldItems is not null)
+        {
+            foreach (OperationViewModel oldOp in e.OldItems.OfType<OperationViewModel>())
+                UnsubscribeOperation(oldOp);
+        }
 
         OnPropertyChanged(nameof(IsValid));
         OnPropertyChanged(nameof(HasChanges));

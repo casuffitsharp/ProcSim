@@ -5,6 +5,7 @@ namespace ProcSim.Core.Models.Operations;
 public abstract class Operation(int duration) : IOperation
 {
     public event Action RemainingTimeChanged;
+    public event Action ChannelChanged;
 
     public int Duration { get; } = duration;
 
@@ -23,7 +24,18 @@ public abstract class Operation(int duration) : IOperation
     } = duration;
 
     [JsonIgnore]
-    public int? Channel { get; set; }
+    public int? Channel
+    {
+        get;
+        set
+        {
+            if (field != value)
+            {
+                field = value;
+                ChannelChanged?.Invoke();
+            }
+        }
+    }
 
     [JsonIgnore]
     public bool IsCompleted => RemainingTime <= 0;

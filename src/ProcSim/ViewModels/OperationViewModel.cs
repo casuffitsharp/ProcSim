@@ -11,6 +11,7 @@ public partial class OperationViewModel() : ObservableObject
     {
         Model = operation;
         Model.RemainingTimeChanged += OnRemainingTimeChanged;
+        Model.ChannelChanged += OnChannelChanged;
         Reset();
     }
 
@@ -77,5 +78,10 @@ public partial class OperationViewModel() : ObservableObject
         OnPropertyChanged(nameof(RemainingTime));
         if (RemainingTime > Duration - 4)
             OnPropertyChanged(nameof(Type));
+    }
+
+    private void OnChannelChanged()
+    {
+        OnPropertyChanged(nameof(Type));
     }
 }

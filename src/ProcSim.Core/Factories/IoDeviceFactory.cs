@@ -16,7 +16,6 @@ public static class IoDeviceFactory
             _ => throw new ArgumentException($"Tipo de dispositivo desconhecido: {deviceType}", nameof(deviceType))
         };
 
-        device.StartProcessing();
         return device;
     }
 }

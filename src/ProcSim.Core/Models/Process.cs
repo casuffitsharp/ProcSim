@@ -53,10 +53,10 @@ public sealed class Process(int id, string name, List<IOperation> operations)
     public void AdvanceTick(ISysCallHandler sysCallHandler)
     {
         IOperation currentOp = GetCurrentOperation();
-        if (currentOp.Channel.HasValue)
-            _currentOpChannel = currentOp.Channel.Value;
-        else
-            currentOp.Channel = _currentOpChannel;
+        //if (currentOp.Channel.HasValue)
+        //    _currentOpChannel = currentOp.Channel.Value;
+        //else
+        //    currentOp.Channel = _currentOpChannel;
 
         if (currentOp is IoOperation operation)
         {

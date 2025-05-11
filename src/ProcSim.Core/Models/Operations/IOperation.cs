@@ -13,6 +13,7 @@ public interface IOperation
     int? Channel { get; set; }
 
     event Action RemainingTimeChanged;
+    event Action ChannelChanged;
 
     void ExecuteTick();
     void Reset();

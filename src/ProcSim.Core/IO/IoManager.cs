@@ -18,7 +18,6 @@ public sealed class IoManager(IStructuredLogger logger) : IIoManager
         if (_devices.TryAdd(device.Name, device))
         {
             device.RequestCompleted += OnDeviceRequestCompleted;
-            device.StartProcessing();
             logger.Log(new DeviceConfigurationChangeEvent
             {
                 Timestamp = DateTime.UtcNow,

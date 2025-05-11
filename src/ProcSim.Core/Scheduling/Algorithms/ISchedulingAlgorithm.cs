@@ -1,7 +1,10 @@
-﻿namespace ProcSim.Core.Scheduling.Algorithms;
+﻿using ProcSim.Core.Runtime;
+using System.Collections.Concurrent;
+
+namespace ProcSim.Core.Scheduling.Algorithms;
 
 public interface ISchedulingAlgorithm
 {
-    Task RunAsync(CpuScheduler scheduler, int coreId, Func<CancellationToken, Task> delayFunc, Func<CancellationToken> tokenProvider);
-    event Action<int, int?> OnProcessTick;
+    ConcurrentQueue<PCB> RunQueue { get; }
+    PCB PickNext();
 }

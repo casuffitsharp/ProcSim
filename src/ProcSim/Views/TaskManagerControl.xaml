@@ -33,6 +33,7 @@
                                                         Series="{Binding Series}"
                                                         XAxes="{Binding XAxes}"
                                                         YAxes="{Binding YAxes}"
+                                                        LegendPosition="Left"
                                                         DrawMargin="{Binding Margin}" />
                                 </Border>
                             </DataTemplate>

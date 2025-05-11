@@ -8,6 +8,8 @@ namespace ProcSim.Core.Runtime;
 public sealed class Kernel : IKernel
 {
     private readonly List<Process> _processTable = [];
+    private readonly List<PCB> _pcbList = [];
+    private readonly List<PCB> _readyQueue = [];
     private readonly CpuScheduler _cpuScheduler;
     private readonly ISchedulingAlgorithm _schedulingAlgorithm;
 
@@ -25,21 +27,21 @@ public sealed class Kernel : IKernel
     public TickManager TickManager { get; }
     public int Cores { get; }
 
-    public void RegisterProcess(Process process)
-    {
-        if (!_processTable.Contains(process))
-            _processTable.Add(process);
-    }
+    //public void RegisterProcess(Process process)
+    //{
+    //    if (!_processTable.Contains(process))
+    //        _processTable.Add(process);
+    //}
 
-    public void UnRegisterProcess(Process process)
-    {
-        _processTable.Remove(process);
-    }
+    //public void UnRegisterProcess(Process process)
+    //{
+    //    _processTable.Remove(process);
+    //}
 
-    public void ClearProcesses()
-    {
-        _processTable.Clear();
-    }
+    //public void ClearProcesses()
+    //{
+    //    _processTable.Clear();
+    //}
 
     public async Task RunAsync(Func<CancellationToken> tokenProvider)
     {

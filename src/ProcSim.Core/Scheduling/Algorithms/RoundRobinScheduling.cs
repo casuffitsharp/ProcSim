@@ -1,5 +1,6 @@
 ﻿using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using ProcSim.Core.Models.Operations;
 using ProcSim.Core.SystemCalls;
 
 namespace ProcSim.Core.Scheduling.Algorithms;
@@ -17,8 +18,6 @@ public sealed class RoundRobinScheduling(ISysCallHandler sysCallHandler) : Preem
             return;
         }
 
-        current.GetCurrentOperation().Channel = coreId;
-
         if (current.State == ProcessState.Ready)
             current.State = ProcessState.Running;
 
@@ -26,6 +25,8 @@ public sealed class RoundRobinScheduling(ISysCallHandler sysCallHandler) : Preem
 
         while (remainingQuantum-- > 0 && !tokenProvider().IsCancellationRequested)
         {
+            current.GetCurrentOperation().Channel = coreId;
+
             OnProcessTick?.Invoke(coreId, current.Id);
             current.AdvanceTick(sysCallHandler);
             await delayFunc(tokenProvider());
