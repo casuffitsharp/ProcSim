@@ -2,7 +2,7 @@
 
 namespace ProcSim.Core.New;
 
-public record PCB
+public class PCB
 {
     public ProcessState State { get; set; } = ProcessState.New;
     public uint ProgramCounter { get; set; }
@@ -10,14 +10,16 @@ public record PCB
     public ConcurrentDictionary<string, uint> Registers { get; } = new();
     public uint ProcessId { get; }
 
-    public PCB(uint processId)
+    public PCB(uint processId, Dictionary<string, uint> registers)
     {
         for (uint i = 0; i < 8; i++)
-            Registers[$"R{i}"] = 0;
+        {
+            uint value = registers?.TryGetValue($"R{i}", out uint regValue) == true ? regValue : 0;
+            Registers[$"R{i}"] = value;
+        }
 
         Registers["ZF"] = 0;
         Registers["CF"] = 0;
-        Registers["SP"] = 0;
         ProcessId = processId;
     }
 }
@@ -42,9 +44,14 @@ public enum SyscallType
 }
 
 public record MicroOp(string Name, Action<CPU> Execute);
-
 public class Instruction(string Mnemonic, IEnumerable<MicroOp> microOps)
 {
     public Queue<MicroOp> MicroOps { get; } = new(microOps);
     public string Mnemonic { get; } = Mnemonic;
+}
+
+public record Process
+{
+    public Dictionary<string, uint> Registers { get; set; }
+    public List<Instruction> Instructions { get; set; }
 }

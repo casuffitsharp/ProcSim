@@ -39,18 +39,21 @@ public class Kernel
         // Cores
         for (uint id = 0; id < cores; id++)
         {
+            PCB idleProcess = new(id, null) { State = ProcessState.Ready };
+            _idlePcbs[id] = idleProcess;
+            Programs[idleProcess] = null;
+
             CPU cpu = new(id, _interruptController, _interruptService, _scheduler, _dispatcher, _syscallDispatcher, Programs, subscribeToTick);
             Cpus.Add(id, cpu);
-            _idlePcbs[id] = new(id) { State = ProcessState.Ready };
-            _dispatcher.ContextSwitch(cpu, _idlePcbs[id]);
+            _dispatcher.ContextSwitch(cpu, idleProcess);
         }
     }
 
-    public void CreateProcess(List<Instruction> program)
+    public void CreateProcess(Process program)
     {
         uint id = (uint)Programs.Count;
-        PCB pcb = new(id);
-        Programs[pcb] = [.. program];
+        PCB pcb = new(id, program.Registers);
+        Programs[pcb] = [.. program.Instructions];
         _scheduler.Admit(pcb);
     }
 }

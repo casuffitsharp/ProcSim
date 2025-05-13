@@ -25,6 +25,12 @@ public class CPU
 
         _programs = processPrograms;
         SyscallDispatcher = syscallDisp;
+
+        for (uint i = 0; i < 8; i++)
+            RegisterFile[$"R{i}"] = 0;
+
+        RegisterFile["ZF"] = 0;
+        RegisterFile["CF"] = 0;
     }
 
     public uint Id { get; }
@@ -36,7 +42,7 @@ public class CPU
     public Scheduler Scheduler { get; }
     public Dispatcher Dispatcher { get; }
     public ulong CycleCount { get; private set; }
-    public ulong InstructionsExecuted { get; private set; }
+    public ulong InstructionsFetched { get; private set; }
 
     private void Tick()
     {
@@ -46,13 +52,6 @@ public class CPU
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing micro-op: {op.Name} (PC: {PC}, SP: {SP})");
             op.Execute(this);
             CycleCount++;
-
-            if (_ops.Count == 0)
-            {
-                PC++;
-                CurrentPCB.ProgramCounter = PC;
-                InstructionsExecuted++;
-            }
 
             return;
         }
@@ -67,16 +66,27 @@ public class CPU
         if (_instructions is null || _instructions.Count == 0)
             LoadNext();
 
-        if (_instructions?.Count > 0)
+        if (_instructions?.Count > 0 && PC < _instructions.Count)
         {
             Instruction instr = _instructions.ElementAt((int)PC);
+            InstructionsFetched++;
+            Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing instruction: {instr.Mnemonic} (PC: {PC}, SP: {SP})");
             _ops = new(instr.MicroOps);
+            PC++;
         }
     }
 
     private void LoadNext()
     {
-        _instructions = _programs.TryGetValue(CurrentPCB, out List<Instruction> q) ? q : null;
+        Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando próximo programa");
+        _programs.TryGetValue(CurrentPCB, out List<Instruction> q);
+        _instructions = q;
+        PC = 0;
+        if (_instructions is null)
+        {
+            Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Programa não encontrado");
+            return;
+        }
     }
 
     public void TrapToKernel() { /* hardware trap: estado mínimo salvo via micro-op */ }
