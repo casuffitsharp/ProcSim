@@ -1,26 +1,23 @@
-﻿using System.Collections.Concurrent;
+﻿using ProcSim.Core.New.Interruptions;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 
 namespace ProcSim.Core.New;
 
-/// <summary>
-/// CPU virtual de um core SMP: Tick executa um micro-op ou instrução e atende IRQ.
-/// </summary>
 public class CPU
 {
     private readonly ConcurrentDictionary<PCB, List<Instruction>> _programs;
-    private readonly InterruptController _intc;
+    private readonly InterruptController _interruptController;
     private readonly InterruptService _isrv;
     private List<Instruction> _instructions;
     private Queue<MicroOp> _ops;
 
-    public CPU(uint id, InterruptController intc, InterruptService isrv, Scheduler sched, Dispatcher disp, SystemCallDispatcher syscallDisp, ConcurrentDictionary<PCB, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
+    public CPU(uint id, InterruptController intc, InterruptService isrv, Scheduler sched, SystemCallDispatcher syscallDisp, ConcurrentDictionary<PCB, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
     {
         Id = id;
-        _intc = intc;
+        _interruptController = intc;
         _isrv = isrv;
         Scheduler = sched;
-        Dispatcher = disp;
         subscribeToTick(Tick);
 
         _programs = processPrograms;
@@ -34,13 +31,20 @@ public class CPU
     }
 
     public uint Id { get; }
-    public PCB CurrentPCB { get; set; }
+    public PCB CurrentPCB { 
+        get; 
+        set
+        {
+            field = value;
+            _instructions = null;
+            _ops = null;
+        }
+    }
     public uint PC { get; set; }
     public uint SP { get; set; }
     public ConcurrentDictionary<string, uint> RegisterFile { get; } = new();
     public SystemCallDispatcher SyscallDispatcher { get; set; }
     public Scheduler Scheduler { get; }
-    public Dispatcher Dispatcher { get; }
     public ulong CycleCount { get; private set; }
     public ulong InstructionsFetched { get; private set; }
 
@@ -56,10 +60,10 @@ public class CPU
             return;
         }
 
-        if (_intc.FetchReady() is uint vec)
+        if (_interruptController.FetchReady(Id) is uint vector)
         {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando ISRV");
-            _ops = _isrv.BuildISR(vec, this);
+            _ops = _isrv.BuildISR(vector, this);
             return;
         }
 
@@ -81,7 +85,6 @@ public class CPU
         Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando próximo programa");
         _programs.TryGetValue(CurrentPCB, out List<Instruction> q);
         _instructions = q;
-        PC = 0;
         if (_instructions is null)
         {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Programa não encontrado");

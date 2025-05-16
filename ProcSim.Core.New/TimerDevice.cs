@@ -1,32 +1,32 @@
-﻿namespace ProcSim.Core.New;
+﻿using ProcSim.Core.New.Interruptions;
 
-/// <summary>
-/// TimerDevice simula o Local APIC Timer, rodando em thread separada.
-/// Gera IRQ periódico (vetor 32) sem polling na CPU (OSDev Wiki).
-/// </summary>
+namespace ProcSim.Core.New;
+
 public class TimerDevice
 {
-    private readonly InterruptController _intc;
     private readonly uint _vector;
     private readonly uint _quantum;
+    private readonly uint _coreId;
+    private readonly InterruptController _intc;
+    private uint _count;
 
-    private uint _counter;
-
-    public TimerDevice(uint vector, uint quantum, InterruptController intc, Action<Action> subscribeToTick)
+    public TimerDevice(uint coreId, uint vector, uint quantum, InterruptController intc, Action<Action> subscribeToTick)
     {
+        _coreId = coreId;
         _vector = vector;
         _quantum = quantum;
         _intc = intc;
+
         subscribeToTick(Tick);
     }
 
     private void Tick()
     {
-        _counter++;
-        if (_counter >= _quantum)
+        _count++;
+        if (_count >= _quantum)
         {
-            _intc.Raise(_vector);
-            _counter = 0;
+            _intc.RaiseLocal(_vector, _coreId);
+            _count = 0;
         }
     }
 }

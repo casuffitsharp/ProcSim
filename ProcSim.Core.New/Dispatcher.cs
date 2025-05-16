@@ -3,9 +3,9 @@ using System.Text.Json;
 
 namespace ProcSim.Core.New;
 
-public class Dispatcher
+public static class Dispatcher
 {
-    public void ContextSwitch(CPU cpu, PCB next)
+    public static void SwitchContext(CPU cpu, PCB next)
     {
         PCB prev = cpu.CurrentPCB;
         if (prev == next)
@@ -29,7 +29,7 @@ public class Dispatcher
 
         pcb.ProgramCounter = cpu.PC;
         pcb.StackPointer = cpu.SP;
-
+        
         foreach ((string k, uint v) in cpu.RegisterFile)
             pcb.Registers[k] = v;
 

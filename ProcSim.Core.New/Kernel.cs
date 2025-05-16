@@ -1,4 +1,7 @@
-﻿using System.Collections.Concurrent;
+﻿using ProcSim.Core.New.Interruptions;
+using ProcSim.Core.New.Interruptions.Handlers;
+using ProcSim.Core.New.IO;
+using System.Collections.Concurrent;
 
 namespace ProcSim.Core.New;
 
@@ -7,11 +10,7 @@ namespace ProcSim.Core.New;
 /// </summary>
 public class Kernel
 {
-    private readonly InterruptController _interruptController;
-    private readonly Dispatcher _dispatcher;
     private readonly Scheduler _scheduler;
-    private readonly InterruptService _interruptService;
-    private readonly SystemCallDispatcher _syscallDispatcher;
     private readonly Dictionary<uint, PCB> _idlePcbs = [];
 
     public Dictionary<uint, IODevice> Devices { get; } = [];
@@ -21,32 +20,44 @@ public class Kernel
 
     public Kernel()
     {
-        _interruptController = new();
-        _dispatcher = new();
         _scheduler = new(ReadyQueue, _idlePcbs);
-        _interruptService = new(_scheduler, _dispatcher);
-        _syscallDispatcher = new(Devices);
     }
 
     public void Initialize(uint cores, uint quantum, uint baseLatency, Action<Action> subscribeToTick)
     {
-        _ = new TimerDevice(vector: 32, quantum, _interruptController, subscribeToTick);
+        InterruptController interruptController = new();
 
-        // Dispositivos I/O (vetores 33-36)
         for (uint deviceId = 0; deviceId < 4; deviceId++)
-            Devices.Add(deviceId, new IODevice(deviceId, 33 + deviceId, baseLatency, _interruptController));
-
-        // Cores
-        for (uint id = 0; id < cores; id++)
         {
-            PCB idleProcess = new(id, null) { State = ProcessState.Ready };
-            _idlePcbs[id] = idleProcess;
+            uint vec = 33 + deviceId;
+            //uint core = deviceId % cores;
+            //interruptController.ConfigureRedirection(vec, core);
+            Devices.Add(deviceId, new IODevice(deviceId, vec, baseLatency, interruptController));
+        }
+
+        List<IInterruptHandler> interruptHandlers =
+        [
+            new TimerInterruptHandler(_scheduler),
+            new IoInterruptHandler(Devices, _scheduler)
+        ];
+        InterruptService interruptService = new(interruptHandlers);
+        SystemCallDispatcher syscallDispatcher = new(Devices);
+
+        for (uint coreId = 0; coreId < cores; coreId++)
+        {
+            PCB idleProcess = new(coreId, null) { State = ProcessState.Ready };
+            _idlePcbs[coreId] = idleProcess;
             Programs[idleProcess] = null;
 
-            CPU cpu = new(id, _interruptController, _interruptService, _scheduler, _dispatcher, _syscallDispatcher, Programs, subscribeToTick);
-            Cpus.Add(id, cpu);
-            _dispatcher.ContextSwitch(cpu, idleProcess);
+            CPU cpu = new(coreId, interruptController, interruptService, _scheduler, syscallDispatcher, Programs, subscribeToTick);
+            Cpus.Add(coreId, cpu);
+
+            interruptController.RegisterCore(coreId);
+            _ = new TimerDevice(coreId, 32, quantum, interruptController, subscribeToTick);
+            Dispatcher.SwitchContext(cpu, idleProcess);
         }
+
+        //interruptController.ConfigureRedirection(32, [.. Cpus.Keys]);
     }
 
     public void CreateProcess(Process program)

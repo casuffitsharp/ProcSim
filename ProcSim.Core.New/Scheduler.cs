@@ -32,6 +32,7 @@ public class Scheduler(ConcurrentQueue<PCB> readyQueue, IReadOnlyDictionary<uint
             next = _idleByCore[cpu.Id];
             Debug.WriteLine($"No process in the ready queue for core {cpu.Id}. Picking idle process");
         }
+
         next.State = ProcessState.Running;
         return next;
     }
