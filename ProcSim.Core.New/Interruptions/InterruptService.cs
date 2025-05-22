@@ -1,12 +1,19 @@
 ﻿using ProcSim.Core.New.Interruptions.Handlers;
+using ProcSim.Core.New.Process;
 using System.Diagnostics;
 
 namespace ProcSim.Core.New.Interruptions;
 
 public class InterruptService(List<IInterruptHandler> handlers)
 {
+    private long _interruptCount;
+
+    public long InterruptCount => _interruptCount;
+
     public Queue<MicroOp> BuildISR(uint vector, CPU cpu)
     {
+        Interlocked.Increment(ref _interruptCount);
+
         Queue<MicroOp> seq = new();
 
         seq.Enqueue(new MicroOp("IRQ_ENTRY", c => c.TrapToKernel()));

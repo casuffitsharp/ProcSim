@@ -1,7 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using ProcSim.Converters;
-using ProcSim.Core.Enums;
 using ProcSim.Core.Models.Operations;
+using ProcSim.Core.New.IO;
 
 namespace ProcSim.ViewModels;
 

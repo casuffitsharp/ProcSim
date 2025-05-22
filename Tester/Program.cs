@@ -1,6 +1,9 @@
 ﻿using ProcSim.Core.New;
+using ProcSim.Core.New.Process;
+using ProcSim.Core.New.Scheduler;
+using ProcSim.Core.New.Syscall;
 
-Process cpuBoundProcess = new()
+ProcessDto cpuBoundProcess = new()
 {
     Instructions =
     [
@@ -19,18 +22,18 @@ Process cpuBoundProcess = new()
 };
 cpuBoundProcess.Instructions.AddRange(SyscallFactory.Create(SyscallType.Exit));
 
-Process ioBoundProcess = new()
+ProcessDto ioBoundProcess = new()
 {
     Instructions =
     [
         SyscallFactory.Create(SyscallType.IoRequest, deviceId: 0, operationUnits: 20),
-        SyscallFactory.Create(SyscallType.IoRequest, deviceId: 1, operationUnits: 20),
-        SyscallFactory.Create(SyscallType.IoRequest, deviceId: 2, operationUnits: 20),
+        SyscallFactory.Create(SyscallType.IoRequest, deviceId: 0, operationUnits: 20),
+        SyscallFactory.Create(SyscallType.IoRequest, deviceId: 0, operationUnits: 20),
         SyscallFactory.Create(SyscallType.Exit),
     ]
 };
 
-Process mixedProcess = new()
+ProcessDto mixedProcess = new()
 {
     Instructions =
     [
@@ -53,7 +56,7 @@ Process mixedProcess = new()
 
 Action tick = () => { };
 
-PeriodicTimer timer = new(TimeSpan.FromMilliseconds(500));
+PeriodicTimer timer = new(TimeSpan.FromMilliseconds(100));
 _ = Task.Run(async () =>
 {
     while (await timer.WaitForNextTickAsync())
@@ -63,9 +66,12 @@ _ = Task.Run(async () =>
 });
 
 Kernel kernel = new();
-kernel.Initialize(1, 5, 100, handler => tick += handler);
+kernel.RegisterDevice("Disk", 1000, 2);
+kernel.Initialize(1, 10, SchedulerType.Priority, handler => tick += handler);
 
 Thread.Sleep(2000);
-kernel.CreateProcess(mixedProcess);
+kernel.CreateProcess(cpuBoundProcess, 1);
+kernel.CreateProcess(ioBoundProcess, 1);
+kernel.CreateProcess(cpuBoundProcess, 1);
 
 Console.ReadKey();

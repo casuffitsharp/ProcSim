@@ -1,6 +1,6 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ProcSim.Core.Enums;
 using ProcSim.Core.IO.Devices;
+using ProcSim.Core.New.IO;
 
 namespace ProcSim.ViewModels;
 

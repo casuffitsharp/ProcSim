@@ -1,4 +1,6 @@
-﻿namespace ProcSim.Core.New;
+﻿using ProcSim.Core.New.Process;
+
+namespace ProcSim.Core.New.Syscall;
 
 public static class SyscallFactory
 {

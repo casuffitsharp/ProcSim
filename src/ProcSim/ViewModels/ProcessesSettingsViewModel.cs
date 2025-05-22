@@ -2,9 +2,9 @@
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using ProcSim.Assets;
-using ProcSim.Core.Configuration;
-using ProcSim.Core.Enums;
 using ProcSim.Core.Models;
+using ProcSim.Core.New.Configuration;
+using ProcSim.Core.New.IO;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;

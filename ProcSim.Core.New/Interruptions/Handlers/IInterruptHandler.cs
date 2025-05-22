@@ -1,4 +1,6 @@
-﻿namespace ProcSim.Core.New.Interruptions.Handlers;
+﻿using ProcSim.Core.New.Process;
+
+namespace ProcSim.Core.New.Interruptions.Handlers;
 
 public interface IInterruptHandler
 {

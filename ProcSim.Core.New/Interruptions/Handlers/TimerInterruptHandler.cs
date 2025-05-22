@@ -1,6 +1,9 @@
-﻿namespace ProcSim.Core.New.Interruptions.Handlers;
+﻿using ProcSim.Core.New.Process;
+using ProcSim.Core.New.Scheduler;
 
-public class TimerInterruptHandler(Scheduler scheduler) : IInterruptHandler
+namespace ProcSim.Core.New.Interruptions.Handlers;
+
+public class TimerInterruptHandler(IScheduler scheduler) : IInterruptHandler
 {
     private const uint TimerVector = 32;
 

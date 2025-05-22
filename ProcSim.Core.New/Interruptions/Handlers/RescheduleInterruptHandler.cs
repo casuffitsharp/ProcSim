@@ -1,6 +1,8 @@
-﻿namespace ProcSim.Core.New.Interruptions.Handlers;
+﻿using ProcSim.Core.New.Process;
 
-public class RescheduleInterruptHandler(uint vector/*, Scheduler sched*/) : IInterruptHandler
+namespace ProcSim.Core.New.Interruptions.Handlers;
+
+public class RescheduleInterruptHandler(uint vector/*, IScheduler sched*/) : IInterruptHandler
 {
     private readonly uint _vector = vector;
 

@@ -1,7 +1,8 @@
 ﻿using ProcSim.Core.New.IO;
+using ProcSim.Core.New.Process;
 using System.Diagnostics;
 
-namespace ProcSim.Core.New;
+namespace ProcSim.Core.New.Syscall;
 
 public class SystemCallDispatcher(IReadOnlyDictionary<uint, IODevice> devices)
 {

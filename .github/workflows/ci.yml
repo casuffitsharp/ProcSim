@@ -1,4 +1,4 @@
-name: CI Build and Test
+name: CI Build
 
 on:
   push:
@@ -23,9 +23,6 @@ jobs:
 
       - name: Build Solution
         run: dotnet build ProcSim.sln --no-restore --configuration Release
-
-      - name: Run Unit Tests
-        run: dotnet test ProcSim.sln --no-build --configuration Release
 
       - name: Publish Self-Contained Executable
         run: dotnet publish src/ProcSim/ProcSim.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true

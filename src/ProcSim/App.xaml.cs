@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using ProcSim.Core.Configuration;
 using ProcSim.Core.Models;
+using ProcSim.Core.New.Configuration;
 using ProcSim.Core.Simulation;
 using ProcSim.ViewModels;
 using ProcSim.Views;

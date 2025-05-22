@@ -3,9 +3,9 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using ProcSim.Assets;
 using ProcSim.Converters;
-using ProcSim.Core.Configuration;
-using ProcSim.Core.Enums;
 using ProcSim.Core.IO.Devices;
+using ProcSim.Core.New.Configuration;
+using ProcSim.Core.New.IO;
 using ProcSim.Core.Scheduling.Algorithms;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -110,7 +110,7 @@ public partial class VmSettingsViewModel : ObservableObject
         if (vmConfig is null)
             return;
 
-        SelectedAlgorithm = vmConfig.SchedulingAlgorithmType;
+        SelectedAlgorithm = vmConfig.SchedulerType;
         Quantum = vmConfig.Quantum;
         CpuCores = vmConfig.CpuCores;
 
@@ -131,7 +131,7 @@ public partial class VmSettingsViewModel : ObservableObject
     {
         return new()
         {
-            SchedulingAlgorithmType = SelectedAlgorithm,
+            SchedulerType = SelectedAlgorithm,
             Quantum = Quantum,
             CpuCores = CpuCores,
             Devices = [.. AvailableDevices.Select(d => d.MapToDeviceConfig())]

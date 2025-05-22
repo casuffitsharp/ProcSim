@@ -1,4 +1,7 @@
 ﻿using ProcSim.Core.New.Interruptions;
+using ProcSim.Core.New.Process;
+using ProcSim.Core.New.Scheduler;
+using ProcSim.Core.New.Syscall;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -12,7 +15,7 @@ public class CPU
     private List<Instruction> _instructions;
     private Queue<MicroOp> _ops;
 
-    public CPU(uint id, InterruptController intc, InterruptService isrv, Scheduler sched, SystemCallDispatcher syscallDisp, ConcurrentDictionary<PCB, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
+    public CPU(uint id, InterruptController intc, InterruptService isrv, IScheduler sched, SystemCallDispatcher syscallDisp, ConcurrentDictionary<PCB, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
     {
         Id = id;
         _interruptController = intc;
@@ -44,9 +47,12 @@ public class CPU
     public uint SP { get; set; }
     public ConcurrentDictionary<string, uint> RegisterFile { get; } = new();
     public SystemCallDispatcher SyscallDispatcher { get; set; }
-    public Scheduler Scheduler { get; }
+    public IScheduler Scheduler { get; }
     public ulong CycleCount { get; private set; }
     public ulong InstructionsFetched { get; private set; }
+    public ulong UserCycleCount { get; private set; }
+    public ulong SyscallCycleCount { get; private set; }
+    public ulong InterruptCycleCount { get; private set; }
 
     private void Tick()
     {
@@ -55,8 +61,13 @@ public class CPU
             MicroOp op = _ops.Dequeue();
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing micro-op: {op.Name} (PC: {PC}, SP: {SP})");
             op.Execute(this);
-            CycleCount++;
 
+            // revisar
+            if (op.Name.StartsWith("SYSCALL")) SyscallCycleCount++;
+            else if (op.Name.StartsWith("IRQ_")) InterruptCycleCount++;
+            else UserCycleCount++;
+
+            CycleCount++;
             return;
         }
 
@@ -64,6 +75,7 @@ public class CPU
         {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando ISRV");
             _ops = _isrv.BuildISR(vector, this);
+            InstructionsFetched++;
             return;
         }
 
