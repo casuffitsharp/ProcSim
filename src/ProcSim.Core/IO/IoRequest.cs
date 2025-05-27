@@ -1,6 +1,5 @@
-﻿using ProcSim.Core.Models;
-using ProcSim.Core.Models.Operations;
+﻿using ProcSim.Core.Process;
 
 namespace ProcSim.Core.IO;
 
-public sealed record IoRequest(Process Process, IoOperation Operation, DateTime ArrivalTime);
+public record IORequest(PCB Pcb, uint OperationUnits);

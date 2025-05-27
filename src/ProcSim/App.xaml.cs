@@ -1,7 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using ProcSim.Core.Models;
-using ProcSim.Core.New.Configuration;
-using ProcSim.Core.Simulation;
+using ProcSim.Core.Configuration;
+using ProcSim.New.ViewModels;
 using ProcSim.ViewModels;
 using ProcSim.Views;
 using System.Windows;
@@ -17,12 +16,12 @@ public partial class App : Application
         base.OnStartup(e);
 
         ServiceCollection sc = new();
-        sc.AddSingleton<ISimulationController, SimulationController>();
-        sc.AddSingleton<IRepositoryBase<VmConfig>, VmConfigRepository>();
-        sc.AddSingleton<IRepositoryBase<List<Process>>, ProcessesConfigRepository>();
-        sc.AddSingleton<VmSettingsViewModel>();
-        sc.AddSingleton<ProcessesSettingsViewModel>();
-        sc.AddSingleton<TaskManagerViewModel>();
+        sc.AddSingleton<IRepositoryBase<VmConfigModel>, VmConfigRepository>();
+        sc.AddSingleton<IRepositoryBase<List<ProcessConfigModel>>, ProcessesConfigRepository>();
+        sc.AddSingleton<SimulationController>();
+        sc.AddSingleton<VmConfigViewModel>();
+        sc.AddSingleton<ProcessesConfigViewModel>();
+        //sc.AddSingleton<TaskManagerViewModel>();
         sc.AddSingleton<MainViewModel>();
         sc.AddTransient<MainView>();
 

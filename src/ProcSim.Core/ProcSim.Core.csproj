@@ -4,21 +4,6 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>disable</Nullable>
         <LangVersion>preview</LangVersion>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <DebugSymbols>false</DebugSymbols>
-        <DebugType>None</DebugType>
-        <Optimize>true</Optimize>
-        <OutputPath>bin\Release\</OutputPath>
-        <PublishReadyToRun>true</PublishReadyToRun>
-        <PublishSingleFile>true</PublishSingleFile>
-        <SelfContained>true</SelfContained>
-        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
-        <TrimUnusedDependencies>true</TrimUnusedDependencies>
-    </PropertyGroup>
-    <ItemGroup>
-        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-            <_Parameter1>$(AssemblyName).Tests</_Parameter1>
-        </AssemblyAttribute>
-    </ItemGroup>
 </Project>

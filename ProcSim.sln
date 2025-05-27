@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{827E0CD3-B72D-47B6-A68D-7590B98EB39B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Core", "src\ProcSim.Core\ProcSim.Core.csproj", "{557EF114-CA40-4DA5-86EA-B38E236BE195}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Core.Old", "src\ProcSim.Core.Old\ProcSim.Core.Old.csproj", "{557EF114-CA40-4DA5-86EA-B38E236BE195}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim", "src\ProcSim\ProcSim.csproj", "{731F4C69-FE36-42BD-8F89-10ABB306CC2D}"
 EndProject
@@ -16,7 +16,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tester", "Tester\Tester.csproj", "{CDC98D9E-5E5A-496E-B50D-9A43F050A348}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Core.New", "ProcSim.Core.New\ProcSim.Core.New.csproj", "{13260189-B12B-4A85-ACAB-82E36968EDB5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProcSim.Core", "src\ProcSim.Core\ProcSim.Core.csproj", "{13260189-B12B-4A85-ACAB-82E36968EDB5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

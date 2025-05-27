@@ -84,7 +84,7 @@ public sealed class EnumDescriptionConverter : IValueConverter
         return [.. enumerable.Cast<object>().OfType<Enum>().Select(GetEnumDescription)];
     }
 
-    private static string GetEnumDescription(Enum value)
+    public static string GetEnumDescription(Enum value)
     {
         FieldInfo field = value.GetType().GetField(value.ToString());
         return field?.GetCustomAttribute<DescriptionAttribute>()?.Description ?? value.ToString();

@@ -25,9 +25,9 @@ public partial class MainView : Window
     protected override void OnClosing(CancelEventArgs e)
     {
         MainViewModel viewModel = (MainViewModel)DataContext;
-        viewModel.VmSettingsVm.SaveConfig();
-        viewModel.ProcessesSettingsVm.SaveConfig();
-        Settings.Default.TickInterval = viewModel.TickInterval;
+        viewModel.VmConfig.SaveConfig();
+        viewModel.ProcessesConfig.SaveConfig();
+        //Settings.Default.TickInterval = viewModel.TickInterval;
 
         Settings.Default.Save();
 

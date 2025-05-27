@@ -27,10 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\ProcSim.Core.New\ProcSim.Core.New.csproj" />
-    </ItemGroup>
-
-    <ItemGroup>
         <Resource Include="Assets\procsim_icon.ico">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Resource>
@@ -60,6 +56,14 @@
         </None>
     </ItemGroup>
 
+    <ItemGroup>
+        <Compile Remove="OldViewModels/*.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ProcSim.Core\ProcSim.Core.csproj" />
+    </ItemGroup>
+
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
         <TargetFramework>net9.0-windows10.0.17763.0</TargetFramework>
@@ -69,6 +73,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <UseWPF>true</UseWPF>
         <ApplicationIcon>Assets/procsim_icon.ico</ApplicationIcon>
+        <NoWarn>0659,NU1701</NoWarn>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

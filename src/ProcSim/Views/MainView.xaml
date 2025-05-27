@@ -127,10 +127,10 @@
                         </Grid.ColumnDefinitions>
 
                         <!-- Cadastro de Processos -->
-                        <views:ProcessesSettingsControl DataContext="{Binding ProcessesSettingsVm}"/>
+                        <views:ProcessesConfigControl DataContext="{Binding ProcessesConfig}"/>
 
                         <!-- Configuração da Simulação -->
-                        <views:VmSettingsControl DataContext="{Binding VmSettingsVm}" Grid.Column="2"/>
+                        <views:VmConfigControl DataContext="{Binding VmConfig}" Grid.Column="2"/>
                     </Grid>
                 </TabItem>
                 <TabItem Header="Monitoramento">

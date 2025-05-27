@@ -1,0 +1,130 @@
+﻿<UserControl x:Class="ProcSim.Views.VmConfigControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
+             xmlns:conv="clr-namespace:ProcSim.Converters"
+             mc:Ignorable="d"
+             Height="Auto"
+             Width="Auto">
+
+    <UserControl.Resources>
+        <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+    </UserControl.Resources>
+
+    <StackPanel Orientation="Vertical"
+                IsEnabled="{Binding CanChangeConfigs}">
+        <materialDesign:ColorZone Grid.Row="0" Grid.ColumnSpan="3" Mode="PrimaryMid" Height="48"  HorizontalAlignment="Stretch" VerticalAlignment="Top">
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left" Text="Configuração de VM" VerticalAlignment="Center" Foreground="White" Margin="16,0"/>
+                <materialDesign:PopupBox 
+                         PlacementMode="BottomAndAlignRightEdges" 
+                         StaysOpen="False"
+                         VerticalAlignment="Center"
+                         HorizontalAlignment="Center"
+                         DockPanel.Dock="Right">
+                    <Menu IsMainMenu="True">
+                        <MenuItem Header="Open"
+                                Icon="{materialDesign:PackIcon Kind=FolderOpen}"
+                                Command="{Binding LoadConfigCommand}"/>
+                        <MenuItem Header="Save"
+                                Icon="{materialDesign:PackIcon Kind=ContentSave}"
+                                Command="{Binding SaveConfigCommand}"/>
+                        <MenuItem Header="Save As.."
+                                Icon="{materialDesign:PackIcon Kind=ContentSaveEdit}"
+                                Command="{Binding SaveAsConfigCommand}"/>
+                        <Menu.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <VirtualizingStackPanel Orientation = "Vertical" VerticalAlignment="Center" />
+                            </ItemsPanelTemplate>
+                        </Menu.ItemsPanel>
+                    </Menu>
+                </materialDesign:PopupBox>
+                <Separator Width="8" Visibility="Hidden"/>
+            </DockPanel>
+        </materialDesign:ColorZone>
+        <materialDesign:Card>
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="10"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Algoritmo -->
+                <ComboBox Grid.Row="0"
+                              Style="{StaticResource MaterialDesignFilledComboBox}"
+                              ItemsSource="{Binding AvailableAlgorithms, Converter={StaticResource EnumDescriptionConverter}}"
+                              SelectedItem="{Binding SelectedAlgorithm, Converter={StaticResource EnumDescriptionConverter}}"
+                              materialDesign:HintAssist.Hint="Algoritmo"
+                              SelectedIndex="0"/>
+
+                <!--Quantum-->
+                <DockPanel Grid.Row="2" LastChildFill="False">
+                    <TextBox Text="{Binding CpuCores}"
+                             VerticalAlignment="Top"
+                             Style="{StaticResource MaterialDesignFilledTextBox}"
+                             TextWrapping="Wrap"
+                             HorizontalAlignment="Left"
+                             Width="100"
+                             materialDesign:HintAssist.Hint="CPU Cores"
+                             DockPanel.Dock="Left"/>
+                    <TextBox Text="{Binding Quantum}"
+                             VerticalAlignment="Top"
+                             Visibility="{Binding IsPreemptive, Converter={StaticResource BooleanToVisibilityConverter}}"
+                             Style="{StaticResource MaterialDesignFilledTextBox}"
+                             TextWrapping="Wrap"
+                             HorizontalAlignment="Left"
+                             Width="100"
+                             materialDesign:HintAssist.Hint="Quantum"
+                             DockPanel.Dock="Right"/>
+                </DockPanel>
+                
+                <!--Dispositivos-->
+                <StackPanel Grid.Row="4">
+                    <TextBlock Text="Dispositivos" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
+                    <Separator Margin="0,4"/>
+                    <DataGrid ItemsSource="{Binding AvailableDevices}"
+                              AutoGenerateColumns="False"
+                              CanUserReorderColumns="False"
+                              CanUserResizeColumns="False"
+                              CanUserSortColumns="False"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              HeadersVisibility="Column"
+                              RowHeaderWidth="0"
+                              GridLinesVisibility="None"
+                              SelectionMode="Single"
+                              SelectionUnit="Cell"
+                              BorderThickness="0"
+                              Padding="0"
+                              HorizontalScrollBarVisibility="Disabled">
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding DeviceType, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Canais" Binding="{Binding Channels, UpdateSourceTrigger=PropertyChanged}" Width="Auto" />
+                            <DataGridCheckBoxColumn Header="Habilitado" Binding="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" Width="Auto" />
+                        </DataGrid.Columns>
+
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                <Setter Property="BorderThickness" Value="0"/>
+                                <Setter Property="BorderBrush" Value="Transparent"/>
+                            </Style>
+                        </DataGrid.CellStyle>
+
+                        <DataGrid.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
+                        </DataGrid.Resources>
+                    </DataGrid>
+                </StackPanel>
+            </Grid>
+        </materialDesign:Card>
+    </StackPanel>
+</UserControl>
