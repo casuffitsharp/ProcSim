@@ -14,7 +14,7 @@ public class IODevice : IDisposable
     private readonly List<Task> _workers;
     private bool _disposed;
     private readonly CancellationTokenSource _cts;
-    
+
     private long _totalRequests;
     private long _totalProcessed;
 
@@ -92,7 +92,7 @@ public class IODevice : IDisposable
                 _interruptController.RaiseExternal(Vector);
             }
         }
-        catch (TaskCanceledException)
+        catch (Exception ex) when (ex is TaskCanceledException or OperationCanceledException)
         {
             Debug.WriteLine($"IODevice {Id} ({channelId}) - Worker cancelled");
         }

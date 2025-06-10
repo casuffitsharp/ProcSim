@@ -7,4 +7,5 @@ public record CpuCoreUsageMetric(
     ulong UserCyclesDelta,
     ulong SyscallCyclesDelta,
     ulong InterruptCyclesDelta
-);
+,
+    ulong dIdle);

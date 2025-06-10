@@ -1,19 +1,19 @@
 ﻿using ProcSim.Core.Process;
-using ProcSim.Core.Scheduler;
+using ProcSim.Core.Process.Factories;
 
 namespace ProcSim.Core.Interruptions.Handlers;
 
-public class TimerInterruptHandler(IScheduler scheduler) : IInterruptHandler
+public class TimerInterruptHandler() : IInterruptHandler
 {
     private const uint TimerVector = 32;
 
-    public bool CanHandle(uint vector) => vector == TimerVector;
-    public void BuildBody(uint vector, CPU cpu, Queue<MicroOp> seq)
+    public bool CanHandle(uint vector)
     {
-        seq.Enqueue(new MicroOp("SWITCH_CONTEXT", c =>
-        {
-            PCB next = scheduler.Preempt(c);
-            Dispatcher.SwitchContext(c, next);
-        }));
+        return vector == TimerVector;
+    }
+
+    public Instruction BuildBody(uint vector)
+    {
+        return InstructionFactory.ContextSwitch();
     }
 }

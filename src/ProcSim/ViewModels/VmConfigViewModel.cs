@@ -7,6 +7,7 @@ using ProcSim.Core.Configuration;
 using ProcSim.Core.IO;
 using ProcSim.Core.Scheduler;
 using ProcSim.ViewModels;
+using ProcSim.Views;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -20,26 +21,35 @@ public partial class VmConfigViewModel : ObservableObject
     {
         _configRepo = configRepo;
 
-        SchedulerTypes = [.. Enum.GetValues<SchedulerType>().Where(t => t > 0)];
-
         SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
         SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
         LoadConfigCommand = new AsyncRelayCommand(LoadConfigFromFileAsync);
 
-        SchedulerType = SchedulerTypes[0];
-        Quantum = 1;
+        SchedulerType = SchedulerType.Priority;
+        Quantum = 10;
         Cores = 1;
         CanChangeConfigs = true;
 
-        UpdateFromModel(_configRepo.Deserialize(Settings.Default.VmConfig));
+        VmConfigModel model = null;
+        if (!string.IsNullOrEmpty(Settings.Default.VmConfig))
+            model = _configRepo.Deserialize(Settings.Default.VmConfig);
+
+        UpdateFromModel(model);
     }
 
-    public ushort Cores { get; set; }
-    public uint Quantum { get; set; }
-    public SchedulerType SchedulerType { get; set; }
-    public ObservableCollection<IoDeviceConfigViewModel> Devices { get; set; }
+    public static SchedulerType[] SchedulerTypeValues { get; } = [.. Enum.GetValues<SchedulerType>().Where(x => x != SchedulerType.None)];
+    public static IoDeviceType[] IoDeviceTypeValues { get; } = [.. Enum.GetValues<IoDeviceType>().Where(x => x != IoDeviceType.None)];
 
-    public ObservableCollection<SchedulerType> SchedulerTypes { get; }
+    public event Action CurrentFileChanged = () => { };
+
+    [ObservableProperty]
+    public partial ushort Cores { get; set; }
+    [ObservableProperty]
+    public partial uint Quantum { get; set; }
+    [ObservableProperty]
+    public partial SchedulerType SchedulerType { get; set; }
+
+    public ObservableCollection<IoDeviceConfigViewModel> IoDevices { get; set; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
     public IAsyncRelayCommand SaveAsConfigCommand { get; }
@@ -48,9 +58,18 @@ public partial class VmConfigViewModel : ObservableObject
     [ObservableProperty]
     public partial bool CanChangeConfigs { get; set; }
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveConfigCommand))]
-    public partial string CurrentFile { get; private set; }
+    public string CurrentFile
+    {
+        get;
+        private set
+        {
+            if (SetProperty(ref field, value))
+            {
+                CurrentFileChanged.Invoke();
+                SaveConfigCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
 
     public VmConfigModel MapToModel()
     {
@@ -59,23 +78,26 @@ public partial class VmConfigViewModel : ObservableObject
             CpuCores = Cores,
             Quantum = Quantum,
             SchedulerType = SchedulerType,
-            Devices = [.. Devices.Select(d => d.MapToModel())]
+            Devices = [.. IoDevices.Select(d => d.MapToModel())]
         };
     }
 
     public void UpdateFromModel(VmConfigModel model)
     {
-        Cores = model.CpuCores;
-        Quantum = model.Quantum;
-        SchedulerType = model.SchedulerType;
+        if (model is not null)
+        {
+            Cores = model.CpuCores;
+            Quantum = model.Quantum;
+            SchedulerType = model.SchedulerType;
+        }
 
-        Devices = [];
+        IoDevices = [];
         EnumDescriptionConverter converter = new();
-        foreach (IoDeviceType type in Enum.GetValues<IoDeviceType>().Where(t => t > 0))
+        foreach (IoDeviceType type in IoDeviceTypeValues)
         {
             IoDeviceConfigViewModel device = new();
 
-            if (model.Devices?.FirstOrDefault(d => d.Type == type) is IoDeviceConfigModel loadedDevice)
+            if (model?.Devices?.FirstOrDefault(d => d.Type == type) is IoDeviceConfigModel loadedDevice)
             {
                 device.UpdateFromModel(loadedDevice);
             }
@@ -87,8 +109,42 @@ public partial class VmConfigViewModel : ObservableObject
                 device.IsEnabled = false;
             }
 
-            Devices.Add(device);
+            IoDevices.Add(device);
         }
+    }
+
+    public async Task<bool> ValidateAsync()
+    {
+        List<string> errors = [];
+
+        if (Cores == 0)
+            errors.Add("Quantidade de núcleos deve ser maior que 0.");
+
+        if (Quantum == 0)
+            errors.Add("Quantum deve ser maior que 0.");
+
+        if (SchedulerType == SchedulerType.None)
+            errors.Add("Tipo de escalonador deve ser definido.");
+
+        foreach (IoDeviceConfigViewModel device in IoDevices)
+        {
+            if (!device.IsEnabled)
+                continue;
+
+            if (!device.Validate(out List<string> deviceErrors))
+            {
+                string type = EnumDescriptionConverter.GetEnumDescription(device.Type);
+                errors.AddRange(deviceErrors.Select(e => $"[{type}] {e}"));
+            }
+        }
+
+        if (errors.Count > 0)
+        {
+            await TextDialog.ShowValidationErrorsAsync("Erros de validação", errors);
+            return false;
+        }
+
+        return true;
     }
 
     internal void SaveConfig()
@@ -103,11 +159,17 @@ public partial class VmConfigViewModel : ObservableObject
 
     private async Task SaveConfigToFileAsync()
     {
+        if (!await ValidateAsync())
+            return;
+
         await _configRepo.SaveAsync(MapToModel(), CurrentFile);
     }
 
     private async Task SaveAsConfigAsync()
     {
+        if (!await ValidateAsync())
+            return;
+
         SaveFileDialog dialog = new() { Filter = _configRepo.FileFilter };
         dialog.ShowDialog();
         string filePath = dialog.FileName;

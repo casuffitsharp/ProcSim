@@ -34,8 +34,9 @@ public class CPU
     }
 
     public uint Id { get; }
-    public PCB CurrentPCB { 
-        get; 
+    public PCB CurrentPCB
+    {
+        get;
         set
         {
             field = value;
@@ -53,29 +54,47 @@ public class CPU
     public ulong UserCycleCount { get; private set; }
     public ulong SyscallCycleCount { get; private set; }
     public ulong InterruptCycleCount { get; private set; }
+    public ulong IdleCycleCount { get; private set; }
 
     private void Tick()
     {
+        CycleCount++;
+
         if (_ops?.Count > 0)
         {
             MicroOp op = _ops.Dequeue();
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing micro-op: {op.Name} (PC: {PC}, SP: {SP})");
             op.Execute(this);
 
-            // revisar
-            if (op.Name.StartsWith("SYSCALL")) SyscallCycleCount++;
-            else if (op.Name.StartsWith("IRQ_")) InterruptCycleCount++;
-            else UserCycleCount++;
+            if (op.Name.StartsWith("SYSCALL"))
+            {
+                SyscallCycleCount++;
+                CurrentPCB.SyscallCycles++;
+            }
+            else if (op.Name.StartsWith("IRQ_"))
+            {
+                InterruptCycleCount++;
+            }
+            else if (op.Name.StartsWith("IDLE"))
+            {
+                IdleCycleCount++;
+            }
+            else
+            {
+                UserCycleCount++;
+                CurrentPCB.UserCycles++;
+            }
 
-            CycleCount++;
             return;
         }
 
         if (_interruptController.FetchReady(Id) is uint vector)
         {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando ISRV");
-            _ops = _isrv.BuildISR(vector, this);
+            Instruction instruction = _isrv.BuildISR(vector);
+            _ops = instruction.MicroOps;
             InstructionsFetched++;
+            InterruptCycleCount++;
             return;
         }
 
@@ -86,6 +105,7 @@ public class CPU
         {
             Instruction instr = _instructions.ElementAt((int)PC);
             InstructionsFetched++;
+            SyscallCycleCount++;
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing instruction: {instr.Mnemonic} (PC: {PC}, SP: {SP})");
             _ops = new(instr.MicroOps);
             PC++;

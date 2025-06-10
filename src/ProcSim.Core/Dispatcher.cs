@@ -9,8 +9,12 @@ public static class Dispatcher
     public static void SwitchContext(CPU cpu, PCB next)
     {
         PCB prev = cpu.CurrentPCB;
+        prev?.OnExitRunning(cpu.UserCycleCount, cpu.SyscallCycleCount);
         if (prev == next)
+        {
+            next.OnDispatched(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount);
             return;
+        }
 
         if (prev != null)
             SaveContext(cpu, prev);
@@ -19,6 +23,7 @@ public static class Dispatcher
 
         if (next != null)
         {
+            next.OnDispatched(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount);
             LoadContext(cpu, next);
             next.State = ProcessState.Running;
         }
@@ -30,7 +35,7 @@ public static class Dispatcher
 
         pcb.ProgramCounter = cpu.PC;
         pcb.StackPointer = cpu.SP;
-        
+
         foreach ((string k, int v) in cpu.RegisterFile)
             pcb.Registers[k] = v;
 

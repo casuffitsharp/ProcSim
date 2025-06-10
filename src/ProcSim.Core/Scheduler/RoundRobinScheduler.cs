@@ -22,6 +22,9 @@ public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs)
         if (prev?.State == ProcessState.Running && prev != _idleByCore[cpu.Id])
             Admit(prev);
 
+        if (prev == _idleByCore[cpu.Id])
+            prev.State = ProcessState.Ready;
+
         PCB next = GetNext(cpu.Id);
         next.State = ProcessState.Running;
         return next;
@@ -30,7 +33,9 @@ public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs)
     public PCB GetNext(uint cpuId)
     {
         if (readyQueue.TryDequeue(out PCB next))
+        {
             Debug.WriteLine($"Picked process {next.ProcessId} from the ready queue for core {cpuId}.");
+        }
         else
         {
             next = _idleByCore[cpuId];

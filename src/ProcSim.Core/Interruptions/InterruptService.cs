@@ -10,19 +10,11 @@ public class InterruptService(List<IInterruptHandler> handlers)
 
     public long InterruptCount => _interruptCount;
 
-    public Queue<MicroOp> BuildISR(uint vector, CPU cpu)
+    public Instruction BuildISR(uint vector)
     {
         Interlocked.Increment(ref _interruptCount);
-
-        Queue<MicroOp> seq = new();
-
-        seq.Enqueue(new MicroOp("IRQ_ENTRY", c => c.TrapToKernel()));
-
         IInterruptHandler handler = handlers.First(h => h.CanHandle(vector));
-        handler.BuildBody(vector, cpu, seq);
         Debug.WriteLine($"Building ISR for vector {vector} using {handler.GetType().Name}");
-        seq.Enqueue(new MicroOp("IRQ_EXIT", c => c.Iret()));
-
-        return seq;
+        return handler.BuildBody(vector);
     }
 }

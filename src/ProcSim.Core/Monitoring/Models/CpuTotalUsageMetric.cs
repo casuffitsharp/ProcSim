@@ -7,4 +7,5 @@ public record CpuTotalUsageMetric(
     ulong UserCyclesDelta,
     ulong SyscallCyclesDelta,
     ulong InterruptCyclesDelta
-);
+,
+    ulong totalIdle);

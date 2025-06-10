@@ -3,8 +3,6 @@ using ProcSim.Assets;
 using ProcSim.ViewModels;
 using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 namespace ProcSim.Views;
 
@@ -27,8 +25,8 @@ public partial class MainView : Window
         MainViewModel viewModel = (MainViewModel)DataContext;
         viewModel.VmConfig.SaveConfig();
         viewModel.ProcessesConfig.SaveConfig();
-        //Settings.Default.TickInterval = viewModel.TickInterval;
 
+        Settings.Default.Clock = viewModel.SimulationControl.Clock;
         Settings.Default.Save();
 
         base.OnClosing(e);
@@ -47,14 +45,5 @@ public partial class MainView : Window
     {
         Settings.Default.DarkMode = DarkModeToggleButton.IsChecked == true;
         ModifyTheme(DarkModeToggleButton.IsChecked == true);
-    }
-
-    private void Slider_DragCompleted(object sender, object e)
-    {
-        if (sender is Slider slider)
-        {
-            BindingExpression binding = slider.GetBindingExpression(Slider.ValueProperty);
-            binding?.UpdateSource();
-        }
     }
 }

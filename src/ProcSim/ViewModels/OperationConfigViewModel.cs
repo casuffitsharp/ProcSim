@@ -1,9 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using ProcSim.Converters;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.IO;
-using System;
 using System.ComponentModel;
-using System.Windows;
 
 namespace ProcSim.ViewModels;
 
@@ -13,27 +12,43 @@ public enum OperationType
     None,
     [Description("CPU")]
     Cpu,
-    [Description("IO")]
+    [Description("I/O")]
     Io
 }
 
-public partial class OperationConfigViewModel : ObservableObject, IEquatable<OperationConfigViewModel>
+public partial class OperationConfigViewModel : ObservableObject
 {
-    public OperationConfigViewModel() { }
-    
-    public OperationConfigViewModel(IOperationConfigModel model)
+    public OperationConfigViewModel()
+    {
+        CpuOperationConfig.PropertyChanged += Child_PropertyChanged;
+        IoOperationConfig.PropertyChanged += Child_PropertyChanged;
+
+        if (Type == OperationType.None)
+            Type = OperationType.Cpu;
+    }
+
+    public OperationConfigViewModel(IOperationConfigModel model) : this()
     {
         UpdateFromModel(model);
     }
+
+    public static OperationType[] OperationTypeValues { get; } = [.. Enum.GetValues<OperationType>().Where(x => x != OperationType.None)];
 
     public CpuOperationConfigViewModel CpuOperationConfig { get; set; } = new();
     public IoOperationConfigViewModel IoOperationConfig { get; set; } = new();
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsCpu))]
+    [NotifyPropertyChangedFor(nameof(Summary), nameof(IsCpu))]
     public partial OperationType Type { get; set; }
 
     public bool IsCpu => Type == OperationType.Cpu;
+
+    public string Summary => Type switch
+    {
+        OperationType.Cpu => CpuOperationConfig.GetSummary(),
+        OperationType.Io => IoOperationConfig.GetSummary(),
+        _ => string.Empty,
+    };
 
     public IOperationConfigModel MapToModel()
     {
@@ -72,21 +87,20 @@ public partial class OperationConfigViewModel : ObservableObject, IEquatable<Ope
         UpdateFromModel(other.MapToModel());
     }
 
-    public bool IsValid
+    public bool Validate(out IEnumerable<string> errors)
     {
-        get
-        {
-            if (Type == OperationType.None) return false;
-            if (Type == OperationType.Cpu && !CpuOperationConfig.IsValid) return false;
-            if (Type == OperationType.Io && !IoOperationConfig.IsValid) return false;
+        List<string> list = [];
 
-            return true;
-        }
-    }
+        if (Type == OperationType.None)
+            list.Add("Tipo de operação não foi selecionado.");
 
-    public override bool Equals(object obj)
-    {
-        return obj is OperationConfigViewModel other && Equals(other);
+        if (Type == OperationType.Cpu && !CpuOperationConfig.Validate(out IEnumerable<string> cpuErrors))
+            list.AddRange(cpuErrors);
+        else if (Type == OperationType.Io && !IoOperationConfig.Validate(out IEnumerable<string> ioErrors))
+            list.AddRange(ioErrors);
+
+        errors = list;
+        return list.Count == 0;
     }
 
     public bool Equals(OperationConfigViewModel other)
@@ -97,40 +111,71 @@ public partial class OperationConfigViewModel : ObservableObject, IEquatable<Ope
         if (Type != other.Type) return false;
         if (CpuOperationConfig.Equals(other.CpuOperationConfig) == false) return false;
         if (IoOperationConfig.Equals(other.IoOperationConfig) == false) return false;
-        
+
         return true;
+    }
+
+    private void Child_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+        OnPropertyChanged(nameof(Summary));
     }
 }
 
-public partial class CpuOperationConfigViewModel : ObservableObject, IEquatable<CpuOperationConfigViewModel>
+public partial class CpuOperationConfigViewModel : ObservableObject
 {
-    public CpuOperationType Type { get; set; }
-    public int R1 { get; set; }
-    public int R2 { get; set; }
+    public CpuOperationConfigViewModel()
+    {
+        Type = CpuOperationType.Random;
+        RepeatCount = 1;
+    }
 
-    public CpuOperationConfigModel MapToModel() => new(Type, R1, R2);
+    public static CpuOperationType[] CpuOperationTypeValues { get; } = [.. Enum.GetValues<CpuOperationType>().Where(x => x != CpuOperationType.None)];
+
+    [ObservableProperty]
+    public partial CpuOperationType Type { get; set; }
+    [ObservableProperty]
+    public partial int Min { get; set; }
+    [ObservableProperty]
+    public partial int Max { get; set; }
+    [ObservableProperty]
+    public partial uint RepeatCount { get; set; }
+
+    public CpuOperationConfigModel MapToModel()
+    {
+        return new(Type, Min, Max, RepeatCount);
+    }
 
     public void UpdateFromModel(CpuOperationConfigModel model)
     {
         Type = model.Type;
-        R1 = model.R1;
-        R2 = model.R2;
+        Min = model.Min;
+        Max = model.Max;
+        RepeatCount = model.RepeatCount;
     }
 
-    public bool IsValid
+    public bool Validate(out IEnumerable<string> errors)
     {
-        get
-        {
-            if (Type == CpuOperationType.None) return false;
-            if (Type is CpuOperationType.Divide or CpuOperationType.Random && R2 == 0) return false;
+        List<string> list = [];
 
-            return true;
-        }
+        if (Type == CpuOperationType.None)
+            list.Add("Tipo de operação CPU não foi selecionado.");
+
+        if (Min == 0 || Max == 0)
+            list.Add("Valores mínimo e máximo não podem ser zero.");
+
+        if (Min >= Max)
+            list.Add("Valor mínimo não pode ser maior ou igual ao máximo.");
+
+        if (RepeatCount == 0)
+            list.Add("Repetições não podem ser zero.");
+
+        errors = list;
+        return list.Count == 0;
     }
 
-    public override bool Equals(object obj)
+    public string GetSummary()
     {
-        return obj is CpuOperationConfigViewModel other && Equals(other);
+        return $"CPU: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(Type),-6} Min: {Min} Max: {Max}";
     }
 
     public bool Equals(CpuOperationConfigViewModel other)
@@ -139,20 +184,64 @@ public partial class CpuOperationConfigViewModel : ObservableObject, IEquatable<
         if (ReferenceEquals(this, other)) return true;
 
         if (Type != other.Type) return false;
-        if (R1 != other.R1) return false;
-        if (R2 != other.R2) return false;
-        
+        if (Min != other.Min) return false;
+        if (Max != other.Max) return false;
+        if (RepeatCount != other.RepeatCount) return false;
+
         return true;
     }
 }
 
-public partial class IoOperationConfigViewModel : ObservableObject, IEquatable<IoOperationConfigViewModel>
+public partial class IoOperationConfigViewModel : ObservableObject
 {
-    public IoDeviceType DeviceType { get; set; }
-    public uint Duration { get; set; }
-    public uint MinDuration { get; set; }
-    public uint MaxDuration { get; set; }
-    public bool IsRandom { get; set; }
+    public IoOperationConfigViewModel()
+    {
+        DeviceType = IoDeviceType.Disk;
+        RepeatCount = 1;
+    }
+
+    public static IoDeviceType[] IoDeviceTypeValues { get; } = [.. Enum.GetValues<IoDeviceType>().Where(x => x != IoDeviceType.None)];
+
+    [ObservableProperty]
+    public partial IoDeviceType DeviceType { get; set; }
+    [ObservableProperty]
+    public partial uint Duration { get; set; }
+    [ObservableProperty]
+    public partial uint MinDuration { get; set; }
+    [ObservableProperty]
+    public partial uint MaxDuration { get; set; }
+    [ObservableProperty]
+    public partial bool IsRandom { get; set; }
+    [ObservableProperty]
+    public partial uint RepeatCount { get; set; }
+
+    public bool Validate(out IEnumerable<string> errors)
+    {
+        List<string> list = [];
+
+        if (DeviceType == IoDeviceType.None)
+            list.Add("Dispositivo não foi selecionado.");
+
+        if (Duration == 0 && !IsRandom)
+            list.Add("Duração não pode ser zero.");
+
+        if (IsRandom && (MinDuration == 0 || MaxDuration == 0 || MinDuration > MaxDuration))
+            list.Add("Duração mínima e máxima inválida.");
+
+        if (RepeatCount == 0)
+            list.Add("Repetições não podem ser zero.");
+
+        errors = list;
+        return list.Count == 0;
+    }
+
+    public string GetSummary()
+    {
+        if (IsRandom)
+            return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} Min: {MinDuration}ms Max: {MaxDuration}ms";
+
+        return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} {Duration}ms";
+    }
 
     public IoOperationConfigModel MapToModel()
     {
@@ -162,7 +251,8 @@ public partial class IoOperationConfigViewModel : ObservableObject, IEquatable<I
             Duration = Duration,
             MinDuration = MinDuration,
             MaxDuration = MaxDuration,
-            IsRandom = IsRandom
+            IsRandom = IsRandom,
+            RepeatCount = RepeatCount
         };
     }
 
@@ -173,23 +263,7 @@ public partial class IoOperationConfigViewModel : ObservableObject, IEquatable<I
         MinDuration = model.MinDuration;
         MaxDuration = model.MaxDuration;
         IsRandom = model.IsRandom;
-    }
-
-    public bool IsValid
-    {
-        get
-        {
-            if (DeviceType == IoDeviceType.None) return false;
-            if (Duration == 0 && !IsRandom) return false;
-            if (IsRandom && (MinDuration == 0 || MaxDuration == 0 || MinDuration > MaxDuration)) return false;
-
-            return true;
-        }
-    }
-
-    public override bool Equals(object obj)
-    {
-        return obj is IoOperationConfigViewModel other && Equals(other);
+        RepeatCount = model.RepeatCount;
     }
 
     public bool Equals(IoOperationConfigViewModel other)
@@ -202,7 +276,8 @@ public partial class IoOperationConfigViewModel : ObservableObject, IEquatable<I
         if (MinDuration != other.MinDuration) return false;
         if (MaxDuration != other.MaxDuration) return false;
         if (IsRandom != other.IsRandom) return false;
-        
+        if (RepeatCount != other.RepeatCount) return false;
+
         return true;
     }
 }

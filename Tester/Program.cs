@@ -1,9 +1,4 @@
-﻿using ProcSim.Core.New;
-using ProcSim.Core.New.Process;
-using ProcSim.Core.New.Scheduler;
-using ProcSim.Core.New.Syscall;
-
-ProcessDto cpuBoundProcess = new()
+﻿ProcessDto cpuBoundProcess = new()
 {
     Instructions =
     [

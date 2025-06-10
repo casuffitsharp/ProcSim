@@ -6,11 +6,25 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              xmlns:vm="clr-namespace:ProcSim.ViewModels"
+             xmlns:converters="clr-namespace:ProcSim.Converters"
              mc:Ignorable="d"
              d:DesignHeight="600"
-             d:DesignWidth="800">
-    <Grid Margin="16">
-        <TabControl materialDesign:ColorZoneAssist.Mode="PrimaryDark">
+             d:DesignWidth="800"
+             VerticalAlignment="Stretch"
+             HorizontalAlignment="Stretch">
+    <UserControl.Resources>
+        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+    </UserControl.Resources>
+    <Grid Margin="16"
+            VerticalAlignment="Stretch"
+            HorizontalAlignment="Stretch">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <TabControl Grid.Row="0"
+                    materialDesign:ColorZoneAssist.Mode="PrimaryDark"
+                    VerticalAlignment="Stretch"
+                    HorizontalAlignment="Stretch">
             <TabItem Header="CPU">
                 <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding CpuCharts}">
@@ -83,19 +97,90 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- Aba Eventos Gerais: lista os eventos não classificados como CPU ou I/O -->
-            <TabItem Header="Eventos Gerais">
-                <DataGrid ItemsSource="{Binding GeneralEvents}" AutoGenerateColumns="False" 
-                          materialDesign:DataGridAssist.CellPadding="8" IsReadOnly="True">
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" Width="150"/>
-                        <DataGridTextColumn Header="Tipo" Binding="{Binding EventType}" Width="100"/>
-                        <DataGridTextColumn Header="Componente" Binding="{Binding Component}" Width="120"/>
-                        <DataGridTextColumn Header="Processo" Binding="{Binding ProcessId}" Width="80"/>
-                        <DataGridTextColumn Header="Core" Binding="{Binding CoreId}" Width="80"/>
-                        <DataGridTextColumn Header="Mensagem" Binding="{Binding Message}" Width="*"/>
-                    </DataGrid.Columns>
-                </DataGrid>
+            <TabItem Header="Detalhes">
+                <Grid VerticalAlignment="Stretch"
+                      HorizontalAlignment="Stretch">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="1.5*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid Grid.Column="0"
+                        ItemsSource="{Binding RunningProcessesDetails}"
+                          AutoGenerateColumns="False"
+                          CanUserReorderColumns="False"
+                          CanUserResizeColumns="False"
+                          HeadersVisibility="Column"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          GridLinesVisibility="None"
+                          SelectionMode="Single"
+                          SelectionUnit="FullRow"
+                          BorderThickness="0"
+                          Padding="0"
+                          RowHeight="33"
+                          IsReadOnly="True"
+                          Background="White"
+                          ScrollViewer.CanContentScroll="True"                 
+                          ScrollViewer.VerticalScrollBarVisibility="Auto" >
+                        <DataGrid.Columns>
+                            <materialDesign:DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="Status" Binding="{Binding State, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="Pr. est." Binding="{Binding StaticPriority, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="Pr. din." Binding="{Binding DynamicPriority}" Width="Auto" />
+                        </DataGrid.Columns>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDataGridCellHoverBackground}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                    </DataGrid>
+                    <DataGrid Grid.Column="1"
+                            ItemsSource="{Binding TerminatedProcessesDetails}"
+                            AutoGenerateColumns="False"
+                            CanUserReorderColumns="False"
+                            CanUserResizeColumns="False"
+                            HeadersVisibility="Column"
+                            CanUserAddRows="False"
+                            CanUserDeleteRows="False"
+                            GridLinesVisibility="None"
+                            SelectionMode="Single"
+                            SelectionUnit="FullRow"
+                            BorderThickness="0"
+                            Padding="0"
+                            RowHeight="33"
+                            IsReadOnly="True"
+                            Background="White"
+                            ScrollViewer.CanContentScroll="True"                 
+                            ScrollViewer.VerticalScrollBarVisibility="Auto" >
+                        <DataGrid.Columns>
+                            <materialDesign:DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="Status" Binding="{Binding State, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="Auto" />
+                        </DataGrid.Columns>
+                        <DataGrid.CellStyle>
+                            <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+                                <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+                                <Setter Property="BorderThickness" Value="0" />
+                                <Style.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDataGridCellHoverBackground}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                    </DataGrid>
+                </Grid>
             </TabItem>
 
             <!-- Aba Informações Adicionais: apresenta dados do sistema, como CPU, memória, etc.

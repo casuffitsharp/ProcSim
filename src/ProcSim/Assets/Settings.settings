@@ -3,15 +3,15 @@
   <Profiles />
   <Settings>
     <Setting Name="VmConfig" Type="System.String" Scope="User">
-      <Value Profile="(Default)">{}</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ProcessesConfig" Type="System.String" Scope="User">
-      <Value Profile="(Default)">[]</Value>
+      <Value Profile="(Default)" />
     </Setting>
     <Setting Name="DarkMode" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
-    <Setting Name="TickInterval" Type="System.UInt16" Scope="User">
+    <Setting Name="Clock" Type="System.UInt16" Scope="User">
       <Value Profile="(Default)">10</Value>
     </Setting>
   </Settings>

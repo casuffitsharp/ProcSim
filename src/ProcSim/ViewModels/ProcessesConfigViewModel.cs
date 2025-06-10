@@ -3,9 +3,12 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using ProcSim.Assets;
 using ProcSim.Core.Configuration;
+using ProcSim.Core.Extensions;
 using ProcSim.Core.IO;
+using ProcSim.Core.Process;
+using ProcSim.Core.Simulation;
+using ProcSim.Views;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 
 namespace ProcSim.ViewModels;
@@ -13,15 +16,18 @@ namespace ProcSim.ViewModels;
 public partial class ProcessesConfigViewModel : ObservableObject
 {
     private readonly IRepositoryBase<List<ProcessConfigModel>> _configRepo;
+    private readonly SimulationController _simulationController;
 
-    public ProcessesConfigViewModel(IRepositoryBase<List<ProcessConfigModel>> configRepo)
+    public ProcessesConfigViewModel(IRepositoryBase<List<ProcessConfigModel>> configRepo, SimulationController simulationController)
     {
         _configRepo = configRepo;
+        _simulationController = simulationController;
 
-        SaveCommand = new RelayCommand(Save, CanSave);
+        SaveCommand = new AsyncRelayCommand(SaveAsync, CanSave, AsyncRelayCommandOptions.None);
         CancelCommand = new RelayCommand(Reset, CanCancel);
         AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
         RemoveProcessCommand = new RelayCommand(RemoveProcess, CanRemoveProcess);
+        BuildCommand = new AsyncRelayCommand(BuildAsync, CanBuild, AsyncRelayCommandOptions.None);
 
         SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
         SaveAsConfigCommand = new AsyncRelayCommand(SaveAsConfigAsync);
@@ -31,17 +37,25 @@ public partial class ProcessesConfigViewModel : ObservableObject
         CancelCommand.NotifyCanExecuteChanged();
         AddProcessCommand.NotifyCanExecuteChanged();
         RemoveProcessCommand.NotifyCanExecuteChanged();
+        BuildCommand.NotifyCanExecuteChanged();
 
         CanChangeConfigs = true;
 
-        UpdateFromModel(_configRepo.Deserialize(Settings.Default.ProcessesConfig));
+        List<ProcessConfigModel> model = [];
+        if (!string.IsNullOrEmpty(Settings.Default.ProcessesConfig))
+            model = _configRepo.Deserialize(Settings.Default.ProcessesConfig);
+
+        UpdateFromModel(model);
         Reset();
     }
 
-    public IRelayCommand SaveCommand { get; }
+    public event Action CurrentFileChanged = () => { };
+
+    public IAsyncRelayCommand SaveCommand { get; }
     public IRelayCommand CancelCommand { get; }
     public IRelayCommand AddProcessCommand { get; }
     public IRelayCommand RemoveProcessCommand { get; }
+    public IAsyncRelayCommand BuildCommand { get; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
     public IAsyncRelayCommand SaveAsConfigCommand { get; }
@@ -49,9 +63,18 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     public ObservableCollection<ProcessConfigViewModel> Processes { get; } = [];
 
-    [ObservableProperty]
-    [NotifyCanExecuteChangedFor(nameof(SaveConfigCommand))]
-    public partial string CurrentFile { get; private set; }
+    public string CurrentFile
+    {
+        get;
+        private set
+        {
+            if (SetProperty(ref field, value))
+            {
+                CurrentFileChanged.Invoke();
+                SaveConfigCommand.NotifyCanExecuteChanged();
+            }
+        }
+    }
 
     [ObservableProperty]
     public partial bool CanChangeConfigs { get; set; }
@@ -61,59 +84,65 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     public ProcessConfigViewModel SelectedProcess
     {
-        get => field;
+        get;
         set
         {
             ProcessConfigViewModel old = field;
-            if (field != null)
-                field.PropertyChanged -= SelectedProcess_PropertyChanged;
-
             SelectedProcessRef = value;
             value = value?.Copy();
 
             if (SetProperty(ref field, value))
             {
-                if (field != null)
-                    field.PropertyChanged += SelectedProcess_PropertyChanged;
-
-                OnPropertyChanged(nameof(IsProcessSelected));
                 SaveCommand.NotifyCanExecuteChanged();
                 CancelCommand.NotifyCanExecuteChanged();
                 AddProcessCommand.NotifyCanExecuteChanged();
                 RemoveProcessCommand.NotifyCanExecuteChanged();
+                BuildCommand.NotifyCanExecuteChanged();
             }
         }
     }
 
     private ProcessConfigViewModel SelectedProcessRef { get; set; }
 
-    public bool IsProcessSelected => SelectedProcess is not null;
-
     internal void SaveConfig()
     {
         Settings.Default.ProcessesConfig = _configRepo.Serialize(MapToModel());
     }
 
-    private List<ProcessConfigModel> MapToModel()
+    public List<ProcessConfigModel> MapToModel()
     {
         return [.. Processes.Select(p => p.MapToModel())];
     }
 
-    private void SelectedProcess_PropertyChanged(object sender, PropertyChangedEventArgs e)
+    private async Task BuildAsync()
     {
-        //if (e.PropertyName is nameof(ProcessConfigViewModel.IsValid))
-        SaveCommand.NotifyCanExecuteChanged();
+        ProcessDto processDto = _simulationController.BuildProgram(SelectedProcessRef.MapToModel(), simulate: true);
+        string process = processDto.SerializePretty();
+        await TextDialog.ShowTextAsync("Processo compilado", process);
     }
 
-    private void Save()
+    private async Task SaveAsync()
     {
         if (SelectedProcess is null)
             return;
 
+        List<string> errors = [];
+        if (Processes.Any(p => p.Name.Equals(SelectedProcess.Name, StringComparison.InvariantCultureIgnoreCase) && p != SelectedProcessRef))
+            errors.Add("Já existe um processo com o mesmo nome.");
+
+        if (!SelectedProcess.Validate(out IEnumerable<string> validationErrors))
+            errors.AddRange(validationErrors);
+
+        if (errors.Count > 0)
+        {
+            await TextDialog.ShowValidationErrorsAsync("Erros de validação", errors);
+            return;
+        }
+
         int index = Processes.IndexOf(SelectedProcessRef);
         if (index >= 0)
         {
-            Processes[index] = SelectedProcess;
+            SelectedProcessRef.UpdateFromViewModel(SelectedProcess);
         }
         else
         {
@@ -130,13 +159,19 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     private bool CanSave()
     {
-        return SelectedProcess is not null && SelectedProcess.IsValid && !SelectedProcess.Equals(SelectedProcessRef);
+        return SelectedProcess is not null && !SelectedProcess.Equals(SelectedProcessRef);
     }
 
     private bool CanCancel()
     {
         return SelectedProcess is not null;
     }
+
+    private bool CanBuild()
+    {
+        return SelectedProcessRef is not null;
+    }
+
 
     private void AddProcess()
     {
@@ -146,7 +181,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     private void RemoveProcess()
     {
-        Processes.Remove(SelectedProcess);
+        Processes.Remove(SelectedProcessRef);
         Reset();
     }
 
@@ -157,7 +192,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     private bool CanRemoveProcess()
     {
-        return SelectedProcess is not null && Processes.Contains(SelectedProcess);
+        return SelectedProcessRef is not null && Processes.Contains(SelectedProcessRef);
     }
 
     private bool CanSaveConfig()

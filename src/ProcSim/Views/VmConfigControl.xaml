@@ -4,7 +4,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" 
-             xmlns:conv="clr-namespace:ProcSim.Converters"
+             xmlns:conv="clr-namespace:ProcSim.Converters" 
+             xmlns:viewmodels="clr-namespace:ProcSim.New.ViewModels" 
+             d:DataContext="{d:DesignInstance Type=viewmodels:VmConfigViewModel}"
              mc:Ignorable="d"
              Height="Auto"
              Width="Auto">
@@ -13,8 +15,7 @@
         <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
     </UserControl.Resources>
 
-    <StackPanel Orientation="Vertical"
-                IsEnabled="{Binding CanChangeConfigs}">
+    <StackPanel Orientation="Vertical" IsEnabled="{Binding CanChangeConfigs}">
         <materialDesign:ColorZone Grid.Row="0" Grid.ColumnSpan="3" Mode="PrimaryMid" Height="48"  HorizontalAlignment="Stretch" VerticalAlignment="Top">
             <DockPanel LastChildFill="False">
                 <TextBlock DockPanel.Dock="Left" Text="Configuração de VM" VerticalAlignment="Center" Foreground="White" Margin="16,0"/>
@@ -56,38 +57,37 @@
 
                 <!-- Algoritmo -->
                 <ComboBox Grid.Row="0"
-                              Style="{StaticResource MaterialDesignFilledComboBox}"
-                              ItemsSource="{Binding AvailableAlgorithms, Converter={StaticResource EnumDescriptionConverter}}"
-                              SelectedItem="{Binding SelectedAlgorithm, Converter={StaticResource EnumDescriptionConverter}}"
-                              materialDesign:HintAssist.Hint="Algoritmo"
-                              SelectedIndex="0"/>
+                            ItemsSource="{Binding Source={x:Static viewmodels:VmConfigViewModel.SchedulerTypeValues}, Converter={StaticResource EnumDescriptionConverter}}"
+                            SelectedItem="{Binding SchedulerType, Converter={StaticResource EnumDescriptionConverter}}"
+                            Style="{StaticResource MaterialDesignFilledComboBox}"
+                            materialDesign:HintAssist.Hint="Algoritmo"
+                          HorizontalAlignment="Left"
+                          Width="220"/>
 
                 <!--Quantum-->
-                <DockPanel Grid.Row="2" LastChildFill="False">
-                    <TextBox Text="{Binding CpuCores}"
+                <StackPanel Grid.Row="2" Orientation="Horizontal">
+                    <TextBox Text="{Binding Cores, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,20,0"
                              VerticalAlignment="Top"
                              Style="{StaticResource MaterialDesignFilledTextBox}"
                              TextWrapping="Wrap"
                              HorizontalAlignment="Left"
                              Width="100"
-                             materialDesign:HintAssist.Hint="CPU Cores"
-                             DockPanel.Dock="Left"/>
-                    <TextBox Text="{Binding Quantum}"
+                             materialDesign:HintAssist.Hint="CPU Cores"/>
+                    <TextBox Text="{Binding Quantum, UpdateSourceTrigger=PropertyChanged}"
                              VerticalAlignment="Top"
-                             Visibility="{Binding IsPreemptive, Converter={StaticResource BooleanToVisibilityConverter}}"
                              Style="{StaticResource MaterialDesignFilledTextBox}"
                              TextWrapping="Wrap"
                              HorizontalAlignment="Left"
                              Width="100"
-                             materialDesign:HintAssist.Hint="Quantum"
-                             DockPanel.Dock="Right"/>
-                </DockPanel>
-                
+                             materialDesign:HintAssist.Hint="Quantum"/>
+                </StackPanel>
+
                 <!--Dispositivos-->
                 <StackPanel Grid.Row="4">
                     <TextBlock Text="Dispositivos" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
                     <Separator Margin="0,4"/>
-                    <DataGrid ItemsSource="{Binding AvailableDevices}"
+                    <DataGrid ItemsSource="{Binding IoDevices}"
                               AutoGenerateColumns="False"
                               CanUserReorderColumns="False"
                               CanUserResizeColumns="False"
@@ -104,8 +104,9 @@
                               HorizontalScrollBarVisibility="Disabled">
 
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Tipo" Binding="{Binding DeviceType, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Tipo" Binding="{Binding Type, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" IsReadOnly="True"/>
                             <DataGridTextColumn Header="Canais" Binding="{Binding Channels, UpdateSourceTrigger=PropertyChanged}" Width="Auto" />
+                            <DataGridTextColumn Header="Latência" Binding="{Binding BaseLatency, UpdateSourceTrigger=PropertyChanged}" Width="Auto" />
                             <DataGridCheckBoxColumn Header="Habilitado" Binding="{Binding IsEnabled, UpdateSourceTrigger=PropertyChanged}" Width="Auto" />
                         </DataGrid.Columns>
 

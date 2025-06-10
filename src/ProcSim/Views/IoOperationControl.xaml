@@ -1,0 +1,77 @@
+﻿<UserControl x:Class="ProcSim.Views.IoOperationControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:viewModels="clr-namespace:ProcSim.ViewModels"
+             xmlns:converters="clr-namespace:ProcSim.Converters"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             Height="135"
+             d:DataContext="{d:DesignInstance Type=viewModels:IoOperationConfigViewModel}">
+    <UserControl.Resources>
+        <converters:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
+        <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+    </UserControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="60" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="60" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="60" />
+        </Grid.ColumnDefinitions>
+
+        <!-- Dispositivo -->
+        <ComboBox Grid.Row="0" Grid.ColumnSpan="5"
+                ItemsSource="{Binding Source={x:Static viewModels:IoOperationConfigViewModel.IoDeviceTypeValues}, Converter={StaticResource EnumDescriptionConverter}}"
+              SelectedItem="{Binding DeviceType, Converter={StaticResource EnumDescriptionConverter}, Mode=TwoWay}"
+              Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+              materialDesign:HintAssist.Hint="Dispositivo" />
+
+        <!-- Duração (quando não aleatório) -->
+        <TextBox Grid.Row="2" Grid.Column="0"
+             Text="{Binding Duration, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+             Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+             materialDesign:HintAssist.Hint="Duração"
+             IsEnabled="{Binding IsRandom, Converter={StaticResource InvertBooleanConverter}}"
+             Margin="0,0,8,0" />
+
+        <!-- Min/Max (quando aleatório) -->
+        <TextBox Grid.Row="2" Grid.Column="2"
+                    Text="{Binding MinDuration, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                    IsEnabled="{Binding IsRandom, Mode=OneWay}"
+                     Visibility="{Binding IsRandom, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                    materialDesign:HintAssist.Hint="Min" />
+        <TextBox Grid.Row="2" Grid.Column="4"
+                    Text="{Binding MaxDuration, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                    IsEnabled="{Binding IsRandom, Mode=OneWay}"
+                     Visibility="{Binding IsRandom, Converter={StaticResource BooleanToVisibilityConverter}}"
+                    Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                    materialDesign:HintAssist.Hint="Max" />
+
+        <!-- Aleatório -->
+        <Grid Grid.Row="4" Grid.ColumnSpan="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="60" />
+            </Grid.ColumnDefinitions>
+            <CheckBox Grid.Column="0" 
+                IsChecked="{Binding IsRandom, Mode=TwoWay}"
+                Content="Aleatório" />
+            <TextBox Grid.Column="2"
+                Text="{Binding RepeatCount, UpdateSourceTrigger=PropertyChanged}"
+                Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                materialDesign:HintAssist.Hint="Repetições" />
+        </Grid>
+    </Grid>
+</UserControl>

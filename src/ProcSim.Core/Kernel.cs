@@ -3,15 +3,13 @@ using ProcSim.Core.Interruptions.Handlers;
 using ProcSim.Core.IO;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
+using ProcSim.Core.Process.Factories;
 using ProcSim.Core.Scheduler;
 using ProcSim.Core.Syscall;
 using System.Collections.Concurrent;
 
 namespace ProcSim.Core;
 
-/// <summary>
-/// Kernel SMP: inicializa interrupt, run-queue, devices, schedulers e cores.
-/// </summary>
 public class Kernel : IDisposable
 {
     private readonly Dictionary<uint, PCB> _idlePcbs = [];
@@ -24,7 +22,6 @@ public class Kernel : IDisposable
     public Dictionary<uint, CPU> Cpus { get; } = [];
     public ConcurrentDictionary<PCB, List<Instruction>> Programs { get; } = new();
     public ulong GlobalCycle { get; private set; }
-    public event Action<uint> ProcessTerminated = _ => { };
 
     public uint RegisterDevice(string name, uint baseLatency, uint channels)
     {
@@ -36,21 +33,22 @@ public class Kernel : IDisposable
 
     public void Initialize(uint cores, uint quantum, SchedulerType schedulerType, Action<Action> subscribeToTick)
     {
-        _scheduler = SchedulerFactory.Create(schedulerType, _idlePcbs);
+        _scheduler = SchedulerFactory.Create(schedulerType, this, _idlePcbs);
 
         List<IInterruptHandler> interruptHandlers =
         [
-            new TimerInterruptHandler(_scheduler),
-            new IoInterruptHandler(Devices, _scheduler)
+            new TimerInterruptHandler(),
+            new IoInterruptHandler(Devices)
         ];
         InterruptService interruptService = new(interruptHandlers);
         SystemCallDispatcher syscallDispatcher = new(Devices);
 
         for (uint coreId = 0; coreId < cores; coreId++)
         {
-            PCB idleProcess = new(coreId, null, 30) { State = ProcessState.Ready };
+            List<Instruction> idleInstructions = [InstructionFactory.Idle()];
+            PCB idleProcess = new((int)coreId, $"Idle({coreId})", null, ProcessStaticPriority.Normal) { State = ProcessState.Ready };
             _idlePcbs[coreId] = idleProcess;
-            Programs[idleProcess] = null;
+            Programs[idleProcess] = idleInstructions;
 
             CPU cpu = new(coreId, _interruptController, interruptService, _scheduler, syscallDispatcher, Programs, subscribeToTick);
             Cpus.Add(coreId, cpu);
@@ -61,14 +59,13 @@ public class Kernel : IDisposable
         }
 
         subscribeToTick(() => GlobalCycle++);
-        Monitoring = new MonitoringService([.. Cpus.Values], [.. Devices.Values], this, TimeSpan.FromSeconds(1));
         //interruptController.ConfigureRedirection(32, [.. Cpus.Keys]);
     }
 
-    public uint CreateProcess(ProcessDto program, uint priority = 0)
+    public int CreateProcess(ProcessDto program)
     {
-        uint id = (uint)Programs.Count;
-        PCB pcb = new(id, program.Registers, priority);
+        int id = Programs.Count;
+        PCB pcb = new(id, program.Name, program.Registers, program.Priority);
         Programs[pcb] = [.. program.Instructions];
         _scheduler.Admit(pcb);
         return id;
@@ -76,7 +73,6 @@ public class Kernel : IDisposable
 
     public void Dispose()
     {
-        Monitoring.Dispose();
         foreach (IODevice device in Devices.Values)
             device.Dispose();
     }

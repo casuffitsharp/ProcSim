@@ -6,13 +6,18 @@ public class RescheduleInterruptHandler(uint vector/*, IScheduler sched*/) : IIn
 {
     private readonly uint _vector = vector;
 
-    public bool CanHandle(uint vector) => vector == _vector;
-    public void BuildBody(uint vector, CPU cpu, Queue<MicroOp> seq)
+    public bool CanHandle(uint vector)
+    {
+        return vector == _vector;
+    }
+
+    public Instruction BuildBody(uint vector)
     {
         //seq.Enqueue(new MicroOp("IPI_RESCHED", c =>
         //{
         //    var next = sched.Preempt(c);
         //    Dispatcher.ContextSwitch(c, next);
         //}));
+        return null;
     }
 }

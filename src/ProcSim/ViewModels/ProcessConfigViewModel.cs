@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Configuration;
+using ProcSim.Core.Process;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
@@ -19,13 +20,14 @@ public enum LoopType
     Random
 }
 
-public partial class ProcessConfigViewModel : ObservableObject, IEquatable<ProcessConfigViewModel>
+public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
 {
     public ProcessConfigViewModel()
     {
+        LoopType = LoopType.Infinite;
+        Priority = ProcessStaticPriority.Normal;
         AddOperationCommand = new RelayCommand(AddOperation);
         RemoveOperationCommand = new RelayCommand<OperationConfigViewModel>(RemoveOperation);
-        Operations.CollectionChanged += Operations_CollectionChanged;
     }
 
     public ProcessConfigViewModel(ProcessConfigModel model) : this()
@@ -33,13 +35,17 @@ public partial class ProcessConfigViewModel : ObservableObject, IEquatable<Proce
         UpdateFromModel(model);
     }
 
+    public static LoopType[] LoopTypeValues { get; } = [.. Enum.GetValues<LoopType>().Where(x => x != LoopType.None)];
+    public static ProcessStaticPriority[] PriorityValues { get; } = [.. Enum.GetValues<ProcessStaticPriority>()];
+
     [ObservableProperty]
     public partial string Name { get; set; }
 
     [ObservableProperty]
-    public partial uint Priority { get; set; }
+    public partial ProcessStaticPriority Priority { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsRandomLoop), nameof(IsFiniteLoop))]
     public partial LoopType LoopType { get; set; }
 
     [ObservableProperty]
@@ -55,6 +61,9 @@ public partial class ProcessConfigViewModel : ObservableObject, IEquatable<Proce
 
     [ObservableProperty]
     public partial OperationConfigViewModel SelectedOperation { get; set; }
+
+    public bool IsRandomLoop => LoopType == LoopType.Random;
+    public bool IsFiniteLoop => LoopType == LoopType.Finite;
 
     public IRelayCommand AddOperationCommand { get; }
     public IRelayCommand<OperationConfigViewModel> RemoveOperationCommand { get; }
@@ -76,6 +85,12 @@ public partial class ProcessConfigViewModel : ObservableObject, IEquatable<Proce
         };
     }
 
+    public void UpdateFromViewModel(ProcessConfigViewModel other)
+    {
+        if (other is null) return;
+        UpdateFromModel(other.MapToModel());
+    }
+
     public void UpdateFromModel(ProcessConfigModel model)
     {
         Name = model.Name;
@@ -91,6 +106,7 @@ public partial class ProcessConfigViewModel : ObservableObject, IEquatable<Proce
             }
             case FiniteLoopConfig finiteLoopConfig:
             {
+                LoopType = LoopType.Finite;
                 Iterations = finiteLoopConfig.Iterations;
                 break;
             }
@@ -119,25 +135,35 @@ public partial class ProcessConfigViewModel : ObservableObject, IEquatable<Proce
         return copy;
     }
 
-    public bool IsValid
+    public bool Validate(out IEnumerable<string> errors)
     {
-        get
+        List<string> list = [];
+
+        if (string.IsNullOrWhiteSpace(Name))
+            list.Add("O nome do processo não pode estar vazio.");
+
+        if (LoopType == LoopType.None)
+            list.Add("Tipo de loop deve ser definido.");
+        else if (LoopType == LoopType.Finite && Iterations == 0)
+            list.Add("O número de iterações não pode ser zero.");
+        else if (LoopType == LoopType.Random && (MinIterations == 0 || MaxIterations < MinIterations))
+            list.Add("O número de iterações aleatórias não pode ser zero ou o máximo deve ser menor que o mínimo.");
+
+        if (Operations.Count == 0)
+            list.Add("O processo deve ter pelo menos uma operação.");
+
+        for (int idx = 0; idx < Operations.Count; idx++)
         {
-            if (string.IsNullOrWhiteSpace(Name)) return false;
-
-            if (LoopType == LoopType.Finite && Iterations == 0) return false;
-            if (LoopType == LoopType.Random && (MinIterations == 0 || MaxIterations < MinIterations)) return false;
-
-            if (Operations.Count == 0) return false;
-            if (Operations.Any(op => !op.IsValid)) return false;
-
-            return true;
+            OperationConfigViewModel operation = Operations.ElementAt(idx);
+            if (!operation.Validate(out IEnumerable<string> opErrors))
+            {
+                foreach (string e in opErrors)
+                    list.Add($"#{idx} [{operation.Summary}]: {e}");
+            }
         }
-    }
 
-    public override bool Equals(object obj)
-    {
-        return obj is ProcessConfigViewModel other && Equals(other);
+        errors = list;
+        return list.Count == 0;
     }
 
     public bool Equals(ProcessConfigViewModel other)
@@ -160,12 +186,6 @@ public partial class ProcessConfigViewModel : ObservableObject, IEquatable<Proce
         }
 
         return true;
-    }
-
-    private void Operations_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-    {
-        //OnPropertyChanged(nameof(IsValid));
-        //OnPropertyChanged(nameof(HasChanges));
     }
 
     private void AddOperation()

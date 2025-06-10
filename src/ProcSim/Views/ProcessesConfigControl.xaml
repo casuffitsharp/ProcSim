@@ -1,14 +1,20 @@
 ﻿<UserControl x:Class="ProcSim.Views.ProcessesConfigControl"
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-    xmlns:converters="clr-namespace:ProcSim.Converters"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
-    xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
-    xmlns:vm="clr-namespace:ProcSim.ViewModels"
-    xmlns:core="clr-namespace:ProcSim.Core;assembly=ProcSim.Core"
-    xmlns:coreconfig="clr-namespace:ProcSim.Core.Configuration;assembly=ProcSim.Core"
-    Height="Auto" Width="500">
+            xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+            xmlns:converters="clr-namespace:ProcSim.Converters"
+            xmlns:sys="clr-namespace:System;assembly=mscorlib"
+            xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
+            xmlns:vm="clr-namespace:ProcSim.ViewModels"
+            xmlns:views="clr-namespace:ProcSim.Views"
+            xmlns:core="clr-namespace:ProcSim.Core;assembly=ProcSim.Core"
+            xmlns:coreconfig="clr-namespace:ProcSim.Core.Configuration;assembly=ProcSim.Core"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            mc:Ignorable="d"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            d:DataContext="{d:DesignInstance Type=vm:ProcessesConfigViewModel}"
+            Height="Auto"
+            Width="600">
 
     <UserControl.Resources>
         <Style TargetType="TextBlock">
@@ -23,6 +29,7 @@
         <converters:IsCpuOperationConverter x:Key="IsCpuOperationConverter"/>
         <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
         <converters:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
         <ObjectDataProvider x:Key="CpuOperationTypes"
                             MethodName="GetValues"
@@ -31,92 +38,6 @@
                 <x:Type TypeName="coreconfig:CpuOperationType"/>
             </ObjectDataProvider.MethodParameters>
         </ObjectDataProvider>
-
-        <DataTemplate x:Key="OperationDetailsTemplate" DataType="{x:Type vm:OperationConfigViewModel}">
-            <Grid Margin="16,4">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="8"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <!-- CPU editor -->
-                <StackPanel Orientation="Horizontal" Grid.Row="0">
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Type}" Value="Cpu">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
-
-                    <ComboBox Width="120"
-                    Margin="0,0,8,0"
-                    Style="{StaticResource MaterialDesignComboBox}"
-                    ItemsSource="{Binding Source={StaticResource CpuOperationTypes}}"
-                    SelectedItem="{Binding CpuOperationConfig.Type, UpdateSourceTrigger=PropertyChanged}" />
-
-                    <TextBox Width="80"
-                   Margin="0,0,8,0"
-                   Style="{StaticResource MaterialDesignFilledTextBox}"
-                   materialDesign:HintAssist.Hint="R1"
-                   Text="{Binding CpuOperationConfig.R1, UpdateSourceTrigger=PropertyChanged}" />
-
-                    <TextBox Width="80"
-                   Style="{StaticResource MaterialDesignFilledTextBox}"
-                   materialDesign:HintAssist.Hint="R2"
-                   Text="{Binding CpuOperationConfig.R2, UpdateSourceTrigger=PropertyChanged}" />
-                </StackPanel>
-
-                <!-- espaço entre CPU e IO -->
-                <Separator Grid.Row="1"/>
-
-                <!-- IO editor -->
-                <StackPanel Orientation="Horizontal" Grid.Row="2">
-                    <StackPanel.Style>
-                        <Style TargetType="StackPanel">
-                            <Setter Property="Visibility" Value="Collapsed"/>
-                            <Style.Triggers>
-                                <DataTrigger Binding="{Binding Type}" Value="Io">
-                                    <Setter Property="Visibility" Value="Visible"/>
-                                </DataTrigger>
-                            </Style.Triggers>
-                        </Style>
-                    </StackPanel.Style>
-
-                    <ComboBox Width="120"
-                    Margin="0,0,8,0"
-                    Style="{StaticResource MaterialDesignComboBox}"
-                    ItemsSource="{Binding RelativeSource={RelativeSource AncestorType=UserControl}, Converter={StaticResource EnumDescriptionConverter}, Path=DataContext.IoDeviceTypes}"
-                    SelectedItem="{Binding IoOperationConfig.DeviceType, Converter={StaticResource EnumDescriptionConverter}, UpdateSourceTrigger=PropertyChanged}" />
-
-                    <TextBox Width="80"
-                   Margin="0,0,8,0"
-                   Style="{StaticResource MaterialDesignFilledTextBox}"
-                   materialDesign:HintAssist.Hint="Duration"
-                   Text="{Binding IoOperationConfig.Duration, UpdateSourceTrigger=PropertyChanged}" />
-
-                    <CheckBox Content="Random"
-                    VerticalAlignment="Center"
-                    IsChecked="{Binding IoOperationConfig.IsRandom}" />
-
-                    <TextBox Width="80"
-                   Margin="8,0,8,0"
-                   Style="{StaticResource MaterialDesignFilledTextBox}"
-                   materialDesign:HintAssist.Hint="Min"
-                   Text="{Binding IoOperationConfig.MinDuration, UpdateSourceTrigger=PropertyChanged}" />
-
-                    <TextBox Width="80"
-                   Style="{StaticResource MaterialDesignFilledTextBox}"
-                   materialDesign:HintAssist.Hint="Max"
-                   Text="{Binding IoOperationConfig.MaxDuration, UpdateSourceTrigger=PropertyChanged}" />
-                </StackPanel>
-            </Grid>
-        </DataTemplate>
-
     </UserControl.Resources>
 
     <Grid IsEnabled="{Binding CanChangeConfigs}">
@@ -133,6 +54,8 @@
             <DockPanel LastChildFill="False">
                 <TextBlock DockPanel.Dock="Left" Text="Configuração de Processos" VerticalAlignment="Center" Foreground="White" Margin="16,0"/>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Command="{Binding BuildCommand}" Content="{materialDesign:PackIcon Kind=CodeJson}" ToolTip="Build"/>
+                    <Separator Width="8" Visibility="Hidden"/>
                     <Button Command="{Binding SaveCommand}" Content="{materialDesign:PackIcon Kind=ContentSaveOutline}" ToolTip="Salvar"/>
                     <Separator Width="8" Visibility="Hidden"/>
                     <Button Command="{Binding CancelCommand}" Content="{materialDesign:PackIcon Kind=Cancel}" ToolTip="Cancelar" />
@@ -189,7 +112,7 @@
                           Padding="0">
 
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto"/>
+                        <materialDesign:DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto"/>
                     </DataGrid.Columns>
 
                     <DataGrid.CellStyle>
@@ -209,24 +132,64 @@
             </StackPanel>
         </materialDesign:Card>
         <materialDesign:Card Grid.Row="1" Grid.Column="2">
-            <StackPanel Margin="5" DataContext="{Binding SelectedProcess}">
+            <StackPanel Margin="5"
+                        IsEnabled="False"
+                        DataContext="{Binding SelectedProcess}"
+                        DataContextChanged="OnSelectedProcessChanged">
                 <TextBlock Text="Detalhes" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
-                <Separator Margin="0,4"/>
-                <TextBox Grid.Column="1"
-                        Width="150"
-                        HorizontalAlignment="Left"
-                        MaxWidth="400"
-                        VerticalAlignment="Top"
-                        materialDesign:HintAssist.Hint="Nome"
-                        Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
-                        Style="{StaticResource MaterialDesignFilledTextBox}"
-                        IsEnabled="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.IsProcessSelected}"
-                        TextWrapping="Wrap" />
-
-                <Separator Margin="0,4" Visibility="Hidden"/>
+                <Separator Height="4"/>
+                <DockPanel LastChildFill="False">
+                    <TextBox Width="100"
+                            HorizontalAlignment="Left"
+                            MaxWidth="400"
+                            VerticalAlignment="Top"
+                            materialDesign:HintAssist.Hint="Nome"
+                            Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
+                            Style="{StaticResource MaterialDesignFilledTextBox}"
+                            TextWrapping="Wrap"
+                            DockPanel.Dock="Left"/>
+                    <Grid DockPanel.Dock="Right">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="60"/>
+                            <ColumnDefinition Width="8"/>
+                            <ColumnDefinition Width="60"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox Grid.Column="0"
+                                  ItemsSource="{Binding Source={x:Static vm:ProcessConfigViewModel.PriorityValues}, Converter={StaticResource EnumDescriptionConverter}}"
+                                  SelectedItem="{Binding Priority, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource EnumDescriptionConverter}, Mode=TwoWay}"
+                                  Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                  materialDesign:HintAssist.Hint="Prioridade" />
+                        <ComboBox Grid.Column="2"
+                                  ItemsSource="{Binding Source={x:Static vm:ProcessConfigViewModel.LoopTypeValues}, Converter={StaticResource EnumDescriptionConverter}}"
+                                  SelectedItem="{Binding LoopType, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource EnumDescriptionConverter}, Mode=TwoWay}"
+                                  Style="{StaticResource MaterialDesignFloatingHintComboBox}"
+                                  materialDesign:HintAssist.Hint="Loop" />
+                        <TextBox Grid.Column="4"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="Qtd"
+                                 Text="{Binding Iterations, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="{Binding IsFiniteLoop, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Hidden}"/>
+                        <TextBox Grid.Column="6"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="Min"
+                                 Text="{Binding MinIterations, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="{Binding IsRandomLoop, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <TextBox Grid.Column="8"
+                                 Style="{StaticResource MaterialDesignFilledTextBox}"
+                                 materialDesign:HintAssist.Hint="Max"
+                                 Text="{Binding MaxIterations, UpdateSourceTrigger=PropertyChanged}"
+                                 Visibility="{Binding IsRandomLoop, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    </Grid>
+                </DockPanel>
+                <Separator Height="5" Visibility="Hidden"/>
                 <TextBlock Text="Operações" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
-                <Separator Margin="0,4"/>
-
+                <Separator Height="4"/>
+                <views:OperationPanelControl DataContext="{Binding SelectedOperation}"/>
+                <Separator Height="5" Visibility="Hidden"/>
                 <DataGrid ItemsSource="{Binding Operations}"
                           SelectedItem="{Binding SelectedOperation, Mode=TwoWay}"
                           AutoGenerateColumns="False"
@@ -236,43 +199,18 @@
                           HeadersVisibility="Column"
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
-                          RowHeaderWidth="0"
                           GridLinesVisibility="None"
                           SelectionMode="Single"
+                          SelectionUnit="FullRow"
                           BorderThickness="0"
                           Padding="0"
                           RowHeight="33"
-                          RowDetailsVisibilityMode="VisibleWhenSelected"
-                          RowDetailsTemplate="{StaticResource OperationDetailsTemplate}"
+                          IsReadOnly="True"
                           dd:DragDrop.IsDragSource="True"
+                          dd:DragDrop.SelectDroppedItems="True"
                           dd:DragDrop.IsDropTarget="True">
-
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Duração"
-                                            Binding="{Binding Duration, UpdateSourceTrigger=PropertyChanged}"
-                                            Width="Auto" />
-                        <!--<materialDesign:DataGridComboBoxColumn
-                            Width="Auto"
-                            Header="Tipo"
-                            SelectedItemBinding="{Binding IsCpu, Converter={StaticResource IsCpuOperationConverter}, UpdateSourceTrigger=PropertyChanged}">
-                            <DataGridComboBoxColumn.ItemsSource>
-                                <x:Array Type="{x:Type sys:String}">
-                                    <sys:String>CPU</sys:String>
-                                    <sys:String>IO</sys:String>
-                                </x:Array>
-                            </DataGridComboBoxColumn.ItemsSource>
-                        </materialDesign:DataGridComboBoxColumn>-->
-                        <materialDesign:DataGridComboBoxColumn
-                            Width="Auto"
-                            Header="Dispositivo"
-                            ItemsSourceBinding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type UserControl}}, Path=DataContext.IoDeviceTypes, Converter={StaticResource EnumDescriptionConverter}}"
-                            SelectedItemBinding="{Binding IoDeviceType, Converter={StaticResource EnumDescriptionConverter}, UpdateSourceTrigger=PropertyChanged}">
-                            <materialDesign:DataGridComboBoxColumn.CellStyle>
-                                <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
-                                    <Setter Property="IsEnabled" Value="{Binding IsCpu, Converter={StaticResource InvertBooleanConverter}}" />
-                                </Style>
-                            </materialDesign:DataGridComboBoxColumn.CellStyle>
-                        </materialDesign:DataGridComboBoxColumn>
+                        <materialDesign:DataGridTextColumn Header="Operação" Binding="{Binding Summary}" Width="Auto" />
                         <DataGridTemplateColumn>
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
@@ -309,20 +247,6 @@
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
-
-                    <DataGrid.CellStyle>
-                        <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
-                            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
-                            <Setter Property="BorderThickness" Value="0"/>
-                            <Setter Property="BorderBrush" Value="Transparent"/>
-                        </Style>
-                    </DataGrid.CellStyle>
-
-                    <DataGrid.Resources>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent"/>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.ControlBrushKey}" Color="Transparent"/>
-                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="Black"/>
-                    </DataGrid.Resources>
                 </DataGrid>
             </StackPanel>
         </materialDesign:Card>

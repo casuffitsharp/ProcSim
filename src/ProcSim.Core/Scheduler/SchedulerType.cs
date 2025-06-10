@@ -9,7 +9,7 @@ public enum SchedulerType
 
     [Description("Round Robin")]
     RoundRobin,
-    
-    [Description("Priority")] 
+
+    [Description("Prioridade")]
     Priority,
 }

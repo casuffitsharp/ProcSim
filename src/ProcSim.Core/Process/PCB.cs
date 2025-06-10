@@ -4,7 +4,7 @@ namespace ProcSim.Core.Process;
 
 public class PCB
 {
-    public PCB(uint processId, Dictionary<string, int> registers, uint priority)
+    public PCB(int processId, string name, Dictionary<string, int> registers, ProcessStaticPriority staticPriority)
     {
         for (uint i = 0; i < 8; i++)
         {
@@ -15,35 +15,39 @@ public class PCB
         Registers["ZF"] = 0;
         Registers["CF"] = 0;
         ProcessId = processId;
-        Priority = priority;
+        StaticPriority = staticPriority;
+        Name = name;
+        State = ProcessState.New;
     }
 
-    public ProcessState State { get; set; } = ProcessState.New;
-    public uint ProgramCounter { get; set; }
-    public uint StackPointer { get; set; }
-    public uint Priority { get; set; }
-    public ConcurrentDictionary<string, int> Registers { get; } = new();
-    public uint ProcessId { get; }
-    public ulong CpuCycles { get; private set; }
-    public ulong WaitCycles { get; private set; }
     internal ulong LastDispatchCycle { get; set; }
     internal ulong LastWaitCycle { get; set; }
+    internal ulong LastEnqueueCycle { get; set; }
 
-    internal void OnDispatched(ulong currentCycle)
+    public string Name { get; set; }
+    public ProcessStaticPriority StaticPriority { get; set; }
+    public uint ProgramCounter { get; set; }
+    public uint StackPointer { get; set; }
+    public int DynamicPriority { get; set; }
+    public ConcurrentDictionary<string, int> Registers { get; } = new();
+    public int ProcessId { get; }
+    public ulong CpuCycles { get; private set; }
+    public ProcessState State { get; set; }
+
+    public ulong UserCycles { get; internal set; }
+    public ulong SyscallCycles { get; internal set; }
+    public ulong WaitCycles { get; private set; }
+
+    internal void OnDispatched(ulong currentCycle, ulong cpuUserCycles, ulong cpuSyscallCycles)
     {
         LastDispatchCycle = currentCycle;
     }
 
-    internal void OnPreempted(ulong currentCycle)
+    internal void OnExitRunning(ulong cpuUserCycles, ulong cpuSyscallCycles)
     {
-        CpuCycles += currentCycle - LastDispatchCycle;
+        LastDispatchCycle = 0;
     }
 
-    // chamadas no IoInterruptHandler, por exemplo:
-    internal void OnIoRequested(ulong currentCycle)
-    {
-        LastWaitCycle = currentCycle;
-    }
     internal void OnIoCompleted(ulong currentCycle)
     {
         WaitCycles += currentCycle - LastWaitCycle;

@@ -1,4 +1,5 @@
 ﻿using ProcSim.Core.IO;
+using ProcSim.Core.Process;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
@@ -9,15 +10,21 @@ public class ProcessConfigModel
     public ILoopConfig LoopConfig { get; set; }
     public string Name { get; set; }
     public List<IOperationConfigModel> Operations { get; set; }
-    public uint Priority { get; set; }
+    public ProcessStaticPriority Priority { get; set; }
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "operationConfig")]
 [JsonDerivedType(typeof(CpuOperationConfigModel), "cpu")]
 [JsonDerivedType(typeof(IoOperationConfigModel), "io")]
-public interface IOperationConfigModel { }
+public interface IOperationConfigModel
+{
+    uint RepeatCount { get; set; }
+}
 
-public record CpuOperationConfigModel(CpuOperationType Type, int R1, int R2) : IOperationConfigModel;
+public record CpuOperationConfigModel(CpuOperationType Type, int Min, int Max, uint RepeatCount) : IOperationConfigModel
+{
+    public uint RepeatCount { get; set; } = RepeatCount;
+}
 
 public enum CpuOperationType
 {
@@ -42,6 +49,7 @@ public record IoOperationConfigModel : IOperationConfigModel
     public uint MinDuration { get; set; }
     public uint MaxDuration { get; set; }
     public bool IsRandom { get; set; }
+    public uint RepeatCount { get; set; }
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "loopConfig")]
