@@ -183,6 +183,19 @@ public class SimulationController
         Debug.WriteLine($"Process '{processConfig.Name}' registered with ID {id}.");
     }
 
+    public void SetProcessStaticPriority(int pid, ProcessStaticPriority newPriority)
+    {
+        if (!_processes.ContainsKey(pid))
+            return;
+
+        _kernel.SetProcessStaticPriority(pid, newPriority);
+    }
+
+    public bool IsUserProcess(int pid)
+    {
+        return _processes.ContainsKey(pid);
+    }
+
     private void RegisterDevice(IoDeviceConfigModel deviceConfig)
     {
         uint deviceId = _kernel.RegisterDevice(deviceConfig.Name, deviceConfig.BaseLatency, deviceConfig.Channels);

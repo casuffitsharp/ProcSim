@@ -71,6 +71,12 @@ public class Kernel : IDisposable
         return id;
     }
 
+    public void SetProcessStaticPriority(int pid, ProcessStaticPriority newPriority)
+    {
+        PCB pcb = Programs.Keys.First(p => p.ProcessId == pid);
+        pcb.StaticPriority = newPriority;
+    }
+
     public void Dispose()
     {
         foreach (IODevice device in Devices.Values)

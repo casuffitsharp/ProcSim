@@ -6,7 +6,9 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              xmlns:vm="clr-namespace:ProcSim.ViewModels"
-             xmlns:converters="clr-namespace:ProcSim.Converters"
+             xmlns:views="clr-namespace:ProcSim.Views"
+             xmlns:converters="clr-namespace:ProcSim.Converters" 
+             d:DataContext="{d:DesignInstance Type=vm:TaskManagerViewModel}"
              mc:Ignorable="d"
              d:DesignHeight="600"
              d:DesignWidth="800"
@@ -14,6 +16,16 @@
              HorizontalAlignment="Stretch">
     <UserControl.Resources>
         <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+        <converters:EqualityToBooleanConverter x:Key="EqualityToBooleanConverter"/>
+
+        <Style x:Key="StaticPriorityCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
+            <Setter Property="IsEnabled" Value="False"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsUserProcess}" Value="True">
+                    <Setter Property="IsEnabled" Value="True"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
     </UserControl.Resources>
     <Grid Margin="16"
             VerticalAlignment="Stretch"
@@ -105,41 +117,46 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
                     <DataGrid Grid.Column="0"
-                        ItemsSource="{Binding RunningProcessesDetails}"
-                          AutoGenerateColumns="False"
-                          CanUserReorderColumns="False"
-                          CanUserResizeColumns="False"
-                          HeadersVisibility="Column"
-                          CanUserAddRows="False"
-                          CanUserDeleteRows="False"
-                          GridLinesVisibility="None"
-                          SelectionMode="Single"
-                          SelectionUnit="FullRow"
-                          BorderThickness="0"
-                          Padding="0"
-                          RowHeight="33"
-                          IsReadOnly="True"
-                          Background="White"
-                          ScrollViewer.CanContentScroll="True"                 
-                          ScrollViewer.VerticalScrollBarVisibility="Auto" >
+                              ItemsSource="{Binding RunningProcessesDetails}"
+                              SelectedItem="{Binding SelectedProcess}"
+                              AutoGenerateColumns="False"
+                              CanUserReorderColumns="False"
+                              CanUserResizeColumns="False"
+                              HeadersVisibility="Column"
+                              CanUserAddRows="False"
+                              CanUserDeleteRows="False"
+                              GridLinesVisibility="None"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              BorderThickness="0"
+                              Padding="0"
+                              RowHeight="33"
+                              IsReadOnly="False"
+                              Background="White"
+                              ScrollViewer.CanContentScroll="True"                 
+                              ScrollViewer.VerticalScrollBarVisibility="Auto" >
                         <DataGrid.Columns>
-                            <materialDesign:DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto" />
-                            <materialDesign:DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto" />
-                            <materialDesign:DataGridTextColumn Header="Status" Binding="{Binding State, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" />
-                            <materialDesign:DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="Auto" />
-                            <materialDesign:DataGridTextColumn Header="Pr. est." Binding="{Binding StaticPriority, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" />
-                            <materialDesign:DataGridTextColumn Header="Pr. din." Binding="{Binding DynamicPriority}" Width="Auto" />
+                            <materialDesign:DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto" IsReadOnly="True"/>
+                            <materialDesign:DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto" IsReadOnly="True"/>
+                            <materialDesign:DataGridTextColumn Header="Status" Binding="{Binding State, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" IsReadOnly="True" />
+                            <materialDesign:DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="Auto" IsReadOnly="True"/>
+                            <materialDesign:DataGridComboBoxColumn Header="Pr. est."
+                                                                   ItemsSource="{Binding Source={x:Static vm:TaskManagerViewModel.ProcessStaticPriorityValues}, Converter={StaticResource EnumDescriptionConverter}}"
+                                                                   SelectedItemBinding="{Binding StaticPriority, Converter={StaticResource EnumDescriptionConverter}, UpdateSourceTrigger=PropertyChanged}"
+                                                                   Width="Auto"
+                                                                   IsReadOnly="False"
+                                                                   CellStyle="{StaticResource StaticPriorityCellStyle}"/>
+                            <materialDesign:DataGridTextColumn Header="Pr. din." Binding="{Binding DynamicPriority}" Width="Auto" IsReadOnly="True"/>
                         </DataGrid.Columns>
                         <DataGrid.CellStyle>
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                                 <Setter Property="BorderThickness" Value="0" />
-                                <Style.Triggers>
+                                <!--<Style.Triggers>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter Property="BorderThickness" Value="0" />
-                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDataGridCellHoverBackground}" />
                                     </Trigger>
-                                </Style.Triggers>
+                                </Style.Triggers>-->
                             </Style>
                         </DataGrid.CellStyle>
                     </DataGrid>

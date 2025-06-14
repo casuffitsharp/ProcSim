@@ -1,6 +1,8 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
+using ProcSim.Core.Simulation;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Windows.Data;
@@ -8,15 +10,17 @@ using System.Windows.Threading;
 
 namespace ProcSim.ViewModels;
 
-public class TaskManagerViewModel : ObservableObject
+public partial class TaskManagerViewModel : ObservableObject
 {
-    private readonly Dictionary<int, ProcessDetailsViewModel> _mapByPid;
+    private readonly Dictionary<int, TaskManagerProcessDetailsViewModel> _mapByPid;
     private readonly Dispatcher _uiDispatcher;
     private readonly MonitoringService _monitoringService;
+    private readonly SimulationController _simulationController;
 
-    public TaskManagerViewModel(MonitoringService monitoringService)
+    public TaskManagerViewModel(MonitoringService monitoringService, SimulationController simulationController)
     {
         _monitoringService = monitoringService;
+        _simulationController = simulationController;
         _uiDispatcher = Dispatcher.CurrentDispatcher;
 
         ProcessesDetails = [];
@@ -29,7 +33,12 @@ public class TaskManagerViewModel : ObservableObject
         TerminatedProcessesDetails = CreateView(ProcessesDetails, p => p.State == ProcessState.Terminated);
     }
 
-    public ObservableCollection<ProcessDetailsViewModel> ProcessesDetails { get; set; }
+    public static ProcessStaticPriority[] ProcessStaticPriorityValues { get; } = [.. Enum.GetValues<ProcessStaticPriority>()];
+
+    [ObservableProperty]
+    public partial TaskManagerProcessDetailsViewModel SelectedProcess { get; set; }
+
+    public ObservableCollection<TaskManagerProcessDetailsViewModel> ProcessesDetails { get; set; }
     public ICollectionView RunningProcessesDetails { get; }
     public ICollectionView TerminatedProcessesDetails { get; }
 
@@ -51,13 +60,14 @@ public class TaskManagerViewModel : ObservableObject
             foreach (ProcessSnapshot snapshot in processesSnapshots)
             {
                 seen.Add(snapshot.Pid);
-                if (_mapByPid.TryGetValue(snapshot.Pid, out ProcessDetailsViewModel existingVm))
+                if (_mapByPid.TryGetValue(snapshot.Pid, out TaskManagerProcessDetailsViewModel existingVm))
                 {
                     existingVm.UpdateFromSnapshot(snapshot);
                 }
                 else
                 {
-                    ProcessDetailsViewModel viewModel = new(snapshot);
+                    bool isUserProcess = _simulationController.IsUserProcess(snapshot.Pid);
+                    TaskManagerProcessDetailsViewModel viewModel = new(snapshot, _simulationController, isUserProcess);
                     ProcessesDetails.Add(viewModel);
                     _mapByPid[snapshot.Pid] = viewModel;
                 }
@@ -72,39 +82,8 @@ public class TaskManagerViewModel : ObservableObject
         if (view is ICollectionViewLiveShaping live)
         {
             live.IsLiveFiltering = true;
-            live.LiveFilteringProperties.Add(nameof(ProcessDetailsViewModel.State));
+            live.LiveFilteringProperties.Add(nameof(TaskManagerProcessDetailsViewModel.State));
         }
         return view;
-    }
-}
-
-public partial class ProcessDetailsViewModel : ObservableObject
-{
-    public ProcessDetailsViewModel(ProcessSnapshot s)
-    {
-        Pid = s.Pid;
-        Name = s.Name;
-        State = s.State;
-        CurrentOperation = "";
-        Cpu = s.CpuUsage;
-        StaticPriority = s.StaticPriority;
-        DynamicPriority = s.DynamicPriority;
-    }
-
-    [ObservableProperty] public partial string Name { get; set; }
-    [ObservableProperty] public partial int Pid { get; set; }
-    [ObservableProperty] public partial ProcessState State { get; set; }
-    [ObservableProperty] public partial string CurrentOperation { get; set; }
-    [ObservableProperty] public partial ushort Cpu { get; set; }
-    [ObservableProperty] public partial ProcessStaticPriority StaticPriority { get; set; }
-    [ObservableProperty] public partial int DynamicPriority { get; set; }
-
-    public void UpdateFromSnapshot(ProcessSnapshot s)
-    {
-        State = s.State;
-        CurrentOperation = ""; //TODO
-        Cpu = s.CpuUsage;
-        StaticPriority = s.StaticPriority;
-        DynamicPriority = s.DynamicPriority;
     }
 }
