@@ -16,7 +16,7 @@ public partial class TaskManagerProcessDetailsViewModel : ObservableObject
         Pid = s.Pid;
         Name = s.Name;
         State = s.State;
-        CurrentOperation = "";
+        //CurrentOperation = "";
         Cpu = s.CpuUsage;
         StaticPriority = s.StaticPriority;
         DynamicPriority = s.DynamicPriority;
@@ -26,7 +26,7 @@ public partial class TaskManagerProcessDetailsViewModel : ObservableObject
     [ObservableProperty] public partial string Name { get; set; }
     [ObservableProperty] public partial int Pid { get; set; }
     [ObservableProperty] public partial ProcessState State { get; set; }
-    [ObservableProperty] public partial string CurrentOperation { get; set; }
+    //[ObservableProperty] public partial string CurrentOperation { get; set; }
     [ObservableProperty] public partial ushort Cpu { get; set; }
     [ObservableProperty] public partial int DynamicPriority { get; set; }
 
@@ -49,7 +49,7 @@ public partial class TaskManagerProcessDetailsViewModel : ObservableObject
     public void UpdateFromSnapshot(ProcessSnapshot s)
     {
         State = s.State;
-        CurrentOperation = ""; //TODO
+        //CurrentOperation = ""; //TODO
         Cpu = s.CpuUsage;
         DynamicPriority = s.DynamicPriority;
     }

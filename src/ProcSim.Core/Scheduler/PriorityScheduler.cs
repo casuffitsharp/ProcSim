@@ -43,7 +43,7 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
         PCB prev = cpu.CurrentPCB;
         PCB next = GetNext(cpu.Id);
 
-        if (next == _idleByCore[cpu.Id])
+        if (next == _idleByCore[cpu.Id] && prev?.State == ProcessState.Running)
         {
             Debug.WriteLine($"No process in the ready queue for core {cpu.Id}. Picking same process");
             return prev;

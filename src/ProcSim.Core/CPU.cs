@@ -60,9 +60,8 @@ public class CPU
     {
         CycleCount++;
 
-        if (_ops?.Count > 0)
+        if (_ops?.TryDequeue(out MicroOp op) == true)
         {
-            MicroOp op = _ops.Dequeue();
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing micro-op: {op.Name} (PC: {PC}, SP: {SP})");
             op.Execute(this);
 
@@ -71,7 +70,7 @@ public class CPU
                 SyscallCycleCount++;
                 CurrentPCB.SyscallCycles++;
             }
-            else if (op.Name.StartsWith("IRQ_"))
+            else if (op.Name.StartsWith("IRQ_") || op.Name.Equals("SWITCH_CONTEXT"))
             {
                 InterruptCycleCount++;
             }

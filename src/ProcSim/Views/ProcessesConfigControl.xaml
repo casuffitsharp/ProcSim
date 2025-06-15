@@ -173,12 +173,12 @@
                                  materialDesign:HintAssist.Hint="Qtd"
                                  Text="{Binding Iterations, UpdateSourceTrigger=PropertyChanged}"
                                  Visibility="{Binding IsFiniteLoop, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Hidden}"/>
-                        <TextBox Grid.Column="6"
+                        <TextBox Grid.Column="4"
                                  Style="{StaticResource MaterialDesignFilledTextBox}"
                                  materialDesign:HintAssist.Hint="Min"
                                  Text="{Binding MinIterations, UpdateSourceTrigger=PropertyChanged}"
                                  Visibility="{Binding IsRandomLoop, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <TextBox Grid.Column="8"
+                        <TextBox Grid.Column="6"
                                  Style="{StaticResource MaterialDesignFilledTextBox}"
                                  materialDesign:HintAssist.Hint="Max"
                                  Text="{Binding MaxIterations, UpdateSourceTrigger=PropertyChanged}"

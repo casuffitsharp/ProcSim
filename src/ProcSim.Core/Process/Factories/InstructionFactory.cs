@@ -92,30 +92,30 @@ public static class InstructionFactory
     public static Instruction MovImmediate(string register, int imm)
     {
         return new(
-                Mnemonic: $"mov {register}, #{imm}",
-                microOps: [MicroOpFactory.MovImmediate(register, imm)]
+            Mnemonic: $"mov {register}, #{imm}",
+            microOps: [MicroOpFactory.MovImmediate(register, imm)]
         );
     }
 
     public static Instruction Blt(string leftReg, string rightReg, uint targetPc)
     {
         return new(
-                Mnemonic: $"blt {leftReg}, {rightReg}, {targetPc}",
-                microOps: [MicroOpFactory.BranchLessThan(leftReg, rightReg, targetPc)]
+            Mnemonic: $"blt {leftReg}, {rightReg}, {targetPc}",
+            microOps: [MicroOpFactory.BranchLessThan(leftReg, rightReg, targetPc)]
         );
     }
 
     public static Instruction Syscall(SyscallType type, uint deviceId = 0, uint units = 0)
     {
         return new(
-        Mnemonic: type.ToString().ToLowerInvariant(),
-        microOps:
-        [
-            MicroOpFactory.IrqEntry(),
-            MicroOpFactory.SyscallHandler(type, deviceId, units),
-            MicroOpFactory.SwitchContext(),
-            MicroOpFactory.IrqExit()
-        ]
+            Mnemonic: type.ToString().ToLowerInvariant(),
+            microOps:
+            [
+                MicroOpFactory.IrqEntry(),
+                MicroOpFactory.SyscallHandler(type, deviceId, units),
+                MicroOpFactory.SwitchContext(),
+                MicroOpFactory.IrqExit()
+            ]
         );
     }
 

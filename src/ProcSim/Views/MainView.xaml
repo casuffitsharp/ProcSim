@@ -85,35 +85,6 @@
                     <TabItem Header="Monitoramento">
                         <views:TaskManagerControl DataContext="{Binding TaskManagerVm}"/>
                     </TabItem>
-                    <TabItem Header="Processos">
-                        <GroupBox Header="Fila de Processos" FontSize="12" FontWeight="Bold" Padding="0">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <views:ProcessListControl Header="Ready"
-                                                   ItemsSource="{Binding ReadyProcessesView}" 
-                                                   CardBackground="{StaticResource ReadyCardBrush}"
-                                                   Grid.Column="0"/>
-                                <views:ProcessListControl Header="Running"
-                                                   ItemsSource="{Binding RunningProcessesView}" 
-                                                   CardBackground="{StaticResource RunningCardBrush}"
-                                                   Grid.Column="1"/>
-                                <views:ProcessListControl Header="Blocked"
-                                                   ItemsSource="{Binding BlockedProcessesView}" 
-                                                   CardBackground="{StaticResource BlockedCardBrush}"
-                                                   Grid.Column="2"/>
-                                <views:ProcessListControl Header="Completed"
-                                                   ItemsSource="{Binding CompletedProcessesView}" 
-                                                   CardBackground="{StaticResource CompletedCardBrush}"
-                                                   Grid.Column="3"/>
-                            </Grid>
-                        </GroupBox>
-                    </TabItem>
                 </TabControl>
             </Grid>
 

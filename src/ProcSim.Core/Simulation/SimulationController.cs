@@ -15,6 +15,7 @@ public class SimulationController
 
     private readonly ConcurrentDictionary<int, ProcessConfigModel> _processes = [];
     private readonly ConcurrentDictionary<IoDeviceType, uint> _deviceIds = [];
+    private readonly Dictionary<uint, IoDeviceConfigModel> _devices = [];
     private readonly MonitoringService _monitoringService;
 
     private Kernel _kernel;
@@ -102,6 +103,7 @@ public class SimulationController
 
             _processes.Clear();
             _deviceIds.Clear();
+            _devices.Clear();
 
             Status = SimulationStatus.Created;
             Debug.WriteLine("Simulation reset to Created state.");
@@ -196,10 +198,17 @@ public class SimulationController
         return _processes.ContainsKey(pid);
     }
 
+    public IoDeviceConfigModel GetDeviceConfig(uint deviceId)
+    {
+        _devices.TryGetValue(deviceId, out IoDeviceConfigModel deviceConfig);
+        return deviceConfig;
+    }
+
     private void RegisterDevice(IoDeviceConfigModel deviceConfig)
     {
         uint deviceId = _kernel.RegisterDevice(deviceConfig.Name, deviceConfig.BaseLatency, deviceConfig.Channels);
         _deviceIds[deviceConfig.Type] = deviceId;
+        _devices[deviceId] = deviceConfig;
 
         Debug.WriteLine($"Device '{deviceConfig.Name}' registered with ID {deviceId} and type {deviceConfig.Type}.");
     }

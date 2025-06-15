@@ -17,6 +17,8 @@
     <UserControl.Resources>
         <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
         <converters:EqualityToBooleanConverter x:Key="EqualityToBooleanConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
 
         <Style x:Key="StaticPriorityCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
             <Setter Property="IsEnabled" Value="False"/>
@@ -37,52 +39,86 @@
                     materialDesign:ColorZoneAssist.Mode="PrimaryDark"
                     VerticalAlignment="Stretch"
                     HorizontalAlignment="Stretch">
-            <TabItem Header="CPU">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding CpuCharts}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="2" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="4" 
-                                        BorderBrush="Gray"
-                                        BorderThickness="1"
-                                        Padding="4"
-                                        MinHeight="200"
-                                        VerticalAlignment="Stretch" 
-                                        HorizontalAlignment="Stretch">
-                                    <lvc:CartesianChart VerticalAlignment="Stretch"
-                                                        HorizontalAlignment="Stretch"
-                                                        Series="{Binding Series}"
-                                                        XAxes="{Binding XAxes}"
-                                                        YAxes="{Binding YAxes}"
-                                                        LegendPosition="Left"
-                                                        DrawMargin="{Binding Margin}" />
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
-            </TabItem>
-
-            <TabItem Header="Dispositivos">
-                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-                    <ItemsControl ItemsSource="{Binding IoCharts}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <UniformGrid Columns="2" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <StackPanel Margin="4" 
+            <TabItem Header="CPU" DataContext="{Binding CpuMonitoringVm}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              Background="Transparent">
+                    <ScrollViewer.ContextMenu>
+                        <ContextMenu>
+                            <MenuItem Header="Visão Agregada"
+                                      Name="AggregatedView"
+                                      IsCheckable="True"/>
+                        </ContextMenu>
+                    </ScrollViewer.ContextMenu>
+                    <Grid>
+                        <ItemsControl ItemsSource="{Binding CoreCharts}">
+                            <ItemsControl.Visibility>
+                                <Binding Path="ContextMenu.Items[0].IsChecked"
+                                         RelativeSource="{RelativeSource AncestorType=ScrollViewer}"
+                                         Converter="{StaticResource InverseBooleanToVisibilityConverter}"
+                                         ConverterParameter="False"/>
+                            </ItemsControl.Visibility>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <UniformGrid Columns="2"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="4"
+                                            BorderBrush="Gray"
+                                            BorderThickness="1"
+                                            Padding="4"
                                             MinHeight="200"
                                             VerticalAlignment="Stretch" 
                                             HorizontalAlignment="Stretch">
-                                    <TextBlock Text="{Binding DeviceName}" FontWeight="Bold" Margin="0,0,0,4"/>
+                                        <lvc:CartesianChart Series="{Binding Series}"
+                                                            XAxes="{Binding XAxes}"
+                                                            YAxes="{Binding YAxes}"
+                                                            ToolTip="{Binding Title}"
+                                                            LegendPosition="Hidden"
+                                                            DrawMargin="{Binding Margin}"
+                                                            VerticalAlignment="Stretch"
+                                                            HorizontalAlignment="Stretch"/>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Border Margin="4"
+                                BorderBrush="Gray"
+                                BorderThickness="1"
+                                Padding="4"
+                                MinHeight="200"
+                                VerticalAlignment="Stretch" 
+                                HorizontalAlignment="Stretch">
+                            <Border.Visibility>
+                                <Binding Path="ContextMenu.Items[0].IsChecked"
+                                         RelativeSource="{RelativeSource AncestorType=ScrollViewer}"
+                                         Converter="{StaticResource BooleanToVisibilityConverter}"
+                                         ConverterParameter="False"/>
+                            </Border.Visibility>
+                            <lvc:CartesianChart Series="{Binding AggregateChart.Series}"
+                                                XAxes="{Binding AggregateChart.XAxes}"
+                                                YAxes="{Binding AggregateChart.YAxes}"
+                                                ToolTip="{Binding AggregateChart.Title}"
+                                                LegendPosition="Hidden"
+                                                DrawMargin="{Binding AggregateChart.Margin}"
+                                                VerticalAlignment="Stretch"
+                                                HorizontalAlignment="Stretch"/>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Dispositivos" DataContext="{Binding DevicesMonitoringVm}">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding DeviceCharts}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="2" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
                                     <Border Margin="4" 
                                             BorderBrush="Gray"
                                             BorderThickness="1"
@@ -93,23 +129,19 @@
                                         <lvc:CartesianChart VerticalAlignment="Stretch"
                                                             HorizontalAlignment="Stretch"
                                                             Series="{Binding Series}"
+                                                            LegendPosition="Hidden"
                                                             XAxes="{Binding XAxes}"
                                                             YAxes="{Binding YAxes}"
+                                                            ToolTip="{Binding Title}"
                                                             DrawMargin="{Binding Margin}" />
                                     </Border>
-                                    <TextBlock Text="{Binding AdditionalInfo}" 
-                                               FontStyle="Italic" 
-                                               FontSize="12" 
-                                               Foreground="Gray" 
-                                               Margin="0,4,0,0"/>
-                                </StackPanel>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
             </TabItem>
 
-            <TabItem Header="Detalhes">
+            <TabItem Header="Detalhes" DataContext="{Binding DetailsVm}">
                 <Grid VerticalAlignment="Stretch"
                       HorizontalAlignment="Stretch">
                     <Grid.ColumnDefinitions>
@@ -141,7 +173,7 @@
                             <materialDesign:DataGridTextColumn Header="Status" Binding="{Binding State, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" IsReadOnly="True" />
                             <materialDesign:DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="Auto" IsReadOnly="True"/>
                             <materialDesign:DataGridComboBoxColumn Header="Pr. est."
-                                                                   ItemsSource="{Binding Source={x:Static vm:TaskManagerViewModel.ProcessStaticPriorityValues}, Converter={StaticResource EnumDescriptionConverter}}"
+                                                                   ItemsSource="{Binding Source={x:Static vm:TaskManagerDetailsViewModel.ProcessStaticPriorityValues}, Converter={StaticResource EnumDescriptionConverter}}"
                                                                    SelectedItemBinding="{Binding StaticPriority, Converter={StaticResource EnumDescriptionConverter}, UpdateSourceTrigger=PropertyChanged}"
                                                                    Width="Auto"
                                                                    IsReadOnly="False"
@@ -198,20 +230,6 @@
                         </DataGrid.CellStyle>
                     </DataGrid>
                 </Grid>
-            </TabItem>
-
-            <!-- Aba Informações Adicionais: apresenta dados do sistema, como CPU, memória, etc.
-                 Essa seção pode ser ajustada conforme as informações disponíveis no seu SystemInfoViewModel. -->
-            <TabItem Header="Informações">
-                <StackPanel Margin="8">
-                    <TextBlock Text="Informações do Sistema" FontWeight="Bold" FontSize="16" Margin="0,0,0,8"/>
-                    <!-- Exemplo: se TaskManagerViewModel tiver uma propriedade SystemInfo do tipo SystemInfoViewModel -->
-                    <TextBlock Text="{Binding SystemInfo.ProcessorName}" FontSize="14"/>
-                    <TextBlock Text="{Binding SystemInfo.BaseSpeed}" FontSize="14"/>
-                    <TextBlock Text="{Binding SystemInfo.CoreCount, StringFormat='Cores: {0}'}" FontSize="14"/>
-                    <TextBlock Text="{Binding SystemInfo.LogicalProcessorCount, StringFormat='Logical Processors: {0}'}" FontSize="14"/>
-                    <!-- Adicione outras informações conforme necessário -->
-                </StackPanel>
             </TabItem>
         </TabControl>
     </Grid>

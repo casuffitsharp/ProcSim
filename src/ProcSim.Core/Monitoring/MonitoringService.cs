@@ -17,10 +17,10 @@ public class MonitoringService : IDisposable
     private readonly Dictionary<uint, CpuSnapshot> _prevCpu = [];
     private ulong _prevGlobalCycle;
     private readonly Dictionary<int, ulong> _prevProcCycles = [];
-    private readonly Dictionary<uint, ulong> _prevInterrupt = [];
-    private readonly Dictionary<DeviceChannelKey, ChannelSnapshot> _prevChan = [];
+    private readonly Dictionary<uint, Dictionary<uint, ChannelSnapshot>> _prevChan = [];
+    private readonly Dictionary<uint, ConcurrentDictionary<uint, bool>> _deviceChannelBusy = [];
 
-    private readonly ConcurrentDictionary<DeviceChannelKey, ChannelStats> _channelStats = [];
+    private readonly ConcurrentDictionary<uint, ConcurrentDictionary<uint, DeviceChannelStats>> _deviceStats = [];
     private readonly ConcurrentDictionary<IoRequestNotification, ulong> _ioStarts = [];
 
     private Kernel _kernel;
@@ -32,14 +32,14 @@ public class MonitoringService : IDisposable
     }
 
     public event Action<IReadOnlyList<ProcessSnapshot>> ProcessListUpdated;
+    public event Action OnMetricsUpdated;
     public event Action OnReset;
 
-    public ConcurrentDictionary<uint, List<CpuCoreUsageMetric>> CpuCoreMetrics { get; } = [];
-    public List<CpuTotalUsageMetric> CpuTotalMetrics { get; } = [];
-    public ConcurrentDictionary<int, List<ProcessCpuUsageMetric>> ProcessMetrics { get; } = [];
-    public ConcurrentDictionary<DeviceChannelKey, List<IoChannelUsageMetric>> IoChannelMetrics { get; } = [];
-    public ConcurrentDictionary<uint, List<DeviceAggregateUsageMetric>> DeviceAggregateMetrics { get; } = [];
-    public ConcurrentDictionary<(uint DeviceId, uint ChannelId, int ProcessId), List<ProcessIoMetric>> ProcessIoMetrics { get; } = [];
+    public ConcurrentDictionary<uint, List<CpuUsageMetric>> CpuCoreMetrics { get; } = [];
+    public List<CpuUsageMetric> CpuTotalMetrics { get; } = [];
+    public ConcurrentDictionary<int, List<ProcessUsageMetric>> ProcessMetrics { get; } = [];
+    public ConcurrentDictionary<uint, List<DeviceUsageMetric>> DeviceMetrics { get; } = [];
+    //public ConcurrentDictionary<(uint DeviceId, uint ChannelId, int ProcessId), List<ProcessIoMetric>> ProcessIoMetrics { get; } = []; // adicionar métrica de io no gerenciador de tarefas
 
 
     public void Resume()
@@ -64,8 +64,14 @@ public class MonitoringService : IDisposable
 
         _prevCpu.Clear();
         _prevProcCycles.Clear();
-        _channelStats.Clear();
         _prevChan.Clear();
+        _deviceChannelBusy.Clear();
+        _deviceStats.Clear();
+        _ioStarts.Clear();
+        CpuCoreMetrics.Clear();
+        CpuTotalMetrics.Clear();
+        ProcessMetrics.Clear();
+        DeviceMetrics.Clear();
 
         // inicializa snapshots de CPU e processos
         foreach (CPU cpu in _kernel.Cpus.Values)
@@ -76,15 +82,21 @@ public class MonitoringService : IDisposable
         foreach (PCB pcb in kernel.Programs.Keys)
             _prevProcCycles[pcb.ProcessId] = pcb.CpuCycles;
 
-        // configura estatísticas por canal e subscreve eventos
         foreach (IODevice device in kernel.Devices.Values)
         {
+            ConcurrentDictionary<uint, DeviceChannelStats> channelStats = [];
+            Dictionary<uint, ChannelSnapshot> channelSnapshots = [];
+            ConcurrentDictionary<uint, bool> channelBusy = [];
+            _deviceStats[device.Id] = channelStats;
+            _prevChan[device.Id] = channelSnapshots;
+            _deviceChannelBusy[device.Id] = channelBusy;
+
             for (uint channel = 0; channel < device.Channels; channel++)
             {
-                DeviceChannelKey key = new(device.Id, channel);
-                _channelStats[key] = new ChannelStats();
-                _prevChan[key] = new ChannelSnapshot(0, 0);
+                channelStats[channel] = new DeviceChannelStats();
+                channelSnapshots[channel] = new ChannelSnapshot();
             }
+
             SubscribeDevice(device);
         }
 
@@ -117,13 +129,9 @@ public class MonitoringService : IDisposable
             {
                 CpuSnapshot prev = _prevCpu[cpu.Id];
 
-                // Ciclos totais que avançaram no core
                 ulong dCyclesTotal = cpu.CycleCount - prev.CycleCount;
-                // Ciclos de usuário que avançaram no core
                 ulong dUserCycles = cpu.UserCycleCount - prev.UserCycleCount;
-                // Ciclos de syscall que avançaram no core
                 ulong dSyscallCycles = cpu.SyscallCycleCount - prev.SyscallCycleCount;
-                // Ciclos de interrupção que avançaram no core
                 ulong dInterruptCycles = cpu.InterruptCycleCount - prev.InterruptCycleCount;
                 ulong dIdleCycles = cpu.IdleCycleCount - prev.IdleCycleCount;
 
@@ -135,10 +143,10 @@ public class MonitoringService : IDisposable
                 totalI += dInterruptCycles;
                 totalIdle += dIdleCycles;
 
-                CpuCoreMetrics.AddOrUpdate(cpu.Id, _ => [new(ts, cpu.Id, dCyclesTotal, dUserCycles, dSyscallCycles, dInterruptCycles, dIdleCycles)], (_, lst) => { lst.Add(new(ts, cpu.Id, dCyclesTotal, dUserCycles, dSyscallCycles, dInterruptCycles, dIdleCycles)); return lst; });
+                CpuCoreMetrics.AddOrUpdate(cpu.Id, _ => [new(ts, dCyclesTotal, dUserCycles, dSyscallCycles, dInterruptCycles, dIdleCycles)], (_, lst) => { lst.Add(new(ts, dCyclesTotal, dUserCycles, dSyscallCycles, dInterruptCycles, dIdleCycles)); return lst; });
             }
 
-            CpuTotalMetrics.Add(new CpuTotalUsageMetric(ts, totalC, totalU, totalS, totalI, totalIdle));
+            CpuTotalMetrics.Add(new(ts, totalC, totalU, totalS, totalI, totalIdle));
 
             ushort interruptsPercent = 0;
             if (totalC > 0UL)
@@ -174,10 +182,51 @@ public class MonitoringService : IDisposable
                     procUsage = (ushort)Math.Min(Math.Round(100.0 * deltaProc / totalC), 100.0);
 
                 processSnapshots.Add(new ProcessSnapshot(pcb.ProcessId, pcb.Name, pcb.State, procUsage, pcb.StaticPriority, pcb.DynamicPriority));
-                ProcessMetrics.AddOrUpdate(pcb.ProcessId, _ => [new(ts, pcb.ProcessId, procUsage)], (_, lst) => { lst.Add(new(ts, pcb.ProcessId, procUsage)); return lst; });
+                ProcessUsageMetric processMetric = new(ts, pcb.ProcessId, procUsage);
+                ProcessMetrics.AddOrUpdate(pcb.ProcessId, _ => [processMetric], (_, lst) => { lst.Add(processMetric); return lst; });
             }
 
             ProcessListUpdated?.Invoke(processSnapshots);
+
+            foreach ((uint deviceId, ConcurrentDictionary<uint, DeviceChannelStats> channelsStats) in _deviceStats)
+            {
+                _prevChan.TryGetValue(deviceId, out Dictionary<uint, ChannelSnapshot> prevChannelsSnapshots);
+
+                DeviceUsageMetric deviceMetric = new();
+                deviceMetric.Timestamp = ts;
+                deviceMetric.ChannelsMetrics = [];
+
+                foreach ((uint channel, DeviceChannelStats channelStats) in channelsStats)
+                {
+                    ulong totalRequests = channelStats.TotalRequests;
+                    ulong busyCycles = channelStats.BusyCycles;
+                    ChannelSnapshot snapshot = new(totalRequests, busyCycles, nowTick);
+
+                    prevChannelsSnapshots.TryGetValue(channel, out ChannelSnapshot prevSnapshot);
+                    prevChannelsSnapshots[channel] = snapshot;
+
+                    ulong dRequests = totalRequests - prevSnapshot.TotalRequests;
+                    ulong dCycles = nowTick - prevSnapshot.TotalCycles;
+                    ulong dBusyCycles = Math.Min(busyCycles - prevSnapshot.BusyCycles, dCycles);
+                    if (dBusyCycles == 0)
+                    {
+                        bool isBusy = _deviceChannelBusy[deviceId].TryGetValue(channel, out bool busy) && busy;
+                        if (isBusy)
+                            dBusyCycles = dCycles;
+                    }
+
+                    IoChannelUsageMetric channelMetric = new(dRequests, dBusyCycles, dCycles);
+                    deviceMetric.ChannelsMetrics[channel] = channelMetric;
+
+                    deviceMetric.RequestsDelta += dRequests;
+                    deviceMetric.BusyDelta += dBusyCycles;
+                    deviceMetric.CyclesDelta += dCycles;
+                }
+
+                DeviceMetrics.AddOrUpdate(deviceId, _ => [deviceMetric], (_, lst) => { lst.Add(deviceMetric); return lst; });
+            }
+
+            OnMetricsUpdated?.Invoke();
         }
     }
 
@@ -186,42 +235,44 @@ public class MonitoringService : IDisposable
         device.IORequestStarted += (req) =>
         {
             _ioStarts[req] = _kernel.GlobalCycle;
+            _deviceChannelBusy[req.DeviceId][req.Channel] = true;
             Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestStarted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid}, Cycle={_kernel.GlobalCycle}");
         };
 
-        device.IORequestCompleted += (req) =>
+        device.IORequestCompleted += (req) => OnIoRequestCompleted(req);
+    }
+
+    private void OnIoRequestCompleted(IoRequestNotification req)
+    {
+        if (!_ioStarts.TryRemove(req, out ulong t0))
         {
-            if (!_ioStarts.TryRemove(req, out ulong t0))
-            {
-                Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestCompleted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid} - Start not found!");
-                return;
-            }
+            Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestCompleted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid} - Start not found!");
+            return;
+        }
 
-            ulong duration = _kernel.GlobalCycle - t0;
-            AddProcessIoMetric(req.DeviceId, req.Channel, req.Pid, duration);
+        _deviceChannelBusy[req.DeviceId][req.Channel] = false;
+        ulong duration = _kernel.GlobalCycle - t0;
+        AddProcessIoMetric(req.DeviceId, req.Channel, req.Pid, duration);
 
-            // atualiza stats do canal
-            DeviceChannelKey key = new(req.DeviceId, req.Channel);
-            ChannelStats stats = _channelStats[key];
-            stats.TotalRequests++;
-            stats.BusyCycles += duration;
+        DeviceChannelStats stats = _deviceStats[req.DeviceId][req.Channel];
+        stats.TotalRequests++;
+        stats.BusyCycles += duration;
 
-            Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestCompleted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid}, Duration={duration} cycles");
-        };
+        Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestCompleted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid}, Cycle={_kernel.GlobalCycle}, Duration={duration} cycles");
     }
 
     private void AddProcessIoMetric(uint deviceId, uint channelId, int processId, ulong latencyCycles)
     {
-        ProcessIoMetric metric = new(
-            Timestamp: DateTime.UtcNow,
-            DeviceId: deviceId,
-            ChannelId: channelId,
-            ProcessId: processId,
-            LatencyCycles: latencyCycles
-        );
+        //ProcessIoMetric metric = new(
+        //    Timestamp: DateTime.UtcNow,
+        //    DeviceId: deviceId,
+        //    ChannelId: channelId,
+        //    ProcessId: processId,
+        //    LatencyCycles: latencyCycles
+        //);
 
-        (uint deviceId, uint channelId, int processId) key = (deviceId, channelId, processId);
-        ProcessIoMetrics.AddOrUpdate(key, _ => [metric], (_, lst) => { lst.Add(metric); return lst; });
+        //(uint deviceId, uint channelId, int processId) key = (deviceId, channelId, processId);
+        //ProcessIoMetrics.AddOrUpdate(key, _ => [metric], (_, lst) => { lst.Add(metric); return lst; });
 
         Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] ProcessIoMetric: Device={deviceId}, Channel={channelId}, Process={processId}, Latency={latencyCycles} cycles");
     }
@@ -238,14 +289,25 @@ public class MonitoringService : IDisposable
         public CpuSnapshot(CPU cpu) : this(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount, cpu.InterruptCycleCount, cpu.IdleCycleCount) { }
     }
 
-    private record ChannelSnapshot(long TotalRequests, ulong BusyCycles)
+    private record ChannelSnapshot
     {
-        public ChannelSnapshot(ChannelStats stats) : this(stats.TotalRequests, stats.BusyCycles) { }
+        public ChannelSnapshot() { }
+
+        public ChannelSnapshot(ulong totalRequests, ulong busyCycles, ulong totalCycles)
+        {
+            TotalRequests = totalRequests;
+            BusyCycles = busyCycles;
+            TotalCycles = totalCycles;
+        }
+
+        public ulong TotalRequests { get; set; }
+        public ulong BusyCycles { get; set; }
+        public ulong TotalCycles { get; set; }
     }
 
-    private class ChannelStats
+    private class DeviceChannelStats
     {
-        public long TotalRequests { get; set; }
+        public ulong TotalRequests { get; set; }
         public ulong BusyCycles { get; set; }
     }
 }
