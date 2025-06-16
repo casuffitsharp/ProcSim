@@ -3,7 +3,6 @@ using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Process;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.ComponentModel;
 
 namespace ProcSim.ViewModels;

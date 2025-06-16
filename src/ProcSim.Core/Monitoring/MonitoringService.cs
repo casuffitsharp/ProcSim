@@ -192,9 +192,11 @@ public class MonitoringService : IDisposable
             {
                 _prevChan.TryGetValue(deviceId, out Dictionary<uint, ChannelSnapshot> prevChannelsSnapshots);
 
-                DeviceUsageMetric deviceMetric = new();
-                deviceMetric.Timestamp = ts;
-                deviceMetric.ChannelsMetrics = [];
+                DeviceUsageMetric deviceMetric = new()
+                {
+                    Timestamp = ts,
+                    ChannelsMetrics = []
+                };
 
                 foreach ((uint channel, DeviceChannelStats channelStats) in channelsStats)
                 {
@@ -239,7 +241,7 @@ public class MonitoringService : IDisposable
             Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestStarted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid}, Cycle={_kernel.GlobalCycle}");
         };
 
-        device.IORequestCompleted += (req) => OnIoRequestCompleted(req);
+        device.IORequestCompleted += OnIoRequestCompleted;
     }
 
     private void OnIoRequestCompleted(IoRequestNotification req)

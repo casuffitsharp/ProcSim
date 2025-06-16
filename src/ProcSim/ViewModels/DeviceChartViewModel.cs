@@ -1,5 +1,4 @@
 ﻿using ProcSim.Core.Monitoring.Models;
-using SkiaSharp;
 
 namespace ProcSim.ViewModels;
 

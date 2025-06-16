@@ -1,6 +1,5 @@
 ﻿using ProcSim.Core.Process;
 using System.Diagnostics;
-using System.Runtime.Intrinsics.Arm;
 
 namespace ProcSim.Core.Scheduler;
 
@@ -10,16 +9,6 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
     private const double ALPHA = 5.0; // IO to CPU time ratio factor
     private const double BETA = 1.0; // Aging factor
     private const double GAMMA = 0.1; // Queue length penalty factor
-
-    //private static readonly Dictionary<ProcessStaticPriority, (int Min, int Max)> StaticPriorityRanges = new()
-    //{
-    //    [ProcessStaticPriority.Low] = (1, 10),
-    //    [ProcessStaticPriority.BelowNormal] = (11, 20),
-    //    [ProcessStaticPriority.Normal] = (21, 30),
-    //    [ProcessStaticPriority.AboveNormal] = (31, 40),
-    //    [ProcessStaticPriority.High] = (41, 50),
-    //    [ProcessStaticPriority.RealTime] = (51, 60),
-    //};
 
     private readonly IReadOnlyDictionary<uint, PCB> _idleByCore = idlePcbs;
     private readonly Kernel _kernel = kernel;

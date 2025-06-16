@@ -1,14 +1,11 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
-using LiveChartsCore.Drawing;
 using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
-using LiveChartsCore.SkiaSharpView.VisualElements;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Drawing;
 
 namespace ProcSim.ViewModels;
 
@@ -130,7 +127,7 @@ public abstract partial class ChartViewModelBase : ObservableObject
 
     private static SKColor GenerateColor(uint id)
     {
-        float hue = ((id + 1) * 360f / 20) % 360f;
+        float hue = (id + 1) * 360f / 20 % 360f;
         float satur = 75;
         float light = 50;
         return SKColor.FromHsl(hue, satur, light);
