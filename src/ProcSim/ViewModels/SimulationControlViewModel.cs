@@ -38,15 +38,6 @@ public partial class SimulationControlViewModel : ObservableObject
         Clock = Math.Clamp(Clock, MinClock, MaxClock);
     }
 
-    //public SimulationControlViewModel(SimulationController controller, ObservableCollection<ProcessViewModel> processes)
-    //{
-    //    AddProcessCommand = new RelayCommand(() =>
-    //    {
-    //        // cria Rn no processo config e já injeta via controller.AddProcess
-    //    });
-
-    //public IRelayCommand AddProcessCommand { get; }
-
     public IAsyncRelayCommand RunPauseCommand { get; }
     public IRelayCommand ResetCommand { get; }
 
@@ -106,7 +97,7 @@ public partial class SimulationControlViewModel : ObservableObject
             return;
 
         _controller.Initialize(_vmConfig.MapToModel());
-        foreach (ProcessConfigModel process in _processesConfig.MapToModel())
+        foreach (ProcessConfigModel process in _processesConfig.MapToModel(p => p.IsSelectedForSimulation == true))
             _controller.RegisterProcess(process);
     }
 
@@ -145,6 +136,7 @@ public partial class SimulationControlViewModel : ObservableObject
     private void OnSimulationStatusChanged()
     {
         IsRunning = _controller.Status == SimulationStatus.Running;
+        _processesConfig.IsSimulationRunning = _controller.Status > SimulationStatus.Created;
         _vmConfig.CanChangeConfigs = _controller.Status is SimulationStatus.Created;
     }
 }

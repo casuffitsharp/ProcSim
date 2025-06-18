@@ -4,7 +4,6 @@ using Microsoft.Win32;
 using ProcSim.Assets;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Extensions;
-using ProcSim.Core.IO;
 using ProcSim.Core.Process;
 using ProcSim.Core.Simulation;
 using ProcSim.Views;
@@ -27,6 +26,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
         CancelCommand = new RelayCommand(Reset, CanCancel);
         AddProcessCommand = new RelayCommand(AddProcess, CanAddProcess);
         RemoveProcessCommand = new RelayCommand(RemoveProcess, CanRemoveProcess);
+        PushProcessCommand = new AsyncRelayCommand<ProcessConfigViewModel>(PushProcessAsync, CanPushProcess, AsyncRelayCommandOptions.None);
         BuildCommand = new AsyncRelayCommand(BuildAsync, CanBuild, AsyncRelayCommandOptions.None);
 
         SaveConfigCommand = new AsyncRelayCommand(SaveConfigToFileAsync, CanSaveConfig);
@@ -37,6 +37,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
         CancelCommand.NotifyCanExecuteChanged();
         AddProcessCommand.NotifyCanExecuteChanged();
         RemoveProcessCommand.NotifyCanExecuteChanged();
+        PushProcessCommand.NotifyCanExecuteChanged();
         BuildCommand.NotifyCanExecuteChanged();
 
         CanChangeConfigs = true;
@@ -55,6 +56,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
     public IRelayCommand CancelCommand { get; }
     public IRelayCommand AddProcessCommand { get; }
     public IRelayCommand RemoveProcessCommand { get; }
+    public IAsyncRelayCommand<ProcessConfigViewModel> PushProcessCommand { get; }
     public IAsyncRelayCommand BuildCommand { get; }
 
     public IAsyncRelayCommand SaveConfigCommand { get; }
@@ -79,9 +81,6 @@ public partial class ProcessesConfigViewModel : ObservableObject
     [ObservableProperty]
     public partial bool CanChangeConfigs { get; set; }
 
-    // falta verificar como será tratado dispositivo que não está ativo
-    public List<IoDeviceType> IoDeviceTypes { get; } = [.. Enum.GetValues<IoDeviceType>()];
-
     public ProcessConfigViewModel SelectedProcess
     {
         get;
@@ -104,14 +103,22 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     private ProcessConfigViewModel SelectedProcessRef { get; set; }
 
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(PushProcessCommand))]
+    public partial bool IsSimulationRunning { get; set; }
+
     internal void SaveConfig()
     {
         Settings.Default.ProcessesConfig = _configRepo.Serialize(MapToModel());
     }
 
-    public List<ProcessConfigModel> MapToModel()
+    public List<ProcessConfigModel> MapToModel(Func<ProcessConfigViewModel, bool> filter = null)
     {
-        return [.. Processes.Select(p => p.MapToModel())];
+        IEnumerable<ProcessConfigViewModel> processes = Processes.AsEnumerable();
+        if (filter is not null)
+            processes = processes.Where(filter);
+
+        return [.. processes.Select(p => p.MapToModel())];
     }
 
     private async Task BuildAsync()
@@ -179,6 +186,14 @@ public partial class ProcessesConfigViewModel : ObservableObject
         SelectedProcess = new();
     }
 
+    private async Task PushProcessAsync(ProcessConfigViewModel process)
+    {
+        ProcessConfigModel model = process.MapToModel();
+        model.Name = $"*{model.Name}";
+        _simulationController.RegisterProcess(model);
+        await Task.Delay(1000);
+    }
+
     private void RemoveProcess()
     {
         Processes.Remove(SelectedProcessRef);
@@ -193,6 +208,11 @@ public partial class ProcessesConfigViewModel : ObservableObject
     private bool CanRemoveProcess()
     {
         return SelectedProcessRef is not null && Processes.Contains(SelectedProcessRef);
+    }
+
+    private bool CanPushProcess(ProcessConfigViewModel _)
+    {
+        return IsSimulationRunning == true;
     }
 
     private bool CanSaveConfig()

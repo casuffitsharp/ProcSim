@@ -46,4 +46,9 @@ public partial class MainView : Window
         Settings.Default.DarkMode = DarkModeToggleButton.IsChecked == true;
         ModifyTheme(DarkModeToggleButton.IsChecked == true);
     }
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        MinWidth = Width;
+    }
 }

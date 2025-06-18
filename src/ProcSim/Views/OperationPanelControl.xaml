@@ -21,9 +21,14 @@
         </DataTemplate>
     </UserControl.Resources>
     <materialDesign:Card Padding="5">
-        <StackPanel>
-            <ListBox ItemsSource="{Binding Source={x:Static viewModels:OperationConfigViewModel.OperationTypeValues}}"
-                     Margin="0,0,0,15"
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="15"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+            <ListBox Grid.Row="0"
+                     ItemsSource="{Binding Source={x:Static viewModels:OperationConfigViewModel.OperationTypeValues}}"
                     SelectedItem="{Binding Type, Mode=TwoWay}"
                     Style="{StaticResource MaterialDesignToolToggleFlatListBox}"
                     ItemTemplate="{StaticResource EnumDescTemplate}"
@@ -35,7 +40,7 @@
                     </ItemsPanelTemplate>
                 </ListBox.ItemsPanel>
             </ListBox>
-            <Grid>
+            <Grid Grid.Row="2">
                 <views:CpuOperationControl DataContext="{Binding DataContext.CpuOperationConfig, RelativeSource={RelativeSource AncestorType=UserControl}}"
                                            Visibility="{Binding DataContext.IsCpu, 
                                                         RelativeSource={RelativeSource AncestorType=UserControl}, 
@@ -47,6 +52,6 @@
                                                         Converter={StaticResource InverseBooleanToVisibilityConverter},
                                                         FallbackValue=Collapsed}"/>
             </Grid>
-        </StackPanel>
+        </Grid>
     </materialDesign:Card>
 </UserControl>

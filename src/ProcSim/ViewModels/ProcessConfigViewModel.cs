@@ -19,7 +19,7 @@ public enum LoopType
     Random
 }
 
-public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
+public partial class ProcessConfigViewModel : ObservableObject
 {
     public ProcessConfigViewModel()
     {
@@ -39,6 +39,9 @@ public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
 
     [ObservableProperty]
     public partial string Name { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsSelectedForSimulation { get; set; }
 
     [ObservableProperty]
     public partial ProcessStaticPriority Priority { get; set; }
@@ -73,6 +76,7 @@ public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
         {
             Priority = Priority,
             Name = Name,
+            IsSelectedForSimulation = IsSelectedForSimulation,
             Operations = [.. Operations.Select(op => op.MapToModel())],
             LoopConfig = LoopType switch
             {
@@ -94,6 +98,7 @@ public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
     {
         Name = model.Name;
         Priority = model.Priority;
+        IsSelectedForSimulation = model.IsSelectedForSimulation;
         Operations = [.. model.Operations.Select(op => new OperationConfigViewModel(op))];
 
         switch (model.LoopConfig)
@@ -125,6 +130,7 @@ public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
         {
             LoopType = LoopType,
             Name = Name,
+            IsSelectedForSimulation = IsSelectedForSimulation,
             Priority = Priority,
             Iterations = Iterations,
             MinIterations = MinIterations,
@@ -170,6 +176,7 @@ public partial class ProcessConfigViewModel : ObservableObject//, IDropTarget
         if (ReferenceEquals(other, this)) return true;
         if (other is null) return false;
         if (Name != other.Name) return false;
+        if (IsSelectedForSimulation != other.IsSelectedForSimulation) return false;
         if (Priority != other.Priority) return false;
         if (LoopType != other.LoopType) return false;
         if (Operations.Count != other.Operations.Count) return false;

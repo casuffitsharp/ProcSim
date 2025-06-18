@@ -140,11 +140,16 @@ public class SimulationController
             };
         }
 
-        ProcessDto program = new()
-        {
-            Name = processConfig.Name,
-            Priority = processConfig.Priority
-        };
+        ProcessDto program = new() { Priority = processConfig.Priority };
+
+        List<string> existingNames = [.. _processes.Values.Where(p => p.Name.StartsWith(processConfig.Name, StringComparison.InvariantCultureIgnoreCase)).Select(p => p.Name)];
+        int index = 1;
+        string baseName = processConfig.Name;
+        while (existingNames.Contains(processConfig.Name, StringComparer.InvariantCultureIgnoreCase))
+            processConfig.Name = $"{baseName} ({index++})";
+
+        program.Name = processConfig.Name;
+
         foreach (IOperationConfigModel operation in processConfig.Operations)
         {
             IEnumerable<Instruction> instructions = operation switch

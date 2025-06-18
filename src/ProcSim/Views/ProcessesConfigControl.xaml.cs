@@ -12,7 +12,7 @@ public partial class ProcessesConfigControl : UserControl
 
     private void OnSelectedProcessChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        (sender as StackPanel).IsEnabled = e.NewValue != null;
+        (sender as Grid).IsEnabled = e.NewValue != null;
     }
     private void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
     {

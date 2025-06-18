@@ -11,6 +11,7 @@ public class ProcessConfigModel
     public string Name { get; set; }
     public List<IOperationConfigModel> Operations { get; set; }
     public ProcessStaticPriority Priority { get; set; }
+    public bool IsSelectedForSimulation { get; set; }
 }
 
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "operationConfig")]

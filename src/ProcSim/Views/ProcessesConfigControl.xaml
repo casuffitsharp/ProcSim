@@ -7,6 +7,7 @@
             xmlns:dd="clr-namespace:GongSolutions.Wpf.DragDrop;assembly=GongSolutions.Wpf.DragDrop"
             xmlns:vm="clr-namespace:ProcSim.ViewModels"
             xmlns:views="clr-namespace:ProcSim.Views"
+            xmlns:helpers="clr-namespace:ProcSim.Helpers"
             xmlns:core="clr-namespace:ProcSim.Core;assembly=ProcSim.Core"
             xmlns:coreconfig="clr-namespace:ProcSim.Core.Configuration;assembly=ProcSim.Core"
             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -14,9 +15,11 @@
             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
             d:DataContext="{d:DesignInstance Type=vm:ProcessesConfigViewModel}"
             Height="Auto"
-            Width="600">
+            Width="Auto">
 
     <UserControl.Resources>
+        <helpers:BindingProxy x:Key="Proxy" Data="{Binding}" />
+        
         <Style TargetType="TextBlock">
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
@@ -30,6 +33,7 @@
         <converters:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
         <converters:InvertBooleanConverter x:Key="InvertBooleanConverter"/>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
 
         <ObjectDataProvider x:Key="CpuOperationTypes"
                             MethodName="GetValues"
@@ -102,19 +106,49 @@
                           CanUserSortColumns="False"
                           CanUserAddRows="False"
                           CanUserDeleteRows="False"
-                          HeadersVisibility="None"
+                          HeadersVisibility="Column"
                           RowHeaderWidth="0"
                           GridLinesVisibility="None"
                           SelectionMode="Single"
                           SelectionUnit="FullRow"
-                          IsReadOnly="True"
                           BorderThickness="0"
+                          RowHeight="33"
+                          IsReadOnly="True"
+                          ScrollViewer.CanContentScroll="True"                 
+                          ScrollViewer.VerticalScrollBarVisibility="Auto"
                           Padding="0">
-
                     <DataGrid.Columns>
-                        <materialDesign:DataGridTextColumn Header="Nome" Binding="{Binding Name}" Width="Auto"/>
+                        <materialDesign:DataGridTextColumn Header="Nome" 
+                                                           Binding="{Binding Name}" 
+                                                           Width="Auto" />
+                        <DataGridCheckBoxColumn Header="Simular"
+                                                Binding="{Binding IsSelectedForSimulation, UpdateSourceTrigger=PropertyChanged}"
+                                                Width="Auto"
+                                                IsReadOnly="False"
+                                                Visibility="{Binding Data.IsSimulationRunning, Source={StaticResource Proxy}, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                        <DataGridTemplateColumn Header="Enviar"
+                                                IsReadOnly="False"
+                                                Visibility="{Binding Data.IsSimulationRunning, Source={StaticResource Proxy}, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding DataContext.PushProcessCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                            CommandParameter="{Binding .}"
+                                            Content="{materialDesign:PackIcon Kind=RocketLaunchOutline}" 
+                                            Style="{StaticResource MaterialDesignToolForegroundButton}"
+                                            ToolTip="Adicionar em runtime"
+                                            HorizontalAlignment="Center"
+                                            VerticalAlignment="Center"
+                                            Padding="0"
+                                            Margin="2"
+                                            MinHeight="0"
+                                            MinWidth="0"
+                                            BorderBrush="Transparent"
+                                            BorderThickness="0">
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
                     </DataGrid.Columns>
-
                     <DataGrid.CellStyle>
                         <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
                             <Setter Property="FocusVisualStyle" Value="{x:Null}" />
@@ -132,65 +166,74 @@
             </StackPanel>
         </materialDesign:Card>
         <materialDesign:Card Grid.Row="1" Grid.Column="2">
-            <StackPanel Margin="5"
+            <Grid Margin="5"
                         IsEnabled="False"
                         DataContext="{Binding SelectedProcess}"
                         DataContextChanged="OnSelectedProcessChanged">
-                <TextBlock Text="Detalhes" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
-                <Separator Height="4"/>
-                <DockPanel LastChildFill="False">
-                    <TextBox Width="100"
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="Detalhes" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
+                <Separator Grid.Row="1" Height="4"/>
+                <Grid Grid.Row="2" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="100"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="60"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="60"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Width="100"
                             HorizontalAlignment="Left"
-                            MaxWidth="400"
                             VerticalAlignment="Top"
                             materialDesign:HintAssist.Hint="Nome"
                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"
                             Style="{StaticResource MaterialDesignFilledTextBox}"
-                            TextWrapping="Wrap"
-                            DockPanel.Dock="Left"/>
-                    <Grid DockPanel.Dock="Right">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="100"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="60"/>
-                            <ColumnDefinition Width="8"/>
-                            <ColumnDefinition Width="60"/>
-                        </Grid.ColumnDefinitions>
-                        <ComboBox Grid.Column="0"
+                            TextWrapping="Wrap"/>
+                    <ComboBox Grid.Column="2"
                                   ItemsSource="{Binding Source={x:Static vm:ProcessConfigViewModel.PriorityValues}, Converter={StaticResource EnumDescriptionConverter}}"
                                   SelectedItem="{Binding Priority, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource EnumDescriptionConverter}, Mode=TwoWay}"
                                   Style="{StaticResource MaterialDesignFloatingHintComboBox}"
                                   materialDesign:HintAssist.Hint="Prioridade" />
-                        <ComboBox Grid.Column="2"
+                    <ComboBox Grid.Column="4"
                                   ItemsSource="{Binding Source={x:Static vm:ProcessConfigViewModel.LoopTypeValues}, Converter={StaticResource EnumDescriptionConverter}}"
                                   SelectedItem="{Binding LoopType, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource EnumDescriptionConverter}, Mode=TwoWay}"
                                   Style="{StaticResource MaterialDesignFloatingHintComboBox}"
                                   materialDesign:HintAssist.Hint="Loop" />
-                        <TextBox Grid.Column="4"
+                    <TextBox Grid.Column="6"
                                  Style="{StaticResource MaterialDesignFilledTextBox}"
                                  materialDesign:HintAssist.Hint="Qtd"
                                  Text="{Binding Iterations, UpdateSourceTrigger=PropertyChanged}"
                                  Visibility="{Binding IsFiniteLoop, Converter={StaticResource BooleanToVisibilityConverter}, FallbackValue=Hidden}"/>
-                        <TextBox Grid.Column="4"
+                    <TextBox Grid.Column="6"
                                  Style="{StaticResource MaterialDesignFilledTextBox}"
                                  materialDesign:HintAssist.Hint="Min"
                                  Text="{Binding MinIterations, UpdateSourceTrigger=PropertyChanged}"
                                  Visibility="{Binding IsRandomLoop, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                        <TextBox Grid.Column="6"
+                    <TextBox Grid.Column="8"
                                  Style="{StaticResource MaterialDesignFilledTextBox}"
                                  materialDesign:HintAssist.Hint="Max"
                                  Text="{Binding MaxIterations, UpdateSourceTrigger=PropertyChanged}"
                                  Visibility="{Binding IsRandomLoop, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                    </Grid>
-                </DockPanel>
-                <Separator Height="5" Visibility="Hidden"/>
-                <TextBlock Text="Operações" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
-                <Separator Height="4"/>
-                <views:OperationPanelControl DataContext="{Binding SelectedOperation}"/>
-                <Separator Height="5" Visibility="Hidden"/>
-                <DataGrid ItemsSource="{Binding Operations}"
+                </Grid>
+                <TextBlock Grid.Row="4" Text="Operações" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
+                <Separator Grid.Row="5" Height="4"/>
+                <views:OperationPanelControl Grid.Row="6" DataContext="{Binding SelectedOperation}"/>
+                <DataGrid Grid.Row="8"
+                          ItemsSource="{Binding Operations}"
                           SelectedItem="{Binding SelectedOperation, Mode=TwoWay}"
                           AutoGenerateColumns="False"
                           CanUserReorderColumns="False"
@@ -206,6 +249,8 @@
                           Padding="0"
                           RowHeight="33"
                           IsReadOnly="True"
+                            ScrollViewer.CanContentScroll="True"                 
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
                           dd:DragDrop.IsDragSource="True"
                           dd:DragDrop.SelectDroppedItems="True"
                           dd:DragDrop.IsDropTarget="True">
@@ -214,7 +259,7 @@
                         <DataGridTemplateColumn>
                             <DataGridTemplateColumn.HeaderTemplate>
                                 <DataTemplate>
-                                    <Button Command="{Binding DataContext.AddOperationCommand, RelativeSource={RelativeSource AncestorType={x:Type StackPanel}}}"
+                                    <Button Command="{Binding DataContext.AddOperationCommand, RelativeSource={RelativeSource AncestorType={x:Type Grid}, AncestorLevel=3}}"
                                             Style="{StaticResource MaterialDesignToolForegroundButton}"
                                             Content="{materialDesign:PackIcon Kind=PlusBold}" 
                                             ToolTip="Add Op."
@@ -229,7 +274,7 @@
                             </DataGridTemplateColumn.HeaderTemplate>
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate>
-                                    <Button Command="{Binding DataContext.RemoveOperationCommand, RelativeSource={RelativeSource AncestorType={x:Type StackPanel}}}"
+                                    <Button Command="{Binding DataContext.RemoveOperationCommand, RelativeSource={RelativeSource AncestorType={x:Type Grid}, AncestorLevel=3}}"
                                             CommandParameter="{Binding .}"
                                             Content="{materialDesign:PackIcon Kind=Delete}" 
                                             Style="{StaticResource MaterialDesignToolForegroundButton}"
@@ -248,7 +293,7 @@
                         </DataGridTemplateColumn>
                     </DataGrid.Columns>
                 </DataGrid>
-            </StackPanel>
+            </Grid>
         </materialDesign:Card>
     </Grid>
 </UserControl>
