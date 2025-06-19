@@ -184,11 +184,6 @@
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                                 <Setter Property="BorderThickness" Value="0" />
-                                <!--<Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="BorderThickness" Value="0" />
-                                    </Trigger>
-                                </Style.Triggers>-->
                             </Style>
                         </DataGrid.CellStyle>
                     </DataGrid>
@@ -220,16 +215,13 @@
                             <Style TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
                                 <Setter Property="FocusVisualStyle" Value="{x:Null}" />
                                 <Setter Property="BorderThickness" Value="0" />
-                                <Style.Triggers>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="BorderThickness" Value="0" />
-                                        <Setter Property="Background" Value="{DynamicResource MaterialDesignDataGridCellHoverBackground}" />
-                                    </Trigger>
-                                </Style.Triggers>
                             </Style>
                         </DataGrid.CellStyle>
                     </DataGrid>
                 </Grid>
+            </TabItem>
+            <TabItem Header="Análise">
+                <views:ProcessAnalysisView DataContext="{Binding ProcessAnalysisVm}"/>
             </TabItem>
         </TabControl>
     </Grid>

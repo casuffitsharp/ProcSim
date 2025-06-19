@@ -28,6 +28,7 @@ public partial class App : Application
         sc.AddSingleton<TaskManagerDetailsViewModel>();
         sc.AddSingleton<CpuMonitoringViewModel>();
         sc.AddSingleton<DevicesMonitoringViewModel>();
+        sc.AddSingleton<ProcessAnalysisViewModel>();
         sc.AddSingleton<TaskManagerViewModel>();
         sc.AddSingleton<MainViewModel>();
         sc.AddTransient<MainView>();

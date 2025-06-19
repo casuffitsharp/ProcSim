@@ -13,7 +13,7 @@ public class CPU
     private readonly InterruptController _interruptController;
     private readonly InterruptService _isrv;
     private List<Instruction> _instructions;
-    private Queue<MicroOp> _ops;
+    private ConcurrentQueue<MicroOp> _ops;
 
     public CPU(uint id, InterruptController intc, InterruptService isrv, IScheduler sched, SystemCallDispatcher syscallDisp, ConcurrentDictionary<PCB, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
     {
@@ -91,7 +91,7 @@ public class CPU
         {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando ISRV");
             Instruction instruction = _isrv.BuildISR(vector);
-            _ops = instruction.MicroOps;
+            _ops = new(instruction.MicroOps);
             InstructionsFetched++;
             InterruptCycleCount++;
             return;

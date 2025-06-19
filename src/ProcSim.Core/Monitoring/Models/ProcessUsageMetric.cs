@@ -1,3 +1,12 @@
-﻿namespace ProcSim.Core.Monitoring.Models;
+﻿using ProcSim.Core.Process;
 
-public record ProcessUsageMetric(DateTime Timestamp, int ProcessId, double Usage);
+namespace ProcSim.Core.Monitoring.Models;
+
+public record ProcessUsageMetric
+{
+    public DateTime Timestamp { get; set; }
+    public ulong CpuTime { get; set; }
+    public ulong IoTime { get; set; }
+    public int DynamicPriority { get; set; }
+    public ProcessStaticPriority StaticPriority { get; set; }
+}

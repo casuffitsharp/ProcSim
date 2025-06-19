@@ -19,7 +19,6 @@ public abstract partial class ChartViewModelBase : ObservableObject
     protected ChartViewModelBase(double windowSizeSeconds, string title)
     {
         _windowSizeSeconds = windowSizeSeconds;
-        XMin = -_windowSizeSeconds;
 
         XAxes =
         [
@@ -44,6 +43,8 @@ public abstract partial class ChartViewModelBase : ObservableObject
             }
         ];
 
+        UpdateMinMax();
+
         Title = title;
         _mainValues.CollectionChanged += Values_CollectionChanged;
     }
@@ -52,17 +53,11 @@ public abstract partial class ChartViewModelBase : ObservableObject
     public Axis[] XAxes { get; set; }
     public Axis[] YAxes { get; set; }
 
-    [ObservableProperty]
-    public partial double XMin { get; set; }
-
-    [ObservableProperty]
-    public partial double XMax { get; set; } = 0;
-
     public string Title { get; }
 
     public Margin Margin { get; set; } = new(50, 10, 50, 10);
 
-    public int CurrentTime
+    private int CurrentTime
     {
         get => field;
         set
@@ -120,8 +115,8 @@ public abstract partial class ChartViewModelBase : ObservableObject
         _seriesValues.Clear();
         Series.Clear();
         CurrentTime = 0;
-        XMin = -_windowSizeSeconds;
-        XMax = 0;
+        XAxes[0].MinLimit = -_windowSizeSeconds;
+        XAxes[0].MaxLimit = 0;
         UpdateMinMax();
     }
 
@@ -146,10 +141,7 @@ public abstract partial class ChartViewModelBase : ObservableObject
 
     private void UpdateMinMax()
     {
-        XMax = CurrentTime;
-        XMin = XMax - _windowSizeSeconds;
-
-        XAxes[0].MinLimit = XMin;
-        XAxes[0].MaxLimit = XMax;
+        XAxes[0].MinLimit = CurrentTime - _windowSizeSeconds;
+        XAxes[0].MaxLimit = CurrentTime;
     }
 }

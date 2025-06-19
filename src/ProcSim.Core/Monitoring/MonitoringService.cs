@@ -39,7 +39,6 @@ public class MonitoringService : IDisposable
     public List<CpuUsageMetric> CpuTotalMetrics { get; } = [];
     public ConcurrentDictionary<int, List<ProcessUsageMetric>> ProcessMetrics { get; } = [];
     public ConcurrentDictionary<uint, List<DeviceUsageMetric>> DeviceMetrics { get; } = [];
-    //public ConcurrentDictionary<(uint DeviceId, uint ChannelId, int ProcessId), List<ProcessIoMetric>> ProcessIoMetrics { get; } = []; // adicionar métrica de io no gerenciador de tarefas
 
 
     public void Resume()
@@ -166,23 +165,30 @@ public class MonitoringService : IDisposable
                 if (pcb.ProcessId < _kernel.Cpus.Count)
                     continue;
 
-                ulong curr = pcb.UserCycles + pcb.SyscallCycles;
+                ulong currentCycles = pcb.UserCycles + pcb.SyscallCycles;
 
                 if (!_prevProcCycles.TryGetValue(pcb.ProcessId, out ulong prev))
                 {
-                    _prevProcCycles[pcb.ProcessId] = curr;
+                    _prevProcCycles[pcb.ProcessId] = currentCycles;
                     continue;
                 }
 
-                ulong deltaProc = (curr > prev) ? (curr - prev) : 0UL;
-                _prevProcCycles[pcb.ProcessId] = curr;
+                ulong deltaProc = (currentCycles > prev) ? (currentCycles - prev) : 0UL;
+                _prevProcCycles[pcb.ProcessId] = currentCycles;
 
                 ushort procUsage = 0;
                 if (deltaProc > 0 && totalC > 0UL)
                     procUsage = (ushort)Math.Min(Math.Round(100.0 * deltaProc / totalC), 100.0);
 
                 processSnapshots.Add(new ProcessSnapshot(pcb.ProcessId, pcb.Name, pcb.State, procUsage, pcb.StaticPriority, pcb.DynamicPriority));
-                ProcessUsageMetric processMetric = new(ts, pcb.ProcessId, procUsage);
+                ProcessUsageMetric processMetric = new()
+                {
+                    CpuTime = currentCycles,
+                    DynamicPriority = pcb.DynamicPriority,
+                    StaticPriority = pcb.StaticPriority,
+                    Timestamp = ts,
+                    IoTime = pcb.WaitCycles
+                };
                 ProcessMetrics.AddOrUpdate(pcb.ProcessId, _ => [processMetric], (_, lst) => { lst.Add(processMetric); return lst; });
             }
 
