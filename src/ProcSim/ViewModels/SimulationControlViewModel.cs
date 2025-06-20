@@ -13,14 +13,12 @@ namespace ProcSim.ViewModels;
 public partial class SimulationControlViewModel : ObservableObject
 {
     private readonly SimulationController _controller;
-    private readonly MonitoringService _monitoringService;
     private readonly VmConfigViewModel _vmConfig;
     private readonly ProcessesConfigViewModel _processesConfig;
 
     public SimulationControlViewModel(SimulationController controller, MonitoringService monitoringService, VmConfigViewModel vmConfig, ProcessesConfigViewModel processesConfig)
     {
         _controller = controller;
-        _monitoringService = monitoringService;
         _vmConfig = vmConfig;
         _processesConfig = processesConfig;
         _controller.SimulationStatusChanged += OnSimulationStatusChanged;
@@ -97,7 +95,7 @@ public partial class SimulationControlViewModel : ObservableObject
             return;
 
         _controller.Initialize(_vmConfig.MapToModel());
-        foreach (ProcessConfigModel process in _processesConfig.MapToModel(p => p.IsSelectedForSimulation == true))
+        foreach (ProcessConfigModel process in _processesConfig.MapToModel(p => p.IsSelectedForSimulation))
             _controller.RegisterProcess(process);
     }
 

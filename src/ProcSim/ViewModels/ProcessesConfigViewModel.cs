@@ -86,7 +86,6 @@ public partial class ProcessesConfigViewModel : ObservableObject
         get;
         set
         {
-            ProcessConfigViewModel old = field;
             SelectedProcessRef = value;
             value = value?.Copy();
 
@@ -212,7 +211,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     private bool CanPushProcess(ProcessConfigViewModel _)
     {
-        return IsSimulationRunning == true;
+        return IsSimulationRunning;
     }
 
     private bool CanSaveConfig()
@@ -240,7 +239,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
     private async Task LoadConfigFromFileAsync()
     {
         OpenFileDialog dialog = new() { Filter = _configRepo.FileFilter };
-        bool? result = dialog.ShowDialog();
+        _ = dialog.ShowDialog();
         string filePath = dialog.FileName;
         if (string.IsNullOrEmpty(filePath))
             return;

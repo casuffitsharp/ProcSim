@@ -109,8 +109,8 @@ public partial class OperationConfigViewModel : ObservableObject
         if (ReferenceEquals(this, other)) return true;
 
         if (Type != other.Type) return false;
-        if (CpuOperationConfig.Equals(other.CpuOperationConfig) == false) return false;
-        if (IoOperationConfig.Equals(other.IoOperationConfig) == false) return false;
+        if (!CpuOperationConfig.Equals(other.CpuOperationConfig)) return false;
+        if (!IoOperationConfig.Equals(other.IoOperationConfig)) return false;
 
         return true;
     }

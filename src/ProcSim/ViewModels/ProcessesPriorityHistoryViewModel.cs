@@ -14,7 +14,7 @@ using System.Windows.Threading;
 
 namespace ProcSim.ViewModels;
 
-public partial class ProcessAnalysisViewModel : ObservableObject
+public partial class ProcessesPriorityHistoryViewModel : ObservableObject
 {
     private const int WINDOW_SIZE_SECONDS = 60;
 
@@ -26,7 +26,7 @@ public partial class ProcessAnalysisViewModel : ObservableObject
     private readonly ObservableCollection<int> _dynamicPriorityValues = [];
     private readonly ObservableCollection<int> _staticPriorityValues = [];
 
-    public ProcessAnalysisViewModel(MonitoringService monitoringService, TaskManagerDetailsViewModel taskManagerDetails)
+    public ProcessesPriorityHistoryViewModel(MonitoringService monitoringService, TaskManagerDetailsViewModel taskManagerDetails)
     {
         _monitoringService = monitoringService;
         _taskManagerDetails = taskManagerDetails;
@@ -38,7 +38,14 @@ public partial class ProcessAnalysisViewModel : ObservableObject
         [
             new()
             {
-                Name = "Uso",
+                Name = "CPU",
+                MinLimit = 0,
+                IsVisible = false,
+                LabelsPaint = new SolidColorPaint(SKColors.Blue),
+            },
+            new()
+            {
+                Name = "IO",
                 MinLimit = 0,
                 IsVisible = false,
                 LabelsPaint = new SolidColorPaint(SKColors.Blue),
@@ -74,7 +81,7 @@ public partial class ProcessAnalysisViewModel : ObservableObject
                 Stroke = new SolidColorPaint(SKColors.Teal) { StrokeThickness = 2 },
                 LineSmoothness = 0,
                 GeometrySize = 0,
-                ScalesYAt = 0
+                ScalesYAt = 1
             },
             new LineSeries<int>
             {
@@ -84,7 +91,7 @@ public partial class ProcessAnalysisViewModel : ObservableObject
                 Stroke = new SolidColorPaint(SKColors.Orange) { StrokeThickness = 3 },
                 LineSmoothness = 0,
                 GeometrySize = 0,
-                ScalesYAt = 1
+                ScalesYAt = 2
             },
             new LineSeries<int>
             {
@@ -98,7 +105,7 @@ public partial class ProcessAnalysisViewModel : ObservableObject
                 },
                 LineSmoothness = 0,
                 GeometrySize = 0,
-                ScalesYAt = 1
+                ScalesYAt = 2
             }
         ];
 

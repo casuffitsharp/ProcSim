@@ -220,8 +220,8 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Análise">
-                <views:ProcessAnalysisView DataContext="{Binding ProcessAnalysisVm}"/>
+            <TabItem Header="Histórico de prioridades">
+                <views:ProcessesPriorityHistoryView DataContext="{Binding ProcessesPriorityHistoryVm}"/>
             </TabItem>
         </TabControl>
     </Grid>

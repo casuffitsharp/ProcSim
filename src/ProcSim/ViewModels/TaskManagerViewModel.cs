@@ -2,10 +2,10 @@
 
 namespace ProcSim.ViewModels;
 
-public partial class TaskManagerViewModel(TaskManagerDetailsViewModel detailsVm, CpuMonitoringViewModel cpuMonitoringVm, DevicesMonitoringViewModel devicesMonitoringVm, ProcessAnalysisViewModel processAnalysisVm) : ObservableObject
+public partial class TaskManagerViewModel(TaskManagerDetailsViewModel detailsVm, CpuMonitoringViewModel cpuMonitoringVm, DevicesMonitoringViewModel devicesMonitoringVm, ProcessesPriorityHistoryViewModel processesPriorityHistoryVm) : ObservableObject
 {
     public TaskManagerDetailsViewModel DetailsVm { get; } = detailsVm;
     public CpuMonitoringViewModel CpuMonitoringVm { get; } = cpuMonitoringVm;
     public DevicesMonitoringViewModel DevicesMonitoringVm { get; } = devicesMonitoringVm;
-    public ProcessAnalysisViewModel ProcessAnalysisVm { get; } = processAnalysisVm;
+    public ProcessesPriorityHistoryViewModel ProcessesPriorityHistoryVm { get; } = processesPriorityHistoryVm;
 }

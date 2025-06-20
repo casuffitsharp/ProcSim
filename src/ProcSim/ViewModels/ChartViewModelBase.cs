@@ -12,8 +12,8 @@ namespace ProcSim.ViewModels;
 public abstract partial class ChartViewModelBase : ObservableObject
 {
     private readonly ObservableCollection<double> _mainValues = [];
-    private readonly Dictionary<uint, ISeries<double>> _series = [];
-    private readonly Dictionary<uint, ObservableCollection<double>> _seriesValues = [];
+    protected readonly Dictionary<uint, ISeries<double>> _series = [];
+    protected readonly Dictionary<uint, ObservableCollection<double>> _seriesValues = [];
     private readonly double _windowSizeSeconds;
 
     protected ChartViewModelBase(double windowSizeSeconds, string title)
@@ -29,8 +29,7 @@ public abstract partial class ChartViewModelBase : ObservableObject
             }
         ];
 
-        YAxes =
-        [
+        YAxes = [
             new Axis
             {
                 MinLimit = 0,
@@ -43,21 +42,19 @@ public abstract partial class ChartViewModelBase : ObservableObject
             }
         ];
 
-        UpdateMinMax();
-
         Title = title;
         _mainValues.CollectionChanged += Values_CollectionChanged;
     }
 
     public List<ISeries> Series { get; set; } = [];
-    public Axis[] XAxes { get; set; }
-    public Axis[] YAxes { get; set; }
+    public Axis[] XAxes { get; private set; }
+    public Axis[] YAxes { get; protected set; }
 
     public string Title { get; }
 
     public Margin Margin { get; set; } = new(50, 10, 50, 10);
 
-    private int CurrentTime
+    protected int CurrentTime
     {
         get => field;
         set
@@ -67,7 +64,7 @@ public abstract partial class ChartViewModelBase : ObservableObject
         }
     }
 
-    public void AddSeries(uint seriesId, string name, SKColor color = default)
+    protected virtual void AddSeries(uint seriesId, string name, SKColor color = default)
     {
         if (_series.ContainsKey(seriesId))
             return;
@@ -81,7 +78,16 @@ public abstract partial class ChartViewModelBase : ObservableObject
         if (Series.Count == 0)
             values = _mainValues;
 
-        LineSeries<double> series = new()
+        ISeries<double> series = GenerateSeries(name, color, values);
+
+        Series.Add(series);
+        _series[seriesId] = series;
+        _seriesValues[seriesId] = values;
+    }
+
+    protected virtual ISeries<double> GenerateSeries(string name, SKColor color, ObservableCollection<double> values)
+    {
+        return new LineSeries<double>()
         {
             Name = name,
             Values = values,
@@ -92,11 +98,6 @@ public abstract partial class ChartViewModelBase : ObservableObject
             EnableNullSplitting = false,
             AnimationsSpeed = TimeSpan.Zero
         };
-
-
-        Series.Add(series);
-        _series[seriesId] = series;
-        _seriesValues[seriesId] = values;
     }
 
     public void RemoveSeries(uint id)
@@ -120,7 +121,7 @@ public abstract partial class ChartViewModelBase : ObservableObject
         UpdateMinMax();
     }
 
-    private static SKColor GenerateColor(uint id)
+    protected static SKColor GenerateColor(uint id)
     {
         float hue = (id + 1) * 360f / 20 % 360f;
         float satur = 75;

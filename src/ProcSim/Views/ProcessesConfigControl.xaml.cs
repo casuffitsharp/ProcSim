@@ -14,8 +14,4 @@ public partial class ProcessesConfigControl : UserControl
     {
         (sender as Grid).IsEnabled = e.NewValue != null;
     }
-    private void DataGrid_LoadingRow(object sender, DataGridRowEventArgs e)
-    {
-        e.Row.Header = e.Row.GetIndex();
-    }
 }

@@ -159,7 +159,7 @@ public partial class ProcessConfigViewModel : ObservableObject
 
         for (int idx = 0; idx < Operations.Count; idx++)
         {
-            OperationConfigViewModel operation = Operations.ElementAt(idx);
+            OperationConfigViewModel operation = Operations[idx];
             if (!operation.Validate(out IEnumerable<string> opErrors))
             {
                 foreach (string e in opErrors)
