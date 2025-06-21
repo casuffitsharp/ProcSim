@@ -55,7 +55,7 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
                 Name = "Prioridade",
                 Position = LiveChartsCore.Measure.AxisPosition.End,
                 MinLimit = 0,
-                MaxLimit = 50,
+                MaxLimit = 55,
                 NamePaint = new SolidColorPaint(SKColors.OrangeRed),
                 LabelsPaint = new SolidColorPaint(SKColors.OrangeRed)
             }

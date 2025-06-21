@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
 using ProcSim.Core.Simulation;
@@ -12,6 +13,7 @@ public partial class TaskManagerProcessDetailsViewModel : ObservableObject
     public TaskManagerProcessDetailsViewModel(ProcessSnapshot s, SimulationController simulationController, bool isUserProcess)
     {
         _simulationController = simulationController;
+        SetPriorityCommand = new RelayCommand<ProcessStaticPriority>(SetPriority, CanSetPriority);
 
         Pid = s.Pid;
         Name = s.Name;
@@ -28,26 +30,31 @@ public partial class TaskManagerProcessDetailsViewModel : ObservableObject
     [ObservableProperty] public partial ushort Cpu { get; set; }
     [ObservableProperty] public partial int DynamicPriority { get; set; }
 
+    public IRelayCommand<ProcessStaticPriority> SetPriorityCommand { get; }
+
     public bool IsUserProcess { get; private set; }
 
-    public ProcessStaticPriority StaticPriority
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                _simulationController.SetProcessStaticPriority(Pid, value);
-                OnPropertyChanged();
-            }
-        }
-    }
+    [ObservableProperty]
+    public partial ProcessStaticPriority StaticPriority { get; set; }
 
     public void UpdateFromSnapshot(ProcessSnapshot s)
     {
         State = s.State;
         Cpu = s.CpuUsage;
         DynamicPriority = s.DynamicPriority;
+    }
+
+    private bool CanSetPriority(ProcessStaticPriority newPriority)
+    {
+        return IsUserProcess && State != ProcessState.Terminated;
+    }
+
+    private void SetPriority(ProcessStaticPriority newPriority)
+    {
+        if (!CanSetPriority(newPriority))
+            return;
+
+        StaticPriority = newPriority;
+        _simulationController.SetProcessStaticPriority(Pid, newPriority);
     }
 }

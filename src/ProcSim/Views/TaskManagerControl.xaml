@@ -21,15 +21,6 @@
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <helpers:BindingProxy x:Key="Proxy" Data="{Binding}" />
-
-        <Style x:Key="StaticPriorityCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
-            <Setter Property="IsEnabled" Value="False"/>
-            <Style.Triggers>
-                <DataTrigger Binding="{Binding IsUserProcess}" Value="True">
-                    <Setter Property="IsEnabled" Value="True"/>
-                </DataTrigger>
-            </Style.Triggers>
-        </Style>
     </UserControl.Resources>
     <Grid Margin="16"
             VerticalAlignment="Stretch"
@@ -121,14 +112,14 @@
                         </ItemsControl.ItemsPanel>
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                    <Border Margin="4" 
+                                <Border Margin="4" 
                                             BorderBrush="Gray"
                                             BorderThickness="1"
                                             Padding="4"
                                             MinHeight="200"
                                             VerticalAlignment="Stretch" 
                                             HorizontalAlignment="Stretch">
-                                        <lvc:CartesianChart VerticalAlignment="Stretch"
+                                    <lvc:CartesianChart VerticalAlignment="Stretch"
                                                             HorizontalAlignment="Stretch"
                                                             Series="{Binding Series}"
                                                             LegendPosition="Hidden"
@@ -136,7 +127,7 @@
                                                             YAxes="{Binding YAxes}"
                                                             ToolTip="{Binding Title}"
                                                             DrawMargin="{Binding Margin}" />
-                                    </Border>
+                                </Border>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -174,12 +165,6 @@
                             <materialDesign:DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto" IsReadOnly="True"/>
                             <materialDesign:DataGridTextColumn Header="Status" Binding="{Binding State, Converter={StaticResource EnumDescriptionConverter}}" Width="Auto" IsReadOnly="True" />
                             <materialDesign:DataGridTextColumn Header="CPU" Binding="{Binding Cpu}" Width="Auto" IsReadOnly="True"/>
-                            <materialDesign:DataGridComboBoxColumn Header="Pr. est."
-                                                                   ItemsSource="{Binding Source={x:Static vm:TaskManagerDetailsViewModel.ProcessStaticPriorityValues}, Converter={StaticResource EnumDescriptionConverter}}"
-                                                                   SelectedItemBinding="{Binding StaticPriority, Converter={StaticResource EnumDescriptionConverter}, UpdateSourceTrigger=PropertyChanged}"
-                                                                   Width="Auto"
-                                                                   IsReadOnly="False"
-                                                                   CellStyle="{StaticResource StaticPriorityCellStyle}"/>
                             <materialDesign:DataGridTextColumn Header="Pr. din." Binding="{Binding DynamicPriority}" Width="Auto" IsReadOnly="True"/>
                         </DataGrid.Columns>
                         <DataGrid.CellStyle>
@@ -192,10 +177,45 @@
                             <Style TargetType="DataGridRow">
                                 <Setter Property="ContextMenu">
                                     <Setter.Value>
-                                        <ContextMenu>
+                                        <ContextMenu DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                            <MenuItem Header="Prioridade">
+                                                <MenuItem.ItemsSource>
+                                                    <x:Static Member="vm:TaskManagerDetailsViewModel.ProcessStaticPriorityValues"/>
+                                                </MenuItem.ItemsSource>
+                                                <MenuItem.ItemContainerStyle>
+                                                    <Style TargetType="MenuItem">
+                                                        <Setter Property="Header" Value="{Binding Converter={StaticResource EnumDescriptionConverter}}"/>
+                                                        <Setter Property="Command" Value="{Binding DataContext.SetPriorityCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}"/>
+                                                        <Setter Property="CommandParameter" Value="{Binding}" />
+
+                                                        <Setter Property="Padding" Value="0 8"/>
+
+                                                        <Style.Triggers>
+                                                            <DataTrigger Value="True">
+                                                                <DataTrigger.Binding>
+                                                                    <MultiBinding Converter="{StaticResource EqualityToBooleanConverter}">
+                                                                        <Binding Path="."/>
+                                                                        <Binding Path="DataContext.StaticPriority" RelativeSource="{RelativeSource AncestorType=ContextMenu}"/>
+                                                                    </MultiBinding>
+                                                                </DataTrigger.Binding>
+                                                                <Setter Property="Icon">
+                                                                    <Setter.Value>
+                                                                        <TextBlock Text="●"
+                                                                                   FontSize="12"
+                                                                                   VerticalAlignment="Center"
+                                                                                   HorizontalAlignment="Center"
+                                                                                   Margin="10 0 0 0"/>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </MenuItem.ItemContainerStyle>
+                                            </MenuItem>
+                                            <Separator />
                                             <MenuItem Header="Encerrar Tarefa"
-                                                      Command="{Binding Source={StaticResource Proxy}, Path=Data.DetailsVm.TerminateProcessCommand}"
-                                                      CommandParameter="{Binding}" />
+                                          Command="{Binding Source={StaticResource Proxy}, Path=Data.DetailsVm.TerminateProcessCommand}"
+                                          CommandParameter="{Binding}"/>
                                         </ContextMenu>
                                     </Setter.Value>
                                 </Setter>
