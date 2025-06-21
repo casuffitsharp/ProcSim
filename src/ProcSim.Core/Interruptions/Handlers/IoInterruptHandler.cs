@@ -11,7 +11,7 @@ public class IoInterruptHandler(IReadOnlyDictionary<uint, IODevice> devices) : I
         return devices.ContainsKey(vector - 33);
     }
 
-    public Instruction BuildBody(uint vector)
+    public Instruction BuildBody(uint vector, CPU cpu)
     {
         IODevice device = devices[vector - 33];
         return InstructionFactory.HandleIo(device);

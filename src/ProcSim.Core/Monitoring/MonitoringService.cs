@@ -114,7 +114,6 @@ public class MonitoringService : IDisposable
 
             DateTime ts = DateTime.UtcNow;
             ulong nowTick = _kernel.GlobalCycle;
-            ulong intervalCycles = nowTick - _prevGlobalCycle;
             _prevGlobalCycle = nowTick;
 
             // 1) CPU por núcleo e agregados
@@ -260,29 +259,12 @@ public class MonitoringService : IDisposable
 
         _deviceChannelBusy[req.DeviceId][req.Channel] = false;
         ulong duration = _kernel.GlobalCycle - t0;
-        AddProcessIoMetric(req.DeviceId, req.Channel, req.Pid, duration);
 
         DeviceChannelStats stats = _deviceStats[req.DeviceId][req.Channel];
         stats.TotalRequests++;
         stats.BusyCycles += duration;
 
         Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] IORequestCompleted: Device={req.DeviceId}, Channel={req.Channel}, Pid={req.Pid}, Cycle={_kernel.GlobalCycle}, Duration={duration} cycles");
-    }
-
-    private void AddProcessIoMetric(uint deviceId, uint channelId, int processId, ulong latencyCycles)
-    {
-        //ProcessIoMetric metric = new(
-        //    Timestamp: DateTime.UtcNow,
-        //    DeviceId: deviceId,
-        //    ChannelId: channelId,
-        //    ProcessId: processId,
-        //    LatencyCycles: latencyCycles
-        //);
-
-        //(uint deviceId, uint channelId, int processId) key = (deviceId, channelId, processId);
-        //ProcessIoMetrics.AddOrUpdate(key, _ => [metric], (_, lst) => { lst.Add(metric); return lst; });
-
-        Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] ProcessIoMetric: Device={deviceId}, Channel={channelId}, Process={processId}, Latency={latencyCycles} cycles");
     }
 
     public void Dispose()
@@ -292,12 +274,12 @@ public class MonitoringService : IDisposable
         Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Disposed");
     }
 
-    private record CpuSnapshot(ulong CycleCount, ulong UserCycleCount, ulong SyscallCycleCount, ulong InterruptCycleCount, ulong IdleCycleCount)
+    private sealed record CpuSnapshot(ulong CycleCount, ulong UserCycleCount, ulong SyscallCycleCount, ulong InterruptCycleCount, ulong IdleCycleCount)
     {
         public CpuSnapshot(CPU cpu) : this(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount, cpu.InterruptCycleCount, cpu.IdleCycleCount) { }
     }
 
-    private record ChannelSnapshot
+    private sealed record ChannelSnapshot
     {
         public ChannelSnapshot() { }
 
@@ -313,7 +295,7 @@ public class MonitoringService : IDisposable
         public ulong TotalCycles { get; set; }
     }
 
-    private class DeviceChannelStats
+    private sealed class DeviceChannelStats
     {
         public ulong TotalRequests { get; set; }
         public ulong BusyCycles { get; set; }

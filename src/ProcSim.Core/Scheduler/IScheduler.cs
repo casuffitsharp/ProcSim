@@ -6,4 +6,5 @@ public interface IScheduler
 {
     void Admit(PCB pcb);
     PCB Preempt(CPU cpu);
+    void Decommission(PCB pcb);
 }

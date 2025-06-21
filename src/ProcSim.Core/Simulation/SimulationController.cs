@@ -177,6 +177,11 @@ public class SimulationController
         return program;
     }
 
+    public void TerminateProcess(int pid)
+    {
+        _kernel?.TerminateProcess(pid);
+    }
+
     public void RegisterProcess(ProcessConfigModel processConfig)
     {
         if (_kernel is null)
@@ -238,8 +243,6 @@ public class SimulationController
             CpuOperationType cpuOperationType = cpuOperation.Type;
             if (cpuOperationType == CpuOperationType.Random)
                 cpuOperationType = Random.Shared.GetItems(CpuOperationTypes, 1)[0];
-
-            string mnemonic = cpuOperationType.ToString().ToLowerInvariant();
 
             int r1 = Random.Shared.Next(cpuOperation.Min, cpuOperation.Max + 1);
             int r2 = Random.Shared.Next(cpuOperation.Min, cpuOperation.Max + 1);

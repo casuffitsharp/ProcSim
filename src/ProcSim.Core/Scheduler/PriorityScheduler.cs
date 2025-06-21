@@ -9,22 +9,25 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
     private const double ALPHA = 5.0; // IO to CPU time ratio factor
     private const double BETA = 1.0; // Aging factor
     private const double GAMMA = 0.1; // Queue length penalty factor
-
-    private readonly IReadOnlyDictionary<uint, PCB> _idleByCore = idlePcbs;
-    private readonly Kernel _kernel = kernel;
     private readonly PriorityQueue<PCB, int> _readyQueue = new();
     private readonly Lock _queueLock = new();
 
     public void Admit(PCB pcb)
     {
+        if (pcb.State == ProcessState.Terminated)
+        {
+            Debug.WriteLine($"Scheduler (RR) ignoring attempt to admit terminated process {pcb.ProcessId}.");
+            return;
+        }
+
         Debug.WriteLine($"Admitting process {pcb.ProcessId} to the ready queue.");
         pcb.State = ProcessState.Ready;
 
-        int dp = RecalculatePriority(pcb, _kernel.GlobalCycle);
+        int dp = RecalculatePriority(pcb, kernel.GlobalCycle);
         lock (_queueLock)
             _readyQueue.Enqueue(pcb, dp);
 
-        pcb.LastEnqueueCycle = _kernel.GlobalCycle;
+        pcb.LastEnqueueCycle = kernel.GlobalCycle;
     }
 
     public PCB Preempt(CPU cpu)
@@ -32,35 +35,58 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
         PCB prev = cpu.CurrentPCB;
         PCB next = GetNext(cpu.Id);
 
-        if (next == _idleByCore[cpu.Id] && prev?.State == ProcessState.Running)
+        if (next == idlePcbs[cpu.Id] && prev?.State == ProcessState.Running)
         {
             Debug.WriteLine($"No process in the ready queue for core {cpu.Id}. Picking same process");
             return prev;
         }
 
-        if (prev?.State == ProcessState.Running && prev != _idleByCore[cpu.Id])
+        if (prev?.State == ProcessState.Running && prev != idlePcbs[cpu.Id])
             Admit(prev);
 
-        if (prev == _idleByCore[cpu.Id])
+        if (prev == idlePcbs[cpu.Id])
             prev.State = ProcessState.Ready;
 
         next.State = ProcessState.Running;
         return next;
     }
 
+    public void Decommission(PCB pcb)
+    {
+        lock (_queueLock)
+        {
+            var remainingItems = _readyQueue.UnorderedItems
+                .Where(item => item.Element.ProcessId != pcb.ProcessId)
+                .Select(item => (item.Element, item.Priority));
+
+            _readyQueue.Clear();
+            foreach (var (item, priority) in remainingItems)
+            {
+                _readyQueue.Enqueue(item, priority);
+            }
+            
+            Debug.WriteLine($"Decommissioned process {pcb.ProcessId} from PriorityScheduler.");
+        }
+    }
+
     public PCB GetNext(uint cpuId)
     {
         lock (_queueLock)
         {
-            if (_readyQueue.TryDequeue(out PCB next, out _))
+            while (_readyQueue.TryDequeue(out PCB next, out _))
             {
-                Debug.WriteLine($"Picked process {next.ProcessId} with priority {next.DynamicPriority} from the ready queue for core {cpuId}.");
-                return next;
+                if (next.State != ProcessState.Terminated)
+                {
+                    Debug.WriteLine($"Picked process {next.ProcessId} with priority {next.DynamicPriority} from the ready queue for core {cpuId}.");
+                    return next;
+                }
+
+                Debug.WriteLine($"Discarding terminated process {next.ProcessId} from ready queue.");
             }
         }
 
         Debug.WriteLine($"No process in the ready queue for core {cpuId}. Picking idle process");
-        return _idleByCore[cpuId];
+        return idlePcbs[cpuId];
     }
 
     private int RecalculatePriority(PCB pcb, ulong now)

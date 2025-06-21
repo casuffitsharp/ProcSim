@@ -7,6 +7,7 @@
              xmlns:lvc="clr-namespace:LiveChartsCore.SkiaSharpView.WPF;assembly=LiveChartsCore.SkiaSharpView.WPF"
              xmlns:vm="clr-namespace:ProcSim.ViewModels"
              xmlns:views="clr-namespace:ProcSim.Views"
+             xmlns:helpers="clr-namespace:ProcSim.Helpers"
              xmlns:converters="clr-namespace:ProcSim.Converters" 
              d:DataContext="{d:DesignInstance Type=vm:TaskManagerViewModel}"
              mc:Ignorable="d"
@@ -19,6 +20,7 @@
         <converters:EqualityToBooleanConverter x:Key="EqualityToBooleanConverter"/>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <converters:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
+        <helpers:BindingProxy x:Key="Proxy" Data="{Binding}" />
 
         <Style x:Key="StaticPriorityCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource MaterialDesignDataGridCell}">
             <Setter Property="IsEnabled" Value="False"/>
@@ -186,6 +188,19 @@
                                 <Setter Property="BorderThickness" Value="0" />
                             </Style>
                         </DataGrid.CellStyle>
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow">
+                                <Setter Property="ContextMenu">
+                                    <Setter.Value>
+                                        <ContextMenu>
+                                            <MenuItem Header="Encerrar Tarefa"
+                                                      Command="{Binding Source={StaticResource Proxy}, Path=Data.DetailsVm.TerminateProcessCommand}"
+                                                      CommandParameter="{Binding}" />
+                                        </ContextMenu>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </DataGrid.RowStyle>
                     </DataGrid>
                     <DataGrid Grid.Column="1"
                             ItemsSource="{Binding TerminatedProcessesDetails}"

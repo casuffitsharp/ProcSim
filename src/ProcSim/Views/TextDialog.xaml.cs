@@ -1,6 +1,7 @@
 ﻿using MaterialDesignThemes.Wpf;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 
 namespace ProcSim.Views;
 
@@ -39,5 +40,14 @@ public partial class TextDialog : UserControl
     {
         TextDialog dlg = new(title, text);
         await DialogHost.Show(dlg);
+    }
+
+    private void UserControl_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Escape)
+        {
+            DialogHost.CloseDialogCommand.Execute(null, this);
+            e.Handled = true;
+        }
     }
 }

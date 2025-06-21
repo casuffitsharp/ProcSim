@@ -90,7 +90,7 @@ public class CPU
         if (_interruptController.FetchReady(Id) is uint vector)
         {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Carregando ISRV");
-            Instruction instruction = _isrv.BuildISR(vector);
+            Instruction instruction = _isrv.BuildISR(vector, this);
             _ops = new(instruction.MicroOps);
             InstructionsFetched++;
             InterruptCycleCount++;
@@ -102,7 +102,7 @@ public class CPU
 
         if (_instructions?.Count > 0 && PC < _instructions.Count)
         {
-            Instruction instr = _instructions.ElementAt((int)PC);
+            Instruction instr = _instructions[(int)PC];
             InstructionsFetched++;
             SyscallCycleCount++;
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Executing instruction: {instr.Mnemonic} (PC: {PC}, SP: {SP})");
@@ -117,10 +117,7 @@ public class CPU
         _programs.TryGetValue(CurrentPCB, out List<Instruction> q);
         _instructions = q;
         if (_instructions is null)
-        {
             Debug.WriteLine($"Process {CurrentPCB.ProcessId} - Programa não encontrado");
-            return;
-        }
     }
 
     public void TrapToKernel() { /* hardware trap: estado mínimo salvo via micro-op */ }

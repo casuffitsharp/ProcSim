@@ -12,7 +12,7 @@ public class TimerInterruptHandler() : IInterruptHandler
         return vector == TimerVector;
     }
 
-    public Instruction BuildBody(uint vector)
+    public Instruction BuildBody(uint vector, CPU cpu)
     {
         return InstructionFactory.ContextSwitch();
     }

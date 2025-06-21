@@ -7,6 +7,7 @@ using ProcSim.Core.Process.Factories;
 using ProcSim.Core.Scheduler;
 using ProcSim.Core.Syscall;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 
 namespace ProcSim.Core;
 
@@ -17,7 +18,8 @@ public class Kernel : IDisposable
 
     private IScheduler _scheduler;
 
-    public MonitoringService Monitoring { get; private set; }
+    public const uint KERNEL_TERMINATE_VECTOR = 31;
+
     public Dictionary<uint, IODevice> Devices { get; } = [];
     public Dictionary<uint, CPU> Cpus { get; } = [];
     public ConcurrentDictionary<PCB, List<Instruction>> Programs { get; } = new();
@@ -59,7 +61,6 @@ public class Kernel : IDisposable
         }
 
         subscribeToTick(() => GlobalCycle++);
-        //interruptController.ConfigureRedirection(32, [.. Cpus.Keys]);
     }
 
     public int CreateProcess(ProcessDto program)
@@ -69,6 +70,24 @@ public class Kernel : IDisposable
         Programs[pcb] = [.. program.Instructions];
         _scheduler.Admit(pcb);
         return id;
+    }
+
+    public void TerminateProcess(int pid)
+    {
+        if (pid < Cpus.Count)
+        {
+            Debug.WriteLine($"Attempt to terminate idle process {pid} denied.");
+            return;
+        }
+
+        PCB pcb = Programs.Keys.FirstOrDefault(p => p.ProcessId == pid);
+        if (pcb?.State is null or ProcessState.Terminated)
+            return;
+
+        pcb.State = ProcessState.Terminated;
+        Debug.WriteLine($"Process {pcb.ProcessId} ('{pcb.Name}') state set to Terminated.");
+
+        _scheduler.Decommission(pcb);
     }
 
     public void SetProcessStaticPriority(int pid, ProcessStaticPriority newPriority)

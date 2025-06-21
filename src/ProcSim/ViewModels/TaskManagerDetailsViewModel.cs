@@ -1,4 +1,5 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
 using ProcSim.Core.Simulation;
@@ -30,6 +31,8 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
 
         RunningProcessesDetails = CreateView(ProcessesDetails, p => p.State != ProcessState.Terminated);
         TerminatedProcessesDetails = CreateView(ProcessesDetails, p => p.State == ProcessState.Terminated);
+
+        TerminateProcessCommand = new RelayCommand<TaskManagerProcessDetailsViewModel>(TerminateProcess, CanTerminateProcess);
     }
 
     public static ProcessStaticPriority[] ProcessStaticPriorityValues { get; } = [.. Enum.GetValues<ProcessStaticPriority>()];
@@ -40,6 +43,8 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
     public ObservableCollection<TaskManagerProcessDetailsViewModel> ProcessesDetails { get; set; }
     public ICollectionView RunningProcessesDetails { get; }
     public ICollectionView TerminatedProcessesDetails { get; }
+
+    public IRelayCommand<TaskManagerProcessDetailsViewModel> TerminateProcessCommand { get; }
 
     public void Reset()
     {
@@ -71,6 +76,19 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
         }, DispatcherPriority.Background);
     }
 
+    private void TerminateProcess(TaskManagerProcessDetailsViewModel processToTerminate)
+    {
+        if (processToTerminate == null)
+            return;
+
+        _simulationController.TerminateProcess(processToTerminate.Pid);
+    }
+
+    private static bool CanTerminateProcess(TaskManagerProcessDetailsViewModel process)
+    {
+        return process?.IsUserProcess == true && process.State != ProcessState.Terminated;
+    }
+
     private static ICollectionView CreateView<T>(ObservableCollection<T> source, Func<T, bool> predicate)
     {
         ICollectionView view = new CollectionViewSource { Source = source }.View;
@@ -80,6 +98,7 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
             live.IsLiveFiltering = true;
             live.LiveFilteringProperties.Add(nameof(TaskManagerProcessDetailsViewModel.State));
         }
+
         return view;
     }
 }
