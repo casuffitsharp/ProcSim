@@ -1,10 +1,13 @@
 ﻿using CommunityToolkit.Mvvm.ComponentModel;
 using LiveChartsCore;
+using LiveChartsCore.Measure;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.Effects;
+using ProcSim.Converters;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Monitoring.Models;
+using ProcSim.Core.Process;
 using SkiaSharp;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -14,7 +17,7 @@ using System.Windows.Threading;
 
 namespace ProcSim.ViewModels;
 
-public partial class ProcessesPriorityHistoryViewModel : ObservableObject
+public partial class ProcessesHistoryViewModel : ObservableObject
 {
     private const int WINDOW_SIZE_SECONDS = 60;
 
@@ -25,8 +28,11 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
     private readonly ObservableCollection<long> _ioValues = [];
     private readonly ObservableCollection<int> _dynamicPriorityValues = [];
     private readonly ObservableCollection<int> _staticPriorityValues = [];
+    private readonly ObservableCollection<int> _stateValues = [];
 
-    public ProcessesPriorityHistoryViewModel(MonitoringService monitoringService, TaskManagerDetailsViewModel taskManagerDetails)
+    private static readonly IList<string> _processStateLabels = [.. Enum.GetValues<ProcessState>().Select(s => EnumDescriptionConverter.GetEnumDescription(s))];
+
+    public ProcessesHistoryViewModel(MonitoringService monitoringService, TaskManagerDetailsViewModel taskManagerDetails)
     {
         _monitoringService = monitoringService;
         _taskManagerDetails = taskManagerDetails;
@@ -53,11 +59,27 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
             new()
             {
                 Name = "Prioridade",
-                Position = LiveChartsCore.Measure.AxisPosition.End,
+                Position = AxisPosition.End,
+                MinStep = 1,
                 MinLimit = 0,
                 MaxLimit = 55,
                 NamePaint = new SolidColorPaint(SKColors.OrangeRed),
-                LabelsPaint = new SolidColorPaint(SKColors.OrangeRed)
+                LabelsPaint = new SolidColorPaint(SKColors.OrangeRed),
+                NameTextSize = 14,
+                TextSize = 12,
+            },
+            new()
+            {
+                Name = "Estado",
+                Position = AxisPosition.Start,
+                Labels = _processStateLabels,
+                Labeler = value => _processStateLabels[(int)value],
+                MinLimit = 0,
+                MaxLimit = 4,
+                ShowSeparatorLines = false,
+                LabelsPaint = new SolidColorPaint(SKColors.DarkViolet),
+                NameTextSize = 0,
+                TextSize = 12
             }
         ];
 
@@ -83,17 +105,16 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
                 GeometrySize = 0,
                 ScalesYAt = 1
             },
-            new LineSeries<int>
+            new StepLineSeries<int>
             {
                 Name = "Prioridade Dinâmica",
                 Values = _dynamicPriorityValues,
                 Fill = null,
                 Stroke = new SolidColorPaint(SKColors.Orange) { StrokeThickness = 3 },
-                LineSmoothness = 0,
                 GeometrySize = 0,
                 ScalesYAt = 2
             },
-            new LineSeries<int>
+            new StepLineSeries<int>
             {
                 Name = "Prioridade Estática",
                 Values = _staticPriorityValues,
@@ -103,9 +124,21 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
                     StrokeThickness = 2,
                     PathEffect = new DashEffect([6, 4])
                 },
-                LineSmoothness = 0,
                 GeometrySize = 0,
                 ScalesYAt = 2
+            },
+            new StepLineSeries<int>
+            {
+                Name = "Estado",
+                Values = _stateValues,
+                Fill = null,
+                Stroke = new SolidColorPaint(SKColors.DarkViolet)
+                {
+                    StrokeThickness = 2,
+                    PathEffect = new DashEffect([6, 4])
+                },
+                GeometrySize = 0,
+                ScalesYAt = 3
             }
         ];
 
@@ -144,13 +177,24 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
         if (!_monitoringService.ProcessMetrics.TryGetValue(SelectedProcess.Pid, out List<ProcessUsageMetric> metrics))
             return;
 
+        ProcessUsageMetric previous = null;
         foreach (ProcessUsageMetric metric in metrics)
+        {
+            if (previous?.State == ProcessState.Terminated)
+                return;
+
             AddMetric(metric);
+            previous = metric;
+        }
     }
 
     private void OnMetricsUpdated()
     {
         if (SelectedProcess is null)
+            return;
+
+        ProcessState previousState = (ProcessState)_stateValues.LastOrDefault((int)ProcessState.Running);
+        if (previousState == ProcessState.Terminated)
             return;
 
         if (!_monitoringService.ProcessMetrics.TryGetValue(SelectedProcess.Pid, out List<ProcessUsageMetric> metrics))
@@ -168,6 +212,7 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
         _ioValues.Add((long)metric.IoTime);
         _dynamicPriorityValues.Add(metric.DynamicPriority);
         _staticPriorityValues.Add((int)metric.StaticPriority);
+        _stateValues.Add((int)metric.State);
     }
 
     private void Reset()
@@ -176,6 +221,7 @@ public partial class ProcessesPriorityHistoryViewModel : ObservableObject
         _ioValues.Clear();
         _dynamicPriorityValues.Clear();
         _staticPriorityValues.Clear();
+        _stateValues.Clear();
         CurrentTime = 0;
         UpdateMinMax();
     }

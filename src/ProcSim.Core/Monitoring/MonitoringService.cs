@@ -185,6 +185,7 @@ public class MonitoringService : IDisposable
                     CpuTime = currentCycles,
                     DynamicPriority = pcb.DynamicPriority,
                     StaticPriority = pcb.StaticPriority,
+                    State = pcb.State,
                     Timestamp = ts,
                     IoTime = pcb.WaitCycles
                 };

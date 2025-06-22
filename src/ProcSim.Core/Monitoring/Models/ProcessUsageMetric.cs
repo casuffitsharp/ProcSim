@@ -9,4 +9,5 @@ public record ProcessUsageMetric
     public ulong IoTime { get; set; }
     public int DynamicPriority { get; set; }
     public ProcessStaticPriority StaticPriority { get; set; }
+    public ProcessState State { get; set; }
 }

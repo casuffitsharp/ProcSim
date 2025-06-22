@@ -2,9 +2,9 @@
 
 namespace ProcSim.Views;
 
-public partial class ProcessesPriorityHistoryView : UserControl
+public partial class ProcessesHistoryView : UserControl
 {
-    public ProcessesPriorityHistoryView()
+    public ProcessesHistoryView()
     {
         InitializeComponent();
     }

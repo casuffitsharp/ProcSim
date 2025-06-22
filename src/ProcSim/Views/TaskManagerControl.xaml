@@ -255,8 +255,8 @@
                     </DataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Histórico de prioridades">
-                <views:ProcessesPriorityHistoryView DataContext="{Binding ProcessesPriorityHistoryVm}"/>
+            <TabItem Header="Histórico do Processo">
+                <views:ProcessesHistoryView DataContext="{Binding ProcessesHistoryVm}"/>
             </TabItem>
         </TabControl>
     </Grid>
