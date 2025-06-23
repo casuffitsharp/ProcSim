@@ -79,7 +79,7 @@ public class MonitoringService : IDisposable
         _prevGlobalCycle = kernel.GlobalCycle;
 
         foreach (PCB pcb in kernel.Programs.Keys)
-            _prevProcCycles[pcb.ProcessId] = pcb.CpuCycles;
+            _prevProcCycles[pcb.ProcessId] = 0;
 
         foreach (IODevice device in kernel.Devices.Values)
         {

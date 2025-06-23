@@ -31,7 +31,6 @@ public class PCB
     public int DynamicPriority { get; set; }
     public ConcurrentDictionary<string, int> Registers { get; } = new();
     public int ProcessId { get; }
-    public ulong CpuCycles { get; private set; }
     public ProcessState State { get; set; }
 
     public ulong UserCycles { get; internal set; }
