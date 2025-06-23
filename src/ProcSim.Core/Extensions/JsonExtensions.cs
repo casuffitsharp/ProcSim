@@ -11,6 +11,7 @@ public static partial class JsonExtensions
         if (jsonTypeInfo.Kind is not JsonTypeInfoKind.Object)
             return;
 
+        List<int> indicesToRemove = [];
         for (int i = 0; i < jsonTypeInfo.Properties.Count; i++)
         {
             if (jsonTypeInfo.Properties[i].AttributeProvider is not PropertyInfo propertyInfo)
@@ -19,7 +20,10 @@ public static partial class JsonExtensions
             if (propertyInfo.GetCustomAttribute<JsonIgnoreAttribute>() is null)
                 continue;
 
-            jsonTypeInfo.Properties.RemoveAt(i--);
+            indicesToRemove.Add(i);
         }
+
+        for (int i = indicesToRemove.Count - 1; i >= 0; i--)
+            jsonTypeInfo.Properties.RemoveAt(indicesToRemove[i]);
     }
 }
