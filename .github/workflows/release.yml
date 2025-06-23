@@ -41,6 +41,9 @@ jobs:
           -p:DebugType=None
           -p:DebugSymbols=false
 
+      - name: Zip Release Artifact
+        run: Compress-Archive -Path ./published/* -DestinationPath ProcSim-${{ github.event.inputs.version }}.zip
+
       - name: Create GitHub Release
         id: create_release
         uses: softprops/action-gh-release@v1
@@ -48,5 +51,5 @@ jobs:
           tag_name: v${{ github.event.inputs.version }}
           name: Release ${{ github.event.inputs.version }}
           body: Release oficial da versão ${{ github.event.inputs.version }} do simulador ProcSim.
-          files: ./published/*
+          files: ProcSim-${{ github.event.inputs.version }}.zip
           fail_on_unmatched_files: true
