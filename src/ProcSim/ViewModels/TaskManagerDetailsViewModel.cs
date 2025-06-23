@@ -26,8 +26,8 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
         ProcessesDetails = [];
         _mapByPid = [];
 
-        _monitoringService.ProcessListUpdated += OnProcessListUpdated;
-        _monitoringService.OnReset += () => _uiDispatcher.Invoke(() => Reset, DispatcherPriority.Background);
+        _monitoringService.ProcessListUpdated += (processesSnapshots) => _uiDispatcher.Invoke(() => OnProcessListUpdated(processesSnapshots), DispatcherPriority.Background);
+        _monitoringService.OnReset += () => _uiDispatcher.Invoke(Reset, DispatcherPriority.Background);
 
         RunningProcessesDetails = CreateView(ProcessesDetails, p => p.State != ProcessState.Terminated);
         TerminatedProcessesDetails = CreateView(ProcessesDetails, p => p.State == ProcessState.Terminated);
@@ -46,7 +46,7 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
 
     public IRelayCommand<TaskManagerProcessDetailsViewModel> TerminateProcessCommand { get; }
 
-    public void Reset()
+    private void Reset()
     {
         ProcessesDetails.Clear();
         _mapByPid.Clear();
@@ -54,26 +54,23 @@ public partial class TaskManagerDetailsViewModel : ObservableObject
 
     private void OnProcessListUpdated(IReadOnlyList<ProcessSnapshot> processesSnapshots)
     {
-        _uiDispatcher.Invoke(() =>
-        {
-            HashSet<int> seen = new(processesSnapshots.Count);
+        HashSet<int> seen = new(processesSnapshots.Count);
 
-            foreach (ProcessSnapshot snapshot in processesSnapshots)
+        foreach (ProcessSnapshot snapshot in processesSnapshots)
+        {
+            seen.Add(snapshot.Pid);
+            if (_mapByPid.TryGetValue(snapshot.Pid, out TaskManagerProcessDetailsViewModel existingVm))
             {
-                seen.Add(snapshot.Pid);
-                if (_mapByPid.TryGetValue(snapshot.Pid, out TaskManagerProcessDetailsViewModel existingVm))
-                {
-                    existingVm.UpdateFromSnapshot(snapshot);
-                }
-                else
-                {
-                    bool isUserProcess = _simulationController.IsUserProcess(snapshot.Pid);
-                    TaskManagerProcessDetailsViewModel viewModel = new(snapshot, _simulationController, isUserProcess);
-                    ProcessesDetails.Add(viewModel);
-                    _mapByPid[snapshot.Pid] = viewModel;
-                }
+                existingVm.UpdateFromSnapshot(snapshot);
             }
-        }, DispatcherPriority.Background);
+            else
+            {
+                bool isUserProcess = _simulationController.IsUserProcess(snapshot.Pid);
+                TaskManagerProcessDetailsViewModel viewModel = new(snapshot, _simulationController, isUserProcess);
+                ProcessesDetails.Add(viewModel);
+                _mapByPid[snapshot.Pid] = viewModel;
+            }
+        }
     }
 
     private void TerminateProcess(TaskManagerProcessDetailsViewModel processToTerminate)
