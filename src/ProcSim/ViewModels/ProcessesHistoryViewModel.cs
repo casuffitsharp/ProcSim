@@ -144,6 +144,7 @@ public partial class ProcessesHistoryViewModel : ObservableObject
 
         Reset();
         _monitoringService.OnMetricsUpdated += () => _uiDispatcher.Invoke(OnMetricsUpdated, DispatcherPriority.Background);
+        _monitoringService.OnReset += () => _uiDispatcher.Invoke(Reset, DispatcherPriority.Background);
         ProcessesView = CollectionViewSource.GetDefaultView(_taskManagerDetails.ProcessesDetails);
         ProcessesView.SortDescriptions.Add(new SortDescription(nameof(TaskManagerProcessDetailsViewModel.Name), ListSortDirection.Ascending));
         ProcessesView.Filter = p => p is TaskManagerProcessDetailsViewModel vm && vm.IsUserProcess;
