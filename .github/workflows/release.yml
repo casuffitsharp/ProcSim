@@ -1,0 +1,52 @@
+name: Create Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'A versão para a release, sem o "v" (ex: 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  build_and_release:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore ProcSim.sln
+
+      - name: Build Solution
+        run: dotnet build ProcSim.sln --no-restore --configuration Release
+
+      - name: Publish Self-Contained Executable
+        run: >
+          dotnet publish src/ProcSim/ProcSim.csproj
+          --configuration Release
+          --output ./published
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:TrimUnusedDependencies=true
+          -p:Version=${{ github.event.inputs.version }}
+          -p:DebugType=None
+          -p:DebugSymbols=false
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          name: Release ${{ github.event.inputs.version }}
+          body: Release oficial da versão ${{ github.event.inputs.version }} do simulador ProcSim.
+          files: ./published/*
+          fail_on_unmatched_files: true
