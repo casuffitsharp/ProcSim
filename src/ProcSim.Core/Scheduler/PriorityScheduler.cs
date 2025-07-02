@@ -16,7 +16,7 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
     {
         if (pcb.State == ProcessState.Terminated)
         {
-            Debug.WriteLine($"Scheduler (RR) ignoring attempt to admit terminated process {pcb.ProcessId}.");
+            Debug.WriteLine($"Scheduler (Priority) ignoring attempt to admit terminated process {pcb.ProcessId}.");
             return;
         }
 
