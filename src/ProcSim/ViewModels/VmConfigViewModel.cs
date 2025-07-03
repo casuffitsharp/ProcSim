@@ -91,7 +91,9 @@ public partial class VmConfigViewModel : ObservableObject
             SchedulerType = model.SchedulerType;
         }
 
-        IoDevices = [];
+        IoDevices ??= [];
+        IoDevices.Clear();
+
         EnumDescriptionConverter converter = new();
         foreach (IoDeviceType type in IoDeviceTypeValues)
         {
