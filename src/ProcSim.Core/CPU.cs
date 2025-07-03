@@ -70,7 +70,7 @@ public class CPU
                 SyscallCycleCount++;
                 CurrentPCB.SyscallCycles++;
             }
-            else if (op.Name.StartsWith("IRQ_") || op.Name.Equals("SWITCH_CONTEXT"))
+            else if (op.Name.StartsWith("IRQ_") || op.Name.Equals("SWITCH_CONTEXT") || op.Name.Equals("IO_HANDLER"))
             {
                 InterruptCycleCount++;
             }
