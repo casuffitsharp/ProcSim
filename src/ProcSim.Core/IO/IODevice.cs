@@ -47,6 +47,7 @@ public class IODevice : IDisposable
     public void Submit(PCB pcb, uint operationUnits)
     {
         Debug.WriteLine($"IODevice {Id} - Received request from process {pcb.ProcessId} (Operation Units: {operationUnits})");
+        pcb.State = ProcessState.Waiting;
         _queue.Add(new IORequest(pcb, operationUnits));
     }
 
