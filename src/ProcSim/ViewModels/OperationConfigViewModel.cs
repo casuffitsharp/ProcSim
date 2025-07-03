@@ -238,9 +238,9 @@ public partial class IoOperationConfigViewModel : ObservableObject
     public string GetSummary()
     {
         if (IsRandom)
-            return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} Min: {MinDuration}ms Max: {MaxDuration}ms";
+            return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} Min: {MinDuration}u Max: {MaxDuration}u";
 
-        return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} {Duration}ms";
+        return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} {Duration}u";
     }
 
     public IoOperationConfigModel MapToModel()

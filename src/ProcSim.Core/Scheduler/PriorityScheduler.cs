@@ -9,6 +9,8 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
     private const double ALPHA = 5.0; // IO to CPU time ratio factor
     private const double BETA = 1.0; // Aging factor
     private const double GAMMA = 0.1; // Queue length penalty factor
+    private const int MAX_DYNAMIC_PRIORITY = (int)ProcessStaticPriority.RealTime + 4;
+
     private readonly PriorityQueue<PCB, int> _readyQueue = new();
     private readonly Lock _queueLock = new();
 
@@ -121,7 +123,7 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
 
         pcb.DynamicPriority = dynamicPriority;
 
-        int queueKey = minStatic + (maxStatic - dynamicPriority);
+        int queueKey = MAX_DYNAMIC_PRIORITY - dynamicPriority;
         return queueKey;
     }
 }
