@@ -1,7 +1,7 @@
-name: CI Build
+name: PR Build Validation
 
 on:
-  push:
+  pull_request:
     branches:
       - main
 
@@ -9,8 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  build_and_publish:
-    name: Build & Publish
+  validate_build:
     runs-on: windows-latest
 
     steps:
@@ -27,12 +26,3 @@ jobs:
 
       - name: Build solution
         run: dotnet build ProcSim.sln --no-restore --configuration Release
-
-      - name: Publish Self-Contained Executable
-        run: dotnet publish src/ProcSim/ProcSim.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true
-
-      - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: ProcSim-Build
-          path: ./published
