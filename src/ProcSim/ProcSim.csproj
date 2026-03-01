@@ -4,16 +4,16 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-        <PackageReference Include="gong-wpf-dragdrop" Version="4.0.0" />
-        <PackageReference Include="LiveCharts.Wpf.Core" Version="0.9.8" />
-        <PackageReference Include="LiveChartsCore" Version="2.0.0-rc5.4" />
-        <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc5.4" />
-        <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
-        <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
-        <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.5" />
-        <PackageReference Include="SonarAnalyzer.CSharp" Version="10.12.0.118525">
+        <PackageReference Include="CommunityToolkit.Mvvm" />
+        <PackageReference Include="gong-wpf-dragdrop" />
+        <PackageReference Include="LiveCharts.Wpf.Core" />
+        <PackageReference Include="LiveChartsCore" />
+        <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" />
+        <PackageReference Include="MaterialDesignColors" />
+        <PackageReference Include="MaterialDesignThemes" />
+        <PackageReference Include="MaterialDesignThemes.MahApps" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+        <PackageReference Include="SonarAnalyzer.CSharp">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
