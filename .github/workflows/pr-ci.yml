@@ -4,11 +4,21 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, reopened, synchronize, labeled, unlabeled]
 
 permissions:
   contents: read
 
 jobs:
+  validate_label:
+    name: Check labels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: agilepathway/label-checker@v1.6.65
+        with:
+          any_of: feature,enhancement,bug,fix,chore,refactor,dependencies,documentation,major
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+
   validate_build:
     runs-on: windows-latest
 

@@ -1,0 +1,48 @@
+name-template: 'Release $RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+
+categories:
+  - title: '🚀 Novas Funcionalidades'
+    labels:
+      - 'feature'
+      - 'enhancement'
+  - title: '🐛 Correções de Bugs'
+    labels:
+      - 'bug'
+      - 'fix'
+  - title: '📝 Documentação'
+    labels:
+      - 'documentation'
+  - title: '🧹 Manutenção'
+    labels:
+      - 'chore'
+      - 'refactor'
+      - 'dependencies'
+  - title: '📦 Outras Mudanças'
+    labels: []
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+change-title-escapes: '\<*_&'
+
+version-resolver:
+  major:
+    labels:
+      - 'major'
+  minor:
+    labels:
+      - 'feature'
+      - 'enhancement'
+  patch:
+    labels:
+      - 'bug'
+      - 'fix'
+      - 'chore'
+      - 'refactor'
+      - 'dependencies'
+      - 'documentation'
+  default: patch
+
+template: |
+  ## Changes
+
+  $CHANGES
