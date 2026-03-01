@@ -4,9 +4,10 @@
 
 <img src="https://i.imgur.com/DaRDGAw.png" alt="Banner do ProcSim" width="800">
 
-[![Licença: GPL v3](https://img.shields.io/badge/Licença-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Build Status](https://github.com/casuffitsharp/procsim/actions/workflows/ci.yml/badge.svg)](https://github.com/casuffitsharp/procsim/actions/workflows/ci.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=casuffitsharp_ProcSim&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=casuffitsharp_ProcSim)
 [![Última Release](https://img.shields.io/github/v/release/casuffitsharp/procsim)](https://github.com/casuffitsharp/procsim/releases/latest)
+[![Licença: GPL v3](https://img.shields.io/badge/Licença-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ---
 
