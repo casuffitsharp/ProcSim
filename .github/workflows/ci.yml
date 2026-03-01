@@ -5,13 +5,12 @@ on:
     branches:
       - main
 
-permissions:
-  contents: read
-
 jobs:
   build_and_publish:
     name: Build & Publish
     runs-on: windows-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repository
