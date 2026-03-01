@@ -17,16 +17,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Restore dependencies
-        run: dotnet restore ProcSim.sln
-
-      - name: Build solution
-        run: dotnet build ProcSim.sln --no-restore --configuration Release
+      - name: Build
+        uses: ./.github/actions/dotnet-build
 
       - name: Publish Self-Contained Executable
         run: dotnet publish src/ProcSim/ProcSim.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true

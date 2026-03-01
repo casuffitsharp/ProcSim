@@ -1,0 +1,32 @@
+name: .NET Build
+description: Setup .NET, restore dependencies, and build the solution.
+
+inputs:
+  dotnet-version:
+    description: The .NET SDK version to use.
+    required: false
+    default: '10.x'
+  solution:
+    description: Path to the solution file.
+    required: false
+    default: 'ProcSim.sln'
+  configuration:
+    description: Build configuration (Debug or Release).
+    required: false
+    default: 'Release'
+
+runs:
+  using: composite
+  steps:
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+
+    - name: Restore dependencies
+      shell: pwsh
+      run: dotnet restore '${{ inputs.solution }}'
+
+    - name: Build solution
+      shell: pwsh
+      run: dotnet build '${{ inputs.solution }}' --no-restore --configuration ${{ inputs.configuration }}
