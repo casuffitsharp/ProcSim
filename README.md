@@ -112,8 +112,8 @@ O "Apêndice B - Jornada do Usuário" do [artigo de apresentação do projeto](d
 #### Requisitos de Sistema (.NET 10)
 | Componente | Requisito Mínimo |
 | :--- | :--- |
-| Sistema Operacional | Windows 10 (versão 1607) ou superior, Windows Server 2012 R2 ou superior |
-| Processador | x64, x86, Arm32 ou Arm64 |
+| Sistema Operacional | Windows 10 (versão 1809 / build 17763) ou superior, Windows Server 2019 ou superior |
+| Processador | x64 (64 bits) |
 | Memória RAM | 512 MB (recomendado: 1 GB) |
 | Espaço em Disco | ~1.7 GB (instalação completa do SDK) |
 
