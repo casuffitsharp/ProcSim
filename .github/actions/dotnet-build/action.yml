@@ -1,5 +1,5 @@
 name: .NET Build
-description: Checkout, setup .NET, restore dependencies, and build the solution.
+description: Setup .NET, restore dependencies, and build the solution.
 
 inputs:
   dotnet-version:
