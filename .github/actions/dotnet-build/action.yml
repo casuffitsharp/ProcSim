@@ -25,8 +25,8 @@ runs:
 
     - name: Restore dependencies
       shell: pwsh
-      run: dotnet restore ${{ inputs.solution }}
+      run: dotnet restore '${{ inputs.solution }}'
 
     - name: Build solution
       shell: pwsh
-      run: dotnet build ${{ inputs.solution }} --no-restore --configuration ${{ inputs.configuration }}
+      run: dotnet build '${{ inputs.solution }}' --no-restore --configuration ${{ inputs.configuration }}
