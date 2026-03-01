@@ -23,7 +23,7 @@ jobs:
         run: dotnet publish src/ProcSim/ProcSim.csproj --configuration Release --output ./published --self-contained true -p:PublishSingleFile=true -p:TrimUnusedDependencies=true
 
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ProcSim-Build
           path: ./published
