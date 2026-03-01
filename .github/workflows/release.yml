@@ -15,19 +15,11 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Restore Dependencies
-        run: dotnet restore ProcSim.sln
-
-      - name: Build Solution
-        run: dotnet build ProcSim.sln --no-restore --configuration Release
+      - name: Build
+        uses: ./.github/actions/dotnet-build
 
       - name: Publish Self-Contained Executable
         run: >

@@ -16,13 +16,5 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '10.x'
-
-      - name: Restore dependencies
-        run: dotnet restore ProcSim.sln
-
-      - name: Build solution
-        run: dotnet build ProcSim.sln --no-restore --configuration Release
+      - name: Build
+        uses: ./.github/actions/dotnet-build
