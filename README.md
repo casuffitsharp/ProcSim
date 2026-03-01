@@ -94,7 +94,7 @@ O "Apêndice B - Jornada do Usuário" do [artigo de apresentação do projeto](d
 
 | Componente | Tecnologia |
 | :--- | :--- |
-| Backend (Camada Core) | C# 12, .NET 9  |
+| Backend (Camada Core) | C# 14, .NET 10  |
 | Frontend (UI) | WPF, XAML, Padrão MVVM, Material Design  |
 | Gráficos | LiveCharts 2  |
 | Ambiente de Dev | Visual Studio 2022  |
@@ -106,8 +106,16 @@ O "Apêndice B - Jornada do Usuário" do [artigo de apresentação do projeto](d
 > **Nota para Usuários:** Se o seu objetivo é apenas **utilizar** o simulador, recomendamos baixar a versão mais recente diretamente da [página de Releases](https://github.com/casuffitsharp/procsim/releases). As instruções a seguir são para desenvolvedores.
 
 ### Pré-requisitos
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Visual Studio 2022](https://visualstudio.microsoft.com/vs/) com a carga de trabalho ".NET desktop development" ou IDE equivalente que permita desenvolvimento com WPF.
+
+#### Requisitos de Sistema (.NET 10)
+| Componente | Requisito Mínimo |
+| :--- | :--- |
+| Sistema Operacional | Windows 10 (versão 1607) ou superior, Windows Server 2012 R2 ou superior |
+| Processador | x64, x86, Arm32 ou Arm64 |
+| Memória RAM | 512 MB (recomendado: 1 GB) |
+| Espaço em Disco | ~1.7 GB (instalação completa do SDK) |
 
 ### Passos para Execução
 1. Clone o repositório:
