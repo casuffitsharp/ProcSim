@@ -1,12 +1,8 @@
-name: Create Manual Release
+name: Release
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'A versão para a release, sem o "v" (ex: 1.0.1)'
-        required: true
-        type: string
+  release:
+    types: [published]
 
 jobs:
   build_and_release:
@@ -17,6 +13,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from tag
+        id: version
+        run: |
+          $tag = "${{ github.event.release.tag_name }}"
+          $version = $tag.TrimStart('v')
+          echo "version=$version" >> $env:GITHUB_OUTPUT
 
       - name: Build
         uses: ./.github/actions/dotnet-build
@@ -29,19 +34,14 @@ jobs:
           --self-contained true
           -p:PublishSingleFile=true
           -p:TrimUnusedDependencies=true
-          -p:Version=${{ github.event.inputs.version }}
           -p:DebugType=None
           -p:DebugSymbols=false
 
       - name: Zip Release Artifact
-        run: Compress-Archive -Path ./published/* -DestinationPath ProcSim-${{ github.event.inputs.version }}.zip
+        run: Compress-Archive -Path ./published/* -DestinationPath ProcSim-${{ steps.version.outputs.version }}.zip
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
+      - name: Upload artifact to release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ github.event.inputs.version }}
-          name: Release ${{ github.event.inputs.version }}
-          body: Release oficial da versão ${{ github.event.inputs.version }} do simulador ProcSim.
-          files: ProcSim-${{ github.event.inputs.version }}.zip
+          files: ProcSim-${{ steps.version.outputs.version }}.zip
           fail_on_unmatched_files: true
