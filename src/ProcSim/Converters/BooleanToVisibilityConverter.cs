@@ -14,7 +14,7 @@ public sealed class BooleanToVisibilityConverter : IValueConverter
             flag = v;
         }
 
-        if (parameter != null && bool.Parse((string)parameter))
+        if (GetBoolParameter(parameter))
             flag = !flag;
 
         return flag ? Visibility.Visible : Visibility.Collapsed;
@@ -23,9 +23,12 @@ public sealed class BooleanToVisibilityConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         bool back = value is Visibility visibility && visibility == Visibility.Visible;
-        if (parameter != null && bool.Parse((string)parameter))
+        if (GetBoolParameter(parameter))
             back = !back;
 
         return back;
     }
+
+    private static bool GetBoolParameter(object parameter) =>
+        parameter is bool b ? b : parameter is string s && bool.TryParse(s, out bool result) && result;
 }
