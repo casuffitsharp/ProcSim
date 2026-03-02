@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using ProcSim.Assets;
@@ -165,7 +165,7 @@ public partial class ProcessesConfigViewModel : ObservableObject
 
     private bool CanSave()
     {
-        return SelectedProcess is not null && !SelectedProcess.Equals(SelectedProcessRef);
+        return SelectedProcess is not null;
     }
 
     private bool CanCancel()

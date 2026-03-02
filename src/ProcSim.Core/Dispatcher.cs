@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 using System.Diagnostics;
 using System.Text.Json;
 
@@ -6,9 +6,9 @@ namespace ProcSim.Core;
 
 public static class Dispatcher
 {
-    public static void SwitchContext(CPU cpu, PCB next)
+    public static void SwitchContext(Cpu cpu, Pcb next)
     {
-        PCB prev = cpu.CurrentPCB;
+        Pcb prev = cpu.CurrentPCB;
         prev?.OnExitRunning(cpu.UserCycleCount, cpu.SyscallCycleCount);
         if (prev == next)
         {
@@ -29,7 +29,7 @@ public static class Dispatcher
         }
     }
 
-    public static void SaveContext(CPU cpu, PCB pcb)
+    public static void SaveContext(Cpu cpu, Pcb pcb)
     {
         Debug.WriteLine($"Process {pcb.ProcessId} - Saving context (PC: {cpu.PC}, SP: {cpu.SP})");
 
@@ -42,7 +42,7 @@ public static class Dispatcher
         Debug.WriteLine($"Process {pcb.ProcessId} - Saved PCB: {JsonSerializer.Serialize(pcb)}");
     }
 
-    public static void LoadContext(CPU cpu, PCB pcb)
+    public static void LoadContext(Cpu cpu, Pcb pcb)
     {
         cpu.PC = pcb.ProgramCounter;
         cpu.SP = pcb.StackPointer;

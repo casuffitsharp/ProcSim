@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Interruptions.Handlers;
+using ProcSim.Core.Interruptions.Handlers;
 using ProcSim.Core.Process;
 using System.Diagnostics;
 
@@ -10,7 +10,7 @@ public class InterruptService(List<IInterruptHandler> handlers)
 
     public long InterruptCount => _interruptCount;
 
-    public Instruction BuildISR(uint vector, CPU cpu)
+    public Instruction BuildISR(uint vector, Cpu cpu)
     {
         Interlocked.Increment(ref _interruptCount);
         IInterruptHandler handler = handlers.First(h => h.CanHandle(vector));

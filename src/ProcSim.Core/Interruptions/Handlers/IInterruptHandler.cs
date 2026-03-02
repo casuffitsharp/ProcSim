@@ -1,9 +1,9 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 
 namespace ProcSim.Core.Interruptions.Handlers;
 
 public interface IInterruptHandler
 {
     bool CanHandle(uint vector);
-    Instruction BuildBody(uint vector, CPU cpu);
+    Instruction BuildBody(uint vector, Cpu cpu);
 }

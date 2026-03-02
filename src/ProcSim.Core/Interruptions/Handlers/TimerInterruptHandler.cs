@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 using ProcSim.Core.Process.Factories;
 
 namespace ProcSim.Core.Interruptions.Handlers;
@@ -12,7 +12,7 @@ public class TimerInterruptHandler() : IInterruptHandler
         return vector == TimerVector;
     }
 
-    public Instruction BuildBody(uint vector, CPU cpu)
+    public Instruction BuildBody(uint vector, Cpu cpu)
     {
         return InstructionFactory.ContextSwitch();
     }

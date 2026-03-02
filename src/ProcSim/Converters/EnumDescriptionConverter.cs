@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.ComponentModel;
 using System.Globalization;
 using System.Reflection;
@@ -8,7 +8,7 @@ namespace ProcSim.Converters;
 
 public sealed class EnumDescriptionConverter : IValueConverter
 {
-    public object Convert(object value, Type targetType, object parameter = null, CultureInfo culture = null)
+    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         return value switch
         {

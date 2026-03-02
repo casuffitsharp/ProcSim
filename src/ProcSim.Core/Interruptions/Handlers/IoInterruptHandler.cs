@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.IO;
+using ProcSim.Core.IO;
 using ProcSim.Core.Process;
 using ProcSim.Core.Process.Factories;
 
@@ -11,7 +11,7 @@ public class IoInterruptHandler(IReadOnlyDictionary<uint, IODevice> devices) : I
         return devices.ContainsKey(vector - 33);
     }
 
-    public Instruction BuildBody(uint vector, CPU cpu)
+    public Instruction BuildBody(uint vector, Cpu cpu)
     {
         IODevice device = devices[vector - 33];
         return InstructionFactory.HandleIo(device);

@@ -1,5 +1,5 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 
 namespace ProcSim.Core.IO;
 
-public record IORequest(PCB Pcb, uint OperationUnits);
+public record IORequest(Pcb Pcb, uint OperationUnits);

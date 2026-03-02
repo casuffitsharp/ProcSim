@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Configuration;
+using ProcSim.Core.Configuration;
 using ProcSim.Core.IO;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
@@ -236,7 +236,7 @@ public class SimulationController
         }
     }
 
-    private IEnumerable<Instruction> BuildCpuInstructions(CpuOperationConfigModel cpuOperation)
+    private static IEnumerable<Instruction> BuildCpuInstructions(CpuOperationConfigModel cpuOperation)
     {
         for (int i = 0; i < cpuOperation.RepeatCount; i++)
         {

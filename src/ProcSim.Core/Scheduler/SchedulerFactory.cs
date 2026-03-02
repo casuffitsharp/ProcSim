@@ -1,10 +1,10 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 
 namespace ProcSim.Core.Scheduler;
 
 internal static class SchedulerFactory
 {
-    public static IScheduler Create(SchedulerType schedulerType, Kernel kernel, IReadOnlyDictionary<uint, PCB> idlePcbs)
+    public static IScheduler Create(SchedulerType schedulerType, Kernel kernel, IReadOnlyDictionary<uint, Pcb> idlePcbs)
     {
         return schedulerType switch
         {

@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.IO;
+using ProcSim.Core.IO;
 using ProcSim.Core.Syscall;
 
 namespace ProcSim.Core.Process.Factories;
@@ -75,7 +75,7 @@ public static class MicroOpFactory
             Description: "Troca de contexto para próximo processo",
             Execute: cpu =>
             {
-                PCB next = cpu.Scheduler.Preempt(cpu);
+                Pcb next = cpu.Scheduler.Preempt(cpu);
                 Dispatcher.SwitchContext(cpu, next);
             }
         );
@@ -106,7 +106,7 @@ public static class MicroOpFactory
             Description: "Finaliza I/O e admite processos aguardando no dispositivo",
             Execute: cpu =>
             {
-                foreach (PCB pcb in device.PopWaiters())
+                foreach (Pcb pcb in device.PopWaiters())
                 {
                     pcb.OnIoCompleted(cpu.CycleCount);
                     cpu.Scheduler.Admit(pcb);

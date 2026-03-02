@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
@@ -13,31 +13,19 @@ public sealed class BooleanToVisibilityConverter : IValueConverter
         {
             flag = v;
         }
-        else if (value is bool?)
-        {
-            bool? nullable = (bool?)value;
-            flag = nullable.GetValueOrDefault();
-        }
-        if (parameter != null)
-        {
-            if (bool.Parse((string)parameter))
-                flag = !flag;
-        }
 
-        if (flag)
-            return Visibility.Visible;
+        if (parameter != null && bool.Parse((string)parameter))
+            flag = !flag;
 
-        return Visibility.Collapsed;
+        return flag ? Visibility.Visible : Visibility.Collapsed;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         bool back = value is Visibility visibility && visibility == Visibility.Visible;
-        if (parameter != null)
-        {
-            if ((bool)parameter)
-                back = !back;
-        }
+        if (parameter != null && (bool)parameter)
+            back = !back;
+
         return back;
     }
 }

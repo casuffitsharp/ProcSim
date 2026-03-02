@@ -1,25 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Configuration;
 using ProcSim.Core.Process;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 
 namespace ProcSim.ViewModels;
 
-public enum LoopType
-{
-    [Description("")]
-    None,
-    [Description("Infinito")]
-    Infinite,
-    [Description("Finito")]
-    Finite,
-    [Description("Random")]
-    Random
-}
-
-public partial class ProcessConfigViewModel : ObservableObject
+public sealed partial class ProcessConfigViewModel : ObservableObject
 {
     public ProcessConfigViewModel()
     {
@@ -171,7 +158,7 @@ public partial class ProcessConfigViewModel : ObservableObject
         return list.Count == 0;
     }
 
-    public bool Equals(ProcessConfigViewModel other)
+    public bool ValueEquals(ProcessConfigViewModel other)
     {
         if (ReferenceEquals(other, this)) return true;
         if (other is null) return false;
@@ -180,14 +167,13 @@ public partial class ProcessConfigViewModel : ObservableObject
         if (Priority != other.Priority) return false;
         if (LoopType != other.LoopType) return false;
         if (Operations.Count != other.Operations.Count) return false;
-        if (LoopType == other.LoopType) return false;
         if (Iterations != other.Iterations) return false;
         if (MinIterations != other.MinIterations) return false;
         if (MaxIterations != other.MaxIterations) return false;
 
         for (int i = 0; i < Operations.Count; i++)
         {
-            if (!Operations[i].Equals(other.Operations[i]))
+            if (!Operations[i].ValueEquals(other.Operations[i]))
                 return false;
         }
 

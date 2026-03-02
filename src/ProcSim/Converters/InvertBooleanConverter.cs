@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Windows.Data;
 
 namespace ProcSim.Converters;
@@ -8,11 +8,15 @@ public class InvertBooleanConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        bool original = (bool)value;
-        return !original;
+        return InvertBoolean(value);
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    {
+        return InvertBoolean(value);
+    }
+
+    private static bool InvertBoolean(object value)
     {
         bool original = (bool)value;
         return !original;
