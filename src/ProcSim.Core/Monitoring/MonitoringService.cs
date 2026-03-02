@@ -22,6 +22,7 @@ public class MonitoringService : IDisposable
     private readonly ConcurrentDictionary<uint, ConcurrentDictionary<uint, DeviceChannelStats>> _deviceStats = [];
     private readonly ConcurrentDictionary<IoRequestNotification, ulong> _ioStarts = [];
 
+    private readonly SemaphoreSlim _kernelLock = new(1, 1);
     private Kernel _kernel;
     private bool _disposed;
 
@@ -53,72 +54,90 @@ public class MonitoringService : IDisposable
 
     public void SetKernel(Kernel kernel)
     {
-        _kernel = kernel;
-        OnReset?.Invoke();
-        if (_kernel is null)
+        _kernelLock.Wait();
+        try
         {
-            Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Kernel set to null.");
-            return;
-        }
+            _kernel = kernel;
 
-        _prevCpu.Clear();
-        _prevProcCycles.Clear();
-        _prevChan.Clear();
-        _deviceChannelBusy.Clear();
-        _deviceStats.Clear();
-        _ioStarts.Clear();
-        CpuCoreMetrics.Clear();
-        CpuTotalMetrics.Clear();
-        ProcessMetrics.Clear();
-        DeviceMetrics.Clear();
+            _prevCpu.Clear();
+            _prevProcCycles.Clear();
+            _prevChan.Clear();
+            _deviceChannelBusy.Clear();
+            _deviceStats.Clear();
+            _ioStarts.Clear();
+            CpuCoreMetrics.Clear();
+            CpuTotalMetrics.Clear();
+            ProcessMetrics.Clear();
+            DeviceMetrics.Clear();
 
-        // inicializa snapshots de CPU e processos
-        foreach (Cpu cpu in _kernel.Cpus.Values)
-            _prevCpu[cpu.Id] = new CpuSnapshot(cpu);
-
-        foreach (Pcb pcb in kernel.Programs.Keys)
-            _prevProcCycles[pcb.ProcessId] = 0;
-
-        foreach (IODevice device in kernel.Devices.Values)
-        {
-            ConcurrentDictionary<uint, DeviceChannelStats> channelStats = [];
-            Dictionary<uint, ChannelSnapshot> channelSnapshots = [];
-            ConcurrentDictionary<uint, bool> channelBusy = [];
-            _deviceStats[device.Id] = channelStats;
-            _prevChan[device.Id] = channelSnapshots;
-            _deviceChannelBusy[device.Id] = channelBusy;
-
-            for (uint channel = 0; channel < device.Channels; channel++)
+            if (_kernel is null)
             {
-                channelStats[channel] = new DeviceChannelStats();
-                channelSnapshots[channel] = new ChannelSnapshot();
+                Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Kernel set to null.");
+                return;
             }
 
-            SubscribeDevice(device);
+            // inicializa snapshots de CPU e processos
+            foreach (Cpu cpu in _kernel.Cpus.Values)
+                _prevCpu[cpu.Id] = new CpuSnapshot(cpu);
+
+            foreach (Pcb pcb in kernel.Programs.Keys)
+                _prevProcCycles[pcb.ProcessId] = 0;
+
+            foreach (IODevice device in kernel.Devices.Values)
+            {
+                ConcurrentDictionary<uint, DeviceChannelStats> channelStats = [];
+                Dictionary<uint, ChannelSnapshot> channelSnapshots = [];
+                ConcurrentDictionary<uint, bool> channelBusy = [];
+                _deviceStats[device.Id] = channelStats;
+                _prevChan[device.Id] = channelSnapshots;
+                _deviceChannelBusy[device.Id] = channelBusy;
+
+                for (uint channel = 0; channel < device.Channels; channel++)
+                {
+                    channelStats[channel] = new DeviceChannelStats();
+                    channelSnapshots[channel] = new ChannelSnapshot();
+                }
+
+                SubscribeDevice(device);
+            }
+
+            Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] Kernel set with {kernel.Cpus.Count} CPUs and {kernel.Devices.Count} devices.");
+        }
+        finally
+        {
+            _kernelLock.Release();
         }
 
-        Debug.WriteLineIf(DebugEnabled, $"[MonitoringService] Kernel set with {kernel.Cpus.Count} CPUs and {kernel.Devices.Count} devices.");
+        OnReset?.Invoke();
     }
 
     private async Task CollectAsync(CancellationToken ct)
     {
         while (await _timer.WaitForNextTickAsync(ct))
         {
-            if (_kernel is null || _kernel.GlobalCycle == 0)
+            await _kernelLock.WaitAsync(ct);
+            try
             {
-                Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Kernel not set or GlobalCycle is zero. Skipping collection.");
-                continue;
+                if (_kernel is null || _kernel.GlobalCycle == 0)
+                {
+                    Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Kernel not set or GlobalCycle is zero. Skipping collection.");
+                    continue;
+                }
+
+                DateTime ts = DateTime.UtcNow;
+                ulong nowTick = _kernel.GlobalCycle;
+
+                CpuTotals cpuTotals = CollectCpuMetrics(ts);
+                List<ProcessSnapshot> processSnapshots = CollectProcessMetrics(ts, cpuTotals);
+                CollectDeviceMetrics(ts, nowTick);
+
+                ProcessListUpdated?.Invoke(processSnapshots);
+                OnMetricsUpdated?.Invoke();
             }
-
-            DateTime ts = DateTime.UtcNow;
-            ulong nowTick = _kernel.GlobalCycle;
-
-            CpuTotals cpuTotals = CollectCpuMetrics(ts);
-            List<ProcessSnapshot> processSnapshots = CollectProcessMetrics(ts, cpuTotals);
-            CollectDeviceMetrics(ts, nowTick);
-
-            ProcessListUpdated?.Invoke(processSnapshots);
-            OnMetricsUpdated?.Invoke();
+            finally
+            {
+                _kernelLock.Release();
+            }
         }
     }
 
@@ -306,6 +325,7 @@ public class MonitoringService : IDisposable
                 _cts.Cancel();
                 _cts.Dispose();
                 _timer.Dispose();
+                _kernelLock.Dispose();
                 Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Disposed");
             }
 
