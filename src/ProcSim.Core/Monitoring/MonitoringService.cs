@@ -83,12 +83,12 @@ public class MonitoringService : IDisposable
             Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Kernel set to null.");
         }
 
+        _state = newState;
+
         CpuCoreMetrics.Clear();
         CpuTotalMetrics.Clear();
         ProcessMetrics.Clear();
         DeviceMetrics.Clear();
-
-        _state = newState;
 
         OnReset?.Invoke();
     }
