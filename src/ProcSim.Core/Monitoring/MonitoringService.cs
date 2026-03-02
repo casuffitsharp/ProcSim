@@ -236,6 +236,7 @@ public class MonitoringService : IDisposable
         ChannelSnapshot snapshot = new(totalRequests, busyCycles, nowTick);
 
         prevChannelsSnapshots.TryGetValue(channel, out ChannelSnapshot prevSnapshot);
+        prevSnapshot ??= new();
         prevChannelsSnapshots[channel] = snapshot;
 
         ulong dRequests = totalRequests - prevSnapshot.TotalRequests;
