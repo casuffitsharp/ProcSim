@@ -57,16 +57,16 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, Pcb> idlePcbs, K
     {
         lock (_queueLock)
         {
-            var remainingItems = _readyQueue.UnorderedItems
+            IEnumerable<(Pcb Element, int Priority)> remainingItems = _readyQueue.UnorderedItems
                 .Where(item => item.Element.ProcessId != pcb.ProcessId)
                 .Select(item => (item.Element, item.Priority));
 
             _readyQueue.Clear();
-            foreach (var (item, priority) in remainingItems)
+            foreach ((Pcb item, int priority) in remainingItems)
             {
                 _readyQueue.Enqueue(item, priority);
             }
-            
+
             Debug.WriteLine($"Decommissioned process {pcb.ProcessId} from PriorityScheduler.");
         }
     }

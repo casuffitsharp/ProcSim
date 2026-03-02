@@ -1,7 +1,6 @@
 using ProcSim.Core.Interruptions;
 using ProcSim.Core.Interruptions.Handlers;
 using ProcSim.Core.IO;
-using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
 using ProcSim.Core.Process.Factories;
 using ProcSim.Core.Scheduler;

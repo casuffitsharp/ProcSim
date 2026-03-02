@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using ProcSim.Core.Monitoring;
 using ProcSim.New.ViewModels;
-using System.ComponentModel;
 using System.IO;
 
 namespace ProcSim.ViewModels;
