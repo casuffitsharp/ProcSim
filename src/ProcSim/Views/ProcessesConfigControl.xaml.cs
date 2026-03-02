@@ -15,7 +15,8 @@ public partial class ProcessesConfigControl : UserControl
 
     private void OnSelectedProcessChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
-        (sender as Grid).IsEnabled = e.NewValue != null;
+        if (sender is Grid grid)
+            grid.IsEnabled = e.NewValue != null;
     }
 
     private void OnProcessListPreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
