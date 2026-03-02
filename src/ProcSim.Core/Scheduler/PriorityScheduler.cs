@@ -59,7 +59,8 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
         {
             var remainingItems = _readyQueue.UnorderedItems
                 .Where(item => item.Element.ProcessId != pcb.ProcessId)
-                .Select(item => (item.Element, item.Priority));
+                .Select(item => (item.Element, item.Priority))
+                .ToList();
 
             _readyQueue.Clear();
             foreach (var (item, priority) in remainingItems)
