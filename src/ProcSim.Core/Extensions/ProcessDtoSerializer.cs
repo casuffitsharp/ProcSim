@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 using System.Text;
 
 namespace ProcSim.Core.Extensions;

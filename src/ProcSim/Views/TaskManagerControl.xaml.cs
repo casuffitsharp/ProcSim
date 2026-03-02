@@ -1,4 +1,4 @@
-﻿using System.Windows.Controls;
+using System.Windows.Controls;
 using System.Windows.Input;
 
 namespace ProcSim.Views;
@@ -10,7 +10,7 @@ public partial class TaskManagerControl : UserControl
         InitializeComponent();
     }
 
-    private void ComboBox_PreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+    private void ComboBox_PreviewLostKeyboardFocus(object sender, KeyboardFocusChangedEventArgs _)
     {
         if (sender is ComboBox cb && cb.IsDropDownOpen)
             cb.IsDropDownOpen = false;

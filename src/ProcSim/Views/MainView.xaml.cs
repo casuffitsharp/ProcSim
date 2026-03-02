@@ -1,4 +1,4 @@
-﻿using MaterialDesignThemes.Wpf;
+using MaterialDesignThemes.Wpf;
 using ProcSim.Assets;
 using ProcSim.ViewModels;
 using System.ComponentModel;
@@ -43,8 +43,8 @@ public partial class MainView : Window
 
     private void MenuDarkModeButton_Click(object sender, RoutedEventArgs e)
     {
-        Settings.Default.DarkMode = DarkModeToggleButton.IsChecked == true;
-        ModifyTheme(DarkModeToggleButton.IsChecked == true);
+        Settings.Default.DarkMode = DarkModeToggleButton.IsChecked.GetValueOrDefault();
+        ModifyTheme(DarkModeToggleButton.IsChecked.GetValueOrDefault());
     }
 
     private void Window_Loaded(object sender, RoutedEventArgs e)

@@ -20,63 +20,80 @@ public sealed class EnumDescriptionConverter : IValueConverter
 
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        // Caso o valor seja uma única string, buscamos o enum correspondente.
         if (value is string description)
         {
-            Type enumType = targetType.IsEnum ? targetType : Nullable.GetUnderlyingType(targetType);
-            if (enumType?.IsEnum == true)
-            {
-                foreach (object enumValue in Enum.GetValues(enumType))
-                {
-                    FieldInfo field = enumType.GetField(enumValue.ToString());
-                    DescriptionAttribute attr = field?.GetCustomAttribute<DescriptionAttribute>();
-                    if (attr?.Description == description)
-                        return enumValue;
-
-                    // Se não tiver descrição definida, compara com o ToString() do enum.
-                    if (string.IsNullOrEmpty(attr?.Description) && enumValue.ToString() == description)
-                        return enumValue;
-                }
-            }
+            return ConvertSingleDescription(description, targetType);
         }
 
-        // Caso o valor seja uma coleção (IEnumerable de strings) e o targetType seja uma coleção genérica
         if (value is IEnumerable enumerable && targetType.IsGenericType)
         {
-            // Obtém o tipo genérico esperado na coleção (ex.: IoDeviceType)
-            Type genericType = targetType.GetGenericArguments()[0];
-            if (!genericType.IsEnum)
-                return Binding.DoNothing;
-
-            Type listType = typeof(List<>).MakeGenericType(genericType);
-            IList list = (IList)Activator.CreateInstance(listType);
-            foreach (object item in enumerable)
-            {
-                if (item is not string desc)
-                    continue;
-
-                foreach (object enumValue in Enum.GetValues(genericType))
-                {
-                    FieldInfo field = genericType.GetField(enumValue.ToString());
-                    DescriptionAttribute attr = field?.GetCustomAttribute<DescriptionAttribute>();
-                    if (attr?.Description == desc)
-                    {
-                        list.Add(enumValue);
-                        break;
-                    }
-
-                    if (string.IsNullOrEmpty(attr?.Description) && enumValue.ToString() == desc)
-                    {
-                        list.Add(enumValue);
-                        break;
-                    }
-                }
-            }
-
-            return list;
+            return ConvertDescriptionCollection(enumerable, targetType);
         }
 
         return Binding.DoNothing;
+    }
+
+    private static object ConvertSingleDescription(string description, Type targetType)
+    {
+        Type enumType = targetType.IsEnum ? targetType : Nullable.GetUnderlyingType(targetType);
+
+        if (enumType?.IsEnum != true)
+            return Binding.DoNothing;
+
+        object result = FindEnumValueByDescription(enumType, description);
+        return result ?? Binding.DoNothing;
+    }
+
+    private static object ConvertDescriptionCollection(IEnumerable enumerable, Type targetType)
+    {
+        Type genericType = targetType.GetGenericArguments()[0];
+
+        if (!genericType.IsEnum)
+            return Binding.DoNothing;
+
+        Type listType = typeof(List<>).MakeGenericType(genericType);
+        IList list = (IList)Activator.CreateInstance(listType);
+
+        foreach (object item in enumerable)
+        {
+            if (item is string desc)
+            {
+                object enumValue = FindEnumValueByDescription(genericType, desc);
+                if (enumValue != null)
+                {
+                    list.Add(enumValue);
+                }
+            }
+        }
+
+        return list;
+    }
+
+    private static object FindEnumValueByDescription(Type enumType, string description)
+    {
+        foreach (object enumValue in Enum.GetValues(enumType))
+        {
+            if (MatchesDescription(enumType, enumValue, description))
+            {
+                return enumValue;
+            }
+        }
+
+        return null;
+    }
+
+    private static bool MatchesDescription(Type enumType, object enumValue, string description)
+    {
+        FieldInfo field = enumType.GetField(enumValue.ToString());
+        DescriptionAttribute attr = field?.GetCustomAttribute<DescriptionAttribute>();
+
+        if (attr?.Description == description)
+            return true;
+
+        if (string.IsNullOrEmpty(attr?.Description) && enumValue.ToString() == description)
+            return true;
+
+        return false;
     }
 
     private static IEnumerable<string> ConvertCollection(IEnumerable enumerable)

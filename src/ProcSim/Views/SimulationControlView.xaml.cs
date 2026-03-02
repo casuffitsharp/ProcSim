@@ -11,7 +11,7 @@ public partial class SimulationControlView : UserControl
     }
 
 #pragma warning disable S2325 // Methods and properties that don't access instance data should be static
-    private void Slider_DragCompleted(object sender, object e)
+    private void Slider_DragCompleted(object sender, object _)
     {
         if (sender is Slider slider)
         {

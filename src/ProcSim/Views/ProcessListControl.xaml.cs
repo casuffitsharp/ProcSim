@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -24,7 +24,7 @@ public partial class ProcessListControl : UserControl
 
     public IEnumerable ItemsSource
     {
-        get => (IEnumerable)GetValue(ItemsSourceProperty);
+        get => GetValue(ItemsSourceProperty) as IEnumerable;
         set => SetValue(ItemsSourceProperty, value);
     }
 
