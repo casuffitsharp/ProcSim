@@ -57,9 +57,10 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, Pcb> idlePcbs, K
     {
         lock (_queueLock)
         {
-            IEnumerable<(Pcb Element, int Priority)> remainingItems = _readyQueue.UnorderedItems
+            List<(Pcb Element, int Priority)> remainingItems = _readyQueue.UnorderedItems
                 .Where(item => item.Element.ProcessId != pcb.ProcessId)
-                .Select(item => (item.Element, item.Priority));
+                .Select(item => (item.Element, item.Priority))
+                .ToList();
 
             _readyQueue.Clear();
             foreach ((Pcb item, int priority) in remainingItems)
