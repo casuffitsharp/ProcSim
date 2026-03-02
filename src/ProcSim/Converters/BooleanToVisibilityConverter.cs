@@ -23,7 +23,7 @@ public sealed class BooleanToVisibilityConverter : IValueConverter
     public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
     {
         bool back = value is Visibility visibility && visibility == Visibility.Visible;
-        if (parameter != null && (bool)parameter)
+        if (parameter != null && bool.Parse((string)parameter))
             back = !back;
 
         return back;
