@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.IO;
+using ProcSim.Core.IO;
 using ProcSim.Core.Process;
 using System.Diagnostics;
 
@@ -8,9 +8,9 @@ public class SystemCallDispatcher(IReadOnlyDictionary<uint, IODevice> devices)
 {
     public IReadOnlyDictionary<uint, IODevice> Devices { get; } = devices;
 
-    public void HandleSyscall(CPU cpu, SyscallType type, uint deviceId, uint operationUnits = 0)
+    public void HandleSyscall(Cpu cpu, SyscallType type, uint deviceId, uint operationUnits = 0)
     {
-        PCB current = cpu.CurrentPCB;
+        Pcb current = cpu.CurrentPCB;
         switch (type)
         {
             case SyscallType.IoRequest:

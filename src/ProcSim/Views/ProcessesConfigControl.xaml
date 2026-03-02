@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="ProcSim.Views.ProcessesConfigControl"
+<UserControl x:Class="ProcSim.Views.ProcessesConfigControl"
             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
@@ -94,11 +94,12 @@
                 </StackPanel>
             </DockPanel>
         </materialDesign:ColorZone>
-        <materialDesign:Card Grid.Row="1" Grid.Column="0">
+        <materialDesign:Card Grid.Row="1" Grid.Column="0" PreviewMouseLeftButtonDown="OnProcessListPreviewMouseLeftButtonDown">
             <StackPanel Margin="5">
                 <TextBlock Text="Processos" Style="{StaticResource MaterialDesignLabelMediumTextBlock}" />
                 <Separator Margin="0,4"/>
-                <DataGrid ItemsSource="{Binding Processes}"
+                <DataGrid x:Name="ProcessesDataGrid"
+                          ItemsSource="{Binding Processes}"
                           SelectedItem="{Binding SelectedProcess, Mode=TwoWay}"
                           AutoGenerateColumns="False"
                           CanUserReorderColumns="False"

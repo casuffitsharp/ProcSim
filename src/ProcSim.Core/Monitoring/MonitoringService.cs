@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.IO;
+using ProcSim.Core.IO;
 using ProcSim.Core.Monitoring.Models;
 using ProcSim.Core.Process;
 using System.Collections.Concurrent;
@@ -15,7 +15,6 @@ public class MonitoringService : IDisposable
     private readonly CancellationTokenSource _cts = new();
 
     private readonly Dictionary<uint, CpuSnapshot> _prevCpu = [];
-    private ulong _prevGlobalCycle;
     private readonly Dictionary<int, ulong> _prevProcCycles = [];
     private readonly Dictionary<uint, Dictionary<uint, ChannelSnapshot>> _prevChan = [];
     private readonly Dictionary<uint, ConcurrentDictionary<uint, bool>> _deviceChannelBusy = [];
@@ -24,6 +23,7 @@ public class MonitoringService : IDisposable
     private readonly ConcurrentDictionary<IoRequestNotification, ulong> _ioStarts = [];
 
     private Kernel _kernel;
+    private bool _disposed;
 
     public MonitoringService()
     {
@@ -73,12 +73,10 @@ public class MonitoringService : IDisposable
         DeviceMetrics.Clear();
 
         // inicializa snapshots de CPU e processos
-        foreach (CPU cpu in _kernel.Cpus.Values)
+        foreach (Cpu cpu in _kernel.Cpus.Values)
             _prevCpu[cpu.Id] = new CpuSnapshot(cpu);
 
-        _prevGlobalCycle = kernel.GlobalCycle;
-
-        foreach (PCB pcb in kernel.Programs.Keys)
+        foreach (Pcb pcb in kernel.Programs.Keys)
             _prevProcCycles[pcb.ProcessId] = 0;
 
         foreach (IODevice device in kernel.Devices.Values)
@@ -114,7 +112,6 @@ public class MonitoringService : IDisposable
 
             DateTime ts = DateTime.UtcNow;
             ulong nowTick = _kernel.GlobalCycle;
-            _prevGlobalCycle = nowTick;
 
             // 1) CPU por núcleo e agregados
             ulong totalC = 0UL;      // total de ticks em todas as CPUs
@@ -123,7 +120,7 @@ public class MonitoringService : IDisposable
             ulong totalI = 0UL;      // ticks de interrupção (sum of dI)
             ulong totalIdle = 0UL;   // ticks de idle (sum of dIdle)
 
-            foreach (CPU cpu in _kernel.Cpus.Values)
+            foreach (Cpu cpu in _kernel.Cpus.Values)
             {
                 CpuSnapshot prev = _prevCpu[cpu.Id];
 
@@ -159,7 +156,7 @@ public class MonitoringService : IDisposable
 
             processSnapshots.Add(new ProcessSnapshot(Pid: 0, Name: "Idle", State: idlePercent > 0 ? ProcessState.Running : ProcessState.Ready, CpuUsage: idlePercent, StaticPriority: ProcessStaticPriority.Normal, DynamicPriority: -1));
 
-            foreach (PCB pcb in _kernel.Programs.Keys)
+            foreach (Pcb pcb in _kernel.Programs.Keys)
             {
                 if (pcb.ProcessId < _kernel.Cpus.Count)
                     continue;
@@ -270,14 +267,29 @@ public class MonitoringService : IDisposable
 
     public void Dispose()
     {
-        _cts.Cancel();
-        _timer.Dispose();
-        Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Disposed");
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!_disposed)
+        {
+            if (disposing)
+            {
+                _cts.Cancel();
+                _cts.Dispose();
+                _timer.Dispose();
+                Debug.WriteLineIf(DebugEnabled, "[MonitoringService] Disposed");
+            }
+
+            _disposed = true;
+        }
     }
 
     private sealed record CpuSnapshot(ulong CycleCount, ulong UserCycleCount, ulong SyscallCycleCount, ulong InterruptCycleCount, ulong IdleCycleCount)
     {
-        public CpuSnapshot(CPU cpu) : this(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount, cpu.InterruptCycleCount, cpu.IdleCycleCount) { }
+        public CpuSnapshot(Cpu cpu) : this(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount, cpu.InterruptCycleCount, cpu.IdleCycleCount) { }
     }
 
     private sealed record ChannelSnapshot

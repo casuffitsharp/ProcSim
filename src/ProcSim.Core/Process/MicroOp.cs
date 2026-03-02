@@ -1,3 +1,3 @@
-﻿namespace ProcSim.Core.Process;
+namespace ProcSim.Core.Process;
 
-public record MicroOp(string Name, string Description, Action<CPU> Execute);
+public record MicroOp(string Name, string Description, Action<Cpu> Execute);

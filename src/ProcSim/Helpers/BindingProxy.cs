@@ -1,10 +1,13 @@
-﻿using System.Windows;
+using System.Windows;
 
 namespace ProcSim.Helpers;
 
 public class BindingProxy : Freezable
 {
-    protected override Freezable CreateInstanceCore() => new BindingProxy();
+    protected override Freezable CreateInstanceCore()
+    {
+        return new BindingProxy();
+    }
 
     public object Data
     {

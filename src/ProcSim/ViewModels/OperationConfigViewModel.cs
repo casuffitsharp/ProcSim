@@ -1,22 +1,10 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using ProcSim.Converters;
+using CommunityToolkit.Mvvm.ComponentModel;
 using ProcSim.Core.Configuration;
-using ProcSim.Core.IO;
 using System.ComponentModel;
 
 namespace ProcSim.ViewModels;
 
-public enum OperationType
-{
-    [Description("")]
-    None,
-    [Description("CPU")]
-    Cpu,
-    [Description("I/O")]
-    Io
-}
-
-public partial class OperationConfigViewModel : ObservableObject
+public sealed partial class OperationConfigViewModel : ObservableObject
 {
     public OperationConfigViewModel()
     {
@@ -103,14 +91,14 @@ public partial class OperationConfigViewModel : ObservableObject
         return list.Count == 0;
     }
 
-    public bool Equals(OperationConfigViewModel other)
+    public bool ValueEquals(OperationConfigViewModel other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
 
         if (Type != other.Type) return false;
-        if (!CpuOperationConfig.Equals(other.CpuOperationConfig)) return false;
-        if (!IoOperationConfig.Equals(other.IoOperationConfig)) return false;
+        if (!CpuOperationConfig.ValueEquals(other.CpuOperationConfig)) return false;
+        if (!IoOperationConfig.ValueEquals(other.IoOperationConfig)) return false;
 
         return true;
     }
@@ -118,166 +106,5 @@ public partial class OperationConfigViewModel : ObservableObject
     private void Child_PropertyChanged(object sender, PropertyChangedEventArgs e)
     {
         OnPropertyChanged(nameof(Summary));
-    }
-}
-
-public partial class CpuOperationConfigViewModel : ObservableObject
-{
-    public CpuOperationConfigViewModel()
-    {
-        Type = CpuOperationType.Random;
-        RepeatCount = 1;
-    }
-
-    public static CpuOperationType[] CpuOperationTypeValues { get; } = [.. Enum.GetValues<CpuOperationType>().Where(x => x != CpuOperationType.None)];
-
-    [ObservableProperty]
-    public partial CpuOperationType Type { get; set; }
-    [ObservableProperty]
-    public partial int Min { get; set; }
-    [ObservableProperty]
-    public partial int Max { get; set; }
-    [ObservableProperty]
-    public partial uint RepeatCount { get; set; }
-
-    public CpuOperationConfigModel MapToModel()
-    {
-        return new(Type, Min, Max, RepeatCount);
-    }
-
-    public void UpdateFromModel(CpuOperationConfigModel model)
-    {
-        Type = model.Type;
-        Min = model.Min;
-        Max = model.Max;
-        RepeatCount = model.RepeatCount;
-    }
-
-    public bool Validate(out IEnumerable<string> errors)
-    {
-        List<string> list = [];
-
-        if (Type == CpuOperationType.None)
-            list.Add("Tipo de operação CPU não foi selecionado.");
-
-        if (Min == 0 || Max == 0)
-            list.Add("Valores mínimo e máximo não podem ser zero.");
-
-        if (Min >= Max)
-            list.Add("Valor mínimo não pode ser maior ou igual ao máximo.");
-
-        if (RepeatCount == 0)
-            list.Add("Repetições não podem ser zero.");
-
-        errors = list;
-        return list.Count == 0;
-    }
-
-    public string GetSummary()
-    {
-        return $"CPU: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(Type),-6} Min: {Min} Max: {Max}";
-    }
-
-    public bool Equals(CpuOperationConfigViewModel other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        if (Type != other.Type) return false;
-        if (Min != other.Min) return false;
-        if (Max != other.Max) return false;
-        if (RepeatCount != other.RepeatCount) return false;
-
-        return true;
-    }
-}
-
-public partial class IoOperationConfigViewModel : ObservableObject
-{
-    public IoOperationConfigViewModel()
-    {
-        DeviceType = IoDeviceType.Disk;
-        RepeatCount = 1;
-    }
-
-    public static IoDeviceType[] IoDeviceTypeValues { get; } = [.. Enum.GetValues<IoDeviceType>().Where(x => x != IoDeviceType.None)];
-
-    [ObservableProperty]
-    public partial IoDeviceType DeviceType { get; set; }
-    [ObservableProperty]
-    public partial uint Duration { get; set; }
-    [ObservableProperty]
-    public partial uint MinDuration { get; set; }
-    [ObservableProperty]
-    public partial uint MaxDuration { get; set; }
-    [ObservableProperty]
-    public partial bool IsRandom { get; set; }
-    [ObservableProperty]
-    public partial uint RepeatCount { get; set; }
-
-    public bool Validate(out IEnumerable<string> errors)
-    {
-        List<string> list = [];
-
-        if (DeviceType == IoDeviceType.None)
-            list.Add("Dispositivo não foi selecionado.");
-
-        if (Duration == 0 && !IsRandom)
-            list.Add("Duração não pode ser zero.");
-
-        if (IsRandom && (MinDuration == 0 || MaxDuration == 0 || MinDuration > MaxDuration))
-            list.Add("Duração mínima e máxima inválida.");
-
-        if (RepeatCount == 0)
-            list.Add("Repetições não podem ser zero.");
-
-        errors = list;
-        return list.Count == 0;
-    }
-
-    public string GetSummary()
-    {
-        if (IsRandom)
-            return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} Min: {MinDuration}u Max: {MaxDuration}u";
-
-        return $"I/O: {RepeatCount}x {EnumDescriptionConverter.GetEnumDescription(DeviceType),-6} {Duration}u";
-    }
-
-    public IoOperationConfigModel MapToModel()
-    {
-        return new()
-        {
-            DeviceType = DeviceType,
-            Duration = Duration,
-            MinDuration = MinDuration,
-            MaxDuration = MaxDuration,
-            IsRandom = IsRandom,
-            RepeatCount = RepeatCount
-        };
-    }
-
-    public void UpdateFromModel(IoOperationConfigModel model)
-    {
-        DeviceType = model.DeviceType;
-        Duration = model.Duration;
-        MinDuration = model.MinDuration;
-        MaxDuration = model.MaxDuration;
-        IsRandom = model.IsRandom;
-        RepeatCount = model.RepeatCount;
-    }
-
-    public bool Equals(IoOperationConfigViewModel other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-
-        if (DeviceType != other.DeviceType) return false;
-        if (Duration != other.Duration) return false;
-        if (MinDuration != other.MinDuration) return false;
-        if (MaxDuration != other.MaxDuration) return false;
-        if (IsRandom != other.IsRandom) return false;
-        if (RepeatCount != other.RepeatCount) return false;
-
-        return true;
     }
 }

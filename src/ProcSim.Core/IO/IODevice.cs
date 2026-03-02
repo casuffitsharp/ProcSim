@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Interruptions;
+using ProcSim.Core.Interruptions;
 using ProcSim.Core.Monitoring.Models;
 using ProcSim.Core.Process;
 using System.Collections.Concurrent;
@@ -10,7 +10,7 @@ public class IODevice : IDisposable
 {
     private readonly BlockingCollection<IORequest> _queue = [];
     private readonly InterruptController _interruptController;
-    private readonly ConcurrentQueue<PCB> _waiters = [];
+    private readonly ConcurrentQueue<Pcb> _waiters = [];
     private readonly List<Task> _workers;
     private bool _disposed;
     private readonly CancellationTokenSource _cts;
@@ -44,16 +44,16 @@ public class IODevice : IDisposable
     public long TotalRequests => _totalRequests;
     public long TotalProcessed => _totalProcessed;
 
-    public void Submit(PCB pcb, uint operationUnits)
+    public void Submit(Pcb pcb, uint operationUnits)
     {
         Debug.WriteLine($"IODevice {Id} - Received request from process {pcb.ProcessId} (Operation Units: {operationUnits})");
         pcb.State = ProcessState.Waiting;
         _queue.Add(new IORequest(pcb, operationUnits));
     }
 
-    public IEnumerable<PCB> PopWaiters()
+    public IEnumerable<Pcb> PopWaiters()
     {
-        if (!_waiters.TryDequeue(out PCB pcb))
+        if (!_waiters.TryDequeue(out Pcb pcb))
             yield break;
 
         yield return pcb;
@@ -61,14 +61,26 @@ public class IODevice : IDisposable
 
     public void Dispose()
     {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
         if (_disposed)
             return;
 
-        _queue.CompleteAdding();
+        if (disposing)
+        {
+            // Dispose managed resources
+            _queue.CompleteAdding();
+            _cts.Cancel();
+            Task.WaitAll([.. _workers]);
+            _queue.Dispose();
+            _cts.Dispose();
+        }
+
         _disposed = true;
-        _cts.Cancel();
-        Task.WaitAll([.. _workers]);
-        _queue.Dispose();
     }
 
     private async Task WorkerAsync(uint channelId, CancellationToken ct)

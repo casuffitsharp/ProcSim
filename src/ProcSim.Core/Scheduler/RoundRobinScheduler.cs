@@ -1,14 +1,14 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 using System.Diagnostics;
 
 namespace ProcSim.Core.Scheduler;
 
-public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs) : IScheduler
+public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, Pcb> idlePcbs) : IScheduler
 {
-    private Queue<PCB> readyQueue = new();
+    private Queue<Pcb> readyQueue = new();
     private readonly Lock _queueLock = new();
 
-    public void Admit(PCB pcb)
+    public void Admit(Pcb pcb)
     {
         if (pcb.State == ProcessState.Terminated)
         {
@@ -22,25 +22,25 @@ public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs)
             readyQueue.Enqueue(pcb);
     }
 
-    public PCB Preempt(CPU cpu)
+    public Pcb Preempt(Cpu cpu)
     {
-        PCB prev = cpu.CurrentPCB;
+        Pcb prev = cpu.CurrentPCB;
         if (prev?.State == ProcessState.Running && prev != idlePcbs[cpu.Id])
             Admit(prev);
 
         if (prev == idlePcbs[cpu.Id])
             prev.State = ProcessState.Ready;
 
-        PCB next = GetNext(cpu.Id);
+        Pcb next = GetNext(cpu.Id);
         next.State = ProcessState.Running;
         return next;
     }
 
-    public PCB GetNext(uint cpuId)
+    public Pcb GetNext(uint cpuId)
     {
         lock (_queueLock)
         {
-            while (readyQueue.TryDequeue(out PCB next))
+            while (readyQueue.TryDequeue(out Pcb next))
             {
                 if (next.State != ProcessState.Terminated)
                 {
@@ -54,11 +54,11 @@ public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs)
         return idlePcbs[cpuId];
     }
 
-    public void Decommission(PCB pcb)
+    public void Decommission(Pcb pcb)
     {
         lock (_queueLock)
         {
-            readyQueue = new Queue<PCB>(readyQueue.Where(p => p.ProcessId != pcb.ProcessId));
+            readyQueue = new Queue<Pcb>(readyQueue.Where(p => p.ProcessId != pcb.ProcessId));
             Debug.WriteLine($"Decommissioned process {pcb.ProcessId} from RoundRobinScheduler.");
         }
     }

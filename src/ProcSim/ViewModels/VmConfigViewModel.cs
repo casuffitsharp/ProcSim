@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 using ProcSim.Assets;
@@ -106,7 +106,7 @@ public partial class VmConfigViewModel : ObservableObject
             else
             {
                 device.Type = type;
-                device.Name = converter.Convert(type, typeof(string)) as string ?? type.ToString();
+                device.Name = converter.Convert(type, typeof(string), null, null) as string ?? type.ToString();
                 device.Channels = 1;
                 device.IsEnabled = false;
             }

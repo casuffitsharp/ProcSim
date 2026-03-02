@@ -1,4 +1,4 @@
-﻿using ProcSim.Core.Interruptions;
+using ProcSim.Core.Interruptions;
 using ProcSim.Core.Process;
 using ProcSim.Core.Scheduler;
 using ProcSim.Core.Syscall;
@@ -7,15 +7,15 @@ using System.Diagnostics;
 
 namespace ProcSim.Core;
 
-public class CPU
+public class Cpu
 {
-    private readonly ConcurrentDictionary<PCB, List<Instruction>> _programs;
+    private readonly ConcurrentDictionary<Pcb, List<Instruction>> _programs;
     private readonly InterruptController _interruptController;
     private readonly InterruptService _isrv;
     private List<Instruction> _instructions;
     private ConcurrentQueue<MicroOp> _ops;
 
-    public CPU(uint id, InterruptController intc, InterruptService isrv, IScheduler sched, SystemCallDispatcher syscallDisp, ConcurrentDictionary<PCB, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
+    public Cpu(uint id, InterruptController intc, InterruptService isrv, IScheduler sched, SystemCallDispatcher syscallDisp, ConcurrentDictionary<Pcb, List<Instruction>> processPrograms, Action<Action> subscribeToTick)
     {
         Id = id;
         _interruptController = intc;
@@ -34,7 +34,7 @@ public class CPU
     }
 
     public uint Id { get; }
-    public PCB CurrentPCB
+    public Pcb CurrentPCB
     {
         get;
         set

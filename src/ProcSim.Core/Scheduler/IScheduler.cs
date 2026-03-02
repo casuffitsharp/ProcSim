@@ -1,10 +1,10 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 
 namespace ProcSim.Core.Scheduler;
 
 public interface IScheduler
 {
-    void Admit(PCB pcb);
-    PCB Preempt(CPU cpu);
-    void Decommission(PCB pcb);
+    void Admit(Pcb pcb);
+    Pcb Preempt(Cpu cpu);
+    void Decommission(Pcb pcb);
 }

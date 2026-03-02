@@ -1,9 +1,9 @@
-﻿using ProcSim.Core.Process;
+using ProcSim.Core.Process;
 using System.Diagnostics;
 
 namespace ProcSim.Core.Scheduler;
 
-public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, Kernel kernel) : IScheduler
+public sealed class PriorityScheduler(IReadOnlyDictionary<uint, Pcb> idlePcbs, Kernel kernel) : IScheduler
 {
     private const ulong AGING_QUANTUM = 50;
     private const double ALPHA = 5.0; // IO to CPU time ratio factor
@@ -11,10 +11,10 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
     private const double GAMMA = 0.1; // Queue length penalty factor
     private const int MAX_DYNAMIC_PRIORITY = (int)ProcessStaticPriority.RealTime + 4;
 
-    private readonly PriorityQueue<PCB, int> _readyQueue = new();
+    private readonly PriorityQueue<Pcb, int> _readyQueue = new();
     private readonly Lock _queueLock = new();
 
-    public void Admit(PCB pcb)
+    public void Admit(Pcb pcb)
     {
         if (pcb.State == ProcessState.Terminated)
         {
@@ -32,10 +32,10 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
         pcb.LastEnqueueCycle = kernel.GlobalCycle;
     }
 
-    public PCB Preempt(CPU cpu)
+    public Pcb Preempt(Cpu cpu)
     {
-        PCB prev = cpu.CurrentPCB;
-        PCB next = GetNext(cpu.Id);
+        Pcb prev = cpu.CurrentPCB;
+        Pcb next = GetNext(cpu.Id);
 
         if (next == idlePcbs[cpu.Id] && prev?.State == ProcessState.Running)
         {
@@ -47,35 +47,35 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
             Admit(prev);
 
         if (prev == idlePcbs[cpu.Id])
-            prev.State = ProcessState.Ready;
+            prev?.State = ProcessState.Ready;
 
         next.State = ProcessState.Running;
         return next;
     }
 
-    public void Decommission(PCB pcb)
+    public void Decommission(Pcb pcb)
     {
         lock (_queueLock)
         {
-            var remainingItems = _readyQueue.UnorderedItems
+            IEnumerable<(Pcb Element, int Priority)> remainingItems = _readyQueue.UnorderedItems
                 .Where(item => item.Element.ProcessId != pcb.ProcessId)
                 .Select(item => (item.Element, item.Priority));
 
             _readyQueue.Clear();
-            foreach (var (item, priority) in remainingItems)
+            foreach ((Pcb item, int priority) in remainingItems)
             {
                 _readyQueue.Enqueue(item, priority);
             }
-            
+
             Debug.WriteLine($"Decommissioned process {pcb.ProcessId} from PriorityScheduler.");
         }
     }
 
-    public PCB GetNext(uint cpuId)
+    public Pcb GetNext(uint cpuId)
     {
         lock (_queueLock)
         {
-            while (_readyQueue.TryDequeue(out PCB next, out _))
+            while (_readyQueue.TryDequeue(out Pcb next, out _))
             {
                 if (next.State != ProcessState.Terminated)
                 {
@@ -91,7 +91,7 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, PCB> idlePcbs, K
         return idlePcbs[cpuId];
     }
 
-    private int RecalculatePriority(PCB pcb, ulong now)
+    private int RecalculatePriority(Pcb pcb, ulong now)
     {
         ulong wait = now - pcb.LastEnqueueCycle;
         double boost = BETA * (wait / (double)AGING_QUANTUM);

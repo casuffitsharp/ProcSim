@@ -1,10 +1,10 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 
 namespace ProcSim.Core.Process;
 
-public class PCB
+public class Pcb
 {
-    public PCB(int processId, string name, Dictionary<string, int> registers, ProcessStaticPriority staticPriority)
+    public Pcb(int processId, string name, Dictionary<string, int> registers, ProcessStaticPriority staticPriority)
     {
         for (uint i = 0; i < 8; i++)
         {

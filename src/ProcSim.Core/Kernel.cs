@@ -1,7 +1,6 @@
-﻿using ProcSim.Core.Interruptions;
+using ProcSim.Core.Interruptions;
 using ProcSim.Core.Interruptions.Handlers;
 using ProcSim.Core.IO;
-using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
 using ProcSim.Core.Process.Factories;
 using ProcSim.Core.Scheduler;
@@ -13,16 +12,17 @@ namespace ProcSim.Core;
 
 public class Kernel : IDisposable
 {
-    private readonly Dictionary<uint, PCB> _idlePcbs = [];
+    private readonly Dictionary<uint, Pcb> _idlePcbs = [];
     private readonly InterruptController _interruptController = new();
 
     private IScheduler _scheduler;
+    private bool _disposed;
 
     public const uint KERNEL_TERMINATE_VECTOR = 31;
 
     public Dictionary<uint, IODevice> Devices { get; } = [];
-    public Dictionary<uint, CPU> Cpus { get; } = [];
-    public ConcurrentDictionary<PCB, List<Instruction>> Programs { get; } = new();
+    public Dictionary<uint, Cpu> Cpus { get; } = [];
+    public ConcurrentDictionary<Pcb, List<Instruction>> Programs { get; } = new();
     public ulong GlobalCycle { get; private set; }
 
     public uint RegisterDevice(string name, uint baseLatency, uint channels)
@@ -48,11 +48,11 @@ public class Kernel : IDisposable
         for (uint coreId = 0; coreId < cores; coreId++)
         {
             List<Instruction> idleInstructions = [InstructionFactory.Idle()];
-            PCB idleProcess = new((int)coreId, $"Idle({coreId})", null, ProcessStaticPriority.Normal) { State = ProcessState.Ready };
+            Pcb idleProcess = new((int)coreId, $"Idle({coreId})", null, ProcessStaticPriority.Normal) { State = ProcessState.Ready };
             _idlePcbs[coreId] = idleProcess;
             Programs[idleProcess] = idleInstructions;
 
-            CPU cpu = new(coreId, _interruptController, interruptService, _scheduler, syscallDispatcher, Programs, subscribeToTick);
+            Cpu cpu = new(coreId, _interruptController, interruptService, _scheduler, syscallDispatcher, Programs, subscribeToTick);
             Cpus.Add(coreId, cpu);
 
             _interruptController.RegisterCore(coreId);
@@ -66,7 +66,7 @@ public class Kernel : IDisposable
     public int CreateProcess(ProcessDto program)
     {
         int id = Programs.Count;
-        PCB pcb = new(id, program.Name, program.Registers, program.Priority);
+        Pcb pcb = new(id, program.Name, program.Registers, program.Priority);
         Programs[pcb] = [.. program.Instructions];
         _scheduler.Admit(pcb);
         return id;
@@ -80,7 +80,7 @@ public class Kernel : IDisposable
             return;
         }
 
-        PCB pcb = Programs.Keys.FirstOrDefault(p => p.ProcessId == pid);
+        Pcb pcb = Programs.Keys.FirstOrDefault(p => p.ProcessId == pid);
         if (pcb?.State is null or ProcessState.Terminated)
             return;
 
@@ -92,13 +92,27 @@ public class Kernel : IDisposable
 
     public void SetProcessStaticPriority(int pid, ProcessStaticPriority newPriority)
     {
-        PCB pcb = Programs.Keys.First(p => p.ProcessId == pid);
+        Pcb pcb = Programs.Keys.First(p => p.ProcessId == pid);
         pcb.StaticPriority = newPriority;
     }
 
     public void Dispose()
     {
-        foreach (IODevice device in Devices.Values)
-            device.Dispose();
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (_disposed)
+            return;
+
+        if (disposing)
+        {
+            foreach (IODevice device in Devices.Values)
+                device.Dispose();
+        }
+
+        _disposed = true;
     }
 }
