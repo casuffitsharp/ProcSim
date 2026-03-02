@@ -12,7 +12,7 @@ public static class Dispatcher
         prev?.OnExitRunning(cpu.UserCycleCount, cpu.SyscallCycleCount);
         if (prev == next)
         {
-            next.OnDispatched(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount);
+            next?.OnDispatched(cpu.CycleCount, cpu.UserCycleCount, cpu.SyscallCycleCount);
             return;
         }
 

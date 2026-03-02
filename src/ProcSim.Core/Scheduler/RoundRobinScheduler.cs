@@ -29,7 +29,7 @@ public sealed class RoundRobinScheduler(IReadOnlyDictionary<uint, Pcb> idlePcbs)
             Admit(prev);
 
         if (prev == idlePcbs[cpu.Id])
-            prev.State = ProcessState.Ready;
+            prev?.State = ProcessState.Ready;
 
         Pcb next = GetNext(cpu.Id);
         next.State = ProcessState.Running;

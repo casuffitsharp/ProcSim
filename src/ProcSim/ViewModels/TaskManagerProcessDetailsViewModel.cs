@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ProcSim.Core.Monitoring;
 using ProcSim.Core.Process;
@@ -44,7 +44,7 @@ public partial class TaskManagerProcessDetailsViewModel : ObservableObject
         DynamicPriority = s.DynamicPriority;
     }
 
-    private bool CanSetPriority(ProcessStaticPriority newPriority)
+    private bool CanSetPriority(ProcessStaticPriority _)
     {
         return IsUserProcess && State != ProcessState.Terminated;
     }
