@@ -47,7 +47,7 @@ public sealed class PriorityScheduler(IReadOnlyDictionary<uint, Pcb> idlePcbs, K
             Admit(prev);
 
         if (prev == idlePcbs[cpu.Id])
-            prev.State = ProcessState.Ready;
+            prev?.State = ProcessState.Ready;
 
         next.State = ProcessState.Running;
         return next;
