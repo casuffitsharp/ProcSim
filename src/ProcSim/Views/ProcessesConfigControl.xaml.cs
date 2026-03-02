@@ -5,7 +5,6 @@ using System.Windows.Media;
 
 namespace ProcSim.Views;
 
-#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
 public partial class ProcessesConfigControl : UserControl
 {
     public ProcessesConfigControl()
@@ -13,6 +12,7 @@ public partial class ProcessesConfigControl : UserControl
         InitializeComponent();
     }
 
+#pragma warning disable S2325 // Methods and properties that don't access instance data should be static
     private void OnSelectedProcessChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (sender is Grid grid)
@@ -24,6 +24,7 @@ public partial class ProcessesConfigControl : UserControl
         if (FindAncestor<DataGridRow>(e.OriginalSource as DependencyObject) is null)
             ProcessesDataGrid.SelectedItem = null;
     }
+#pragma warning restore S2325 // Methods and properties that don't access instance data should be static
 
     private static T FindAncestor<T>(DependencyObject element) where T : DependencyObject
     {
