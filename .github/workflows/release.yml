@@ -41,7 +41,7 @@ jobs:
         run: Compress-Archive -Path ./published/* -DestinationPath ProcSim-${{ steps.version.outputs.version }}.zip
 
       - name: Upload artifact to release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: ProcSim-${{ steps.version.outputs.version }}.zip
           fail_on_unmatched_files: true
