@@ -12,7 +12,7 @@
         <PackageVersion Include="MaterialDesignThemes" Version="5.2.1" />
         <PackageVersion Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
         <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-        <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.21.0.135717" />
+        <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.24.0.138807" />
         <PackageVersion Include="MinVer" Version="5.0.0" />
     </ItemGroup>
 </Project>
