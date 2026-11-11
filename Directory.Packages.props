@@ -8,7 +8,7 @@
         <PackageVersion Include="LiveCharts.Wpf.Core" Version="0.9.8" />
         <PackageVersion Include="LiveChartsCore" Version="2.0.0-rc5.4" />
         <PackageVersion Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.0.0-rc5.4" />
-        <PackageVersion Include="MaterialDesignColors" Version="5.2.1" />
+        <PackageVersion Include="MaterialDesignColors" Version="5.4.0" />
         <PackageVersion Include="MaterialDesignThemes" Version="5.2.1" />
         <PackageVersion Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
         <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
